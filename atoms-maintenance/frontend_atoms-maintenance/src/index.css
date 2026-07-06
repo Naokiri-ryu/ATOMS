@@ -1,0 +1,298 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Light Mode Variables ─────────────────────────────────── */
+:root {
+  --bg-page:        #EEF1F8;
+  --bg-card:        #ffffff;
+  --border-card:    #D1D5DB;
+  --text-primary:   #1E293B;
+  --text-secondary: #64748B;
+  --bg-input:       #ffffff;
+  --dot-color:      #E2E6F0;
+  
+  /* Table and form colors */
+  --table-header-bg:    #f8fafc;
+  --table-border:       #e2e8f0;
+  --table-hover-bg:     #f8fafc;
+  --table-text:         #334155;
+  --table-text-muted:   #475569;
+  
+  /* Scrollbar colors */
+  --scrollbar-track:    #F1F5F9;
+  --scrollbar-thumb:    #CBD5E1;
+  --scrollbar-thumb-hover: #94A3B8;
+}
+
+@layer base {
+  body {
+    @apply antialiased;
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+      'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: var(--text-primary);
+    background-color: var(--bg-page);
+  }
+
+  /* Consistent heading hierarchy */
+  h1 { @apply text-2xl font-bold tracking-tight; }
+  h2 { @apply text-lg font-semibold tracking-tight; }
+  h3 { @apply text-base font-semibold; }
+}
+
+/* ─── Background pattern — subtle dot grid ───────────────── */
+.main-content-bg {
+  background-color: var(--bg-page);
+  background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ─── Animations ─────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(50px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeScaleUp {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cardHover {
+  from { transform: translateY(0); }
+  to { transform: translateY(-8px); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-fade-in-delay {
+  animation: fadeIn 1s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-delay-2 {
+  animation: fadeIn 1s ease-out 0.8s forwards;
+  opacity: 0;
+}
+
+.animate-fade-slide-down {
+  animation: fadeSlideDown 0.6s ease-out forwards;
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.8s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+.animate-fade-scale-up {
+  animation: fadeScaleUp 0.3s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInFromRight 0.4s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInFromLeft 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* ─── Responsive utilities ───────────────────────────────── */
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Screen reader only - hide visually but keep accessible */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .focus\:not-sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+}
+
+/* ─── Backdrop blur ──────────────────────────────────────── */
+@supports (backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px)) {
+  .backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+}
+
+/* ─── Custom scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ─── Grounding Checklist Form Styles ────────────────────── */
+.grounding-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.grounding-table th {
+  background: var(--table-header-bg);
+  border: 1px solid var(--table-border);
+  padding: 0.625rem 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  color: var(--table-text);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.grounding-table td {
+  border: 1px solid var(--table-border);
+  padding: 0.5rem 0.75rem;
+  vertical-align: middle;
+}
+
+.grounding-table tbody tr:hover {
+  background: var(--table-hover-bg);
+}
+
+.grounding-radio-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.grounding-radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--table-text-muted);
+  white-space: nowrap;
+}
+
+.grounding-radio-group input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--scrollbar-thumb);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.grounding-radio-group input[type="radio"]:checked {
+  border-color: #1B3A6B;
+}
+
+.grounding-radio-group input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1B3A6B;
+}
+
+.grounding-radio-group input[type="radio"]:hover {
+  border-color: var(--scrollbar-thumb-hover);
+}
+
+.grounding-note-input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--table-border);
+  padding: 4px 2px;
+  font-size: 0.8125rem;
+  background: transparent;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.grounding-note-input:focus {
+  border-bottom-color: #1B3A6B;
+}
+
+.grounding-section-header {
+  background: var(--scrollbar-track) !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+
+.grounding-standard {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.8125rem;
+  color: #1B3A6B;
+  font-weight: 600;
+  text-align: center;
+}
+

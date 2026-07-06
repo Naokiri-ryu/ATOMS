@@ -1,0 +1,150 @@
+/**
+ * RosterWeekView Component
+ * 
+ * Weekly roster view with shift assignments
+ * Shows 7-day grid with staff per shift
+ */
+
+import React from 'react';
+import type { RosterDay, Shift } from '../types/roster';
+import ShiftAssignmentCard from './ShiftAssignmentCard';
+
+interface RosterWeekViewProps {
+  weekDays: Date[];
+  selectedDate: Date;
+  onDateSelect: (date: Date) => void;
+  onNavigateWeek: (direction: 'prev' | 'next') => void;
+  rosterDay?: RosterDay;
+  shifts: Shift[];
+  isReadOnly?: boolean;
+  onAddStaff?: (shiftId: number) => void;
+  onRemoveStaff?: (assignmentId: number) => void;
+}
+
+const RosterWeekView: React.FC<RosterWeekViewProps> = ({
+  weekDays,
+  selectedDate,
+  onDateSelect,
+  onNavigateWeek,
+  rosterDay,
+  shifts,
+  isReadOnly = false,
+  onAddStaff,
+  onRemoveStaff
+}) => {
+  const formatDayName = (date: Date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
+  };
+
+  const isSameDay = (date1: Date, date2: Date) => {
+    return date1.getDate() === date2.getDate() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getFullYear() === date2.getFullYear();
+  };
+
+  const getShiftColor = (shiftName: string): string => {
+    const name = shiftName.toLowerCase();
+    if (name.includes('morning') || name.includes('pagi')) return 'bg-blue-500';
+    if (name.includes('afternoon') || name.includes('siang')) return 'bg-yellow-400';
+    if (name.includes('night') || name.includes('malam')) return 'bg-green-500';
+    return 'bg-purple-500';
+  };
+
+  return (
+    <div className="bg-white rounded-3xl shadow-lg border border-gray-1400 -mx-4 sm:mx-0 p-4 sm:p-6 lg:p-8">
+      {/* Week Navigation */}
+      <div className="flex items-center justify-between mb-6 sm:mb-8">
+        <button
+          onClick={() => onNavigateWeek('prev')}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          aria-label="Previous week"
+        >
+          <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        
+        <h3 className="text-lg sm:text-xl font-bold text-gray-900">This Week</h3>
+        
+        <button
+          onClick={() => onNavigateWeek('next')}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          aria-label="Next week"
+        >
+          <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Week Days Selector */}
+      <div className="grid grid-cols-7 gap-1 mb-6 sm:mb-8 overflow-x-auto">
+        {weekDays.map((day, index) => {
+          const isSelected = isSameDay(day, selectedDate);
+          const isToday = isSameDay(day, new Date());
+          
+          return (
+            <button
+              key={index}
+              onClick={() => onDateSelect(day)}
+              className={`flex flex-col items-center justify-center py-1 px-1 sm:py-2 sm:px-2 rounded-lg transition-all text-center ${
+                isSelected
+                  ? 'bg-[#222E6A] text-white shadow-lg'
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+              } ${isToday && !isSelected ? 'ring-2 ring-blue-400' : ''}`}
+            >
+              <span className="text-xs font-medium mb-0.5">{formatDayName(day)}</span>
+              <span className="text-sm sm:text-lg font-bold">{day.getDate()}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Shifts Grid */}
+      {rosterDay ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          {shifts.map((shift) => {
+            // Filter out employees who are off (libur, cuti, etc.)
+            const allAssignments = rosterDay.shift_assignments?.filter(a => a.shift_id === shift.id) || [];
+            const assignments = allAssignments.filter(a => {
+              const notes = (a.notes || '').toLowerCase().trim();
+              // Check if notes contain any off-duty keywords
+              if (!notes) return true; // Show if no notes
+              return !notes.includes('libur') && 
+                     !notes.includes('cuti') && 
+                     !notes.includes('off') &&
+                     !notes.includes('leave') &&
+                     !notes.includes('holiday');
+            });
+            
+            const shiftManagerDuties = rosterDay.manager_duties?.filter(d => d.shift_id === shift.id) || [];
+            const bgColor = getShiftColor(shift.name);
+            
+            return (
+              <ShiftAssignmentCard
+                key={shift.id}
+                shift={shift}
+                assignments={assignments}
+                managerDuties={shiftManagerDuties}
+                backgroundColor={bgColor}
+                isReadOnly={isReadOnly}
+                onAddStaff={onAddStaff ? () => onAddStaff(shift.id) : undefined}
+                onRemoveStaff={onRemoveStaff}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <div className="text-center text-gray-400 py-8">
+          <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <p className="text-lg font-medium">Select a date to view roster</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export { RosterWeekView };
+export default RosterWeekView;

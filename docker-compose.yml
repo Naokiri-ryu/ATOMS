@@ -1,0 +1,50 @@
+services:
+  atoms-app:
+    build: ./atoms
+    container_name: atoms-app
+    ports:
+      - "8000:80"
+    depends_on:
+      - atoms-db
+
+  atoms-db:
+    image: postgres:16
+    container_name: atoms-db
+    restart: always
+    environment:
+      POSTGRES_DB: atoms_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    expose:
+      - "5432"
+    volumes:
+      - atoms_pg_data:/var/lib/postgresql/data
+
+  sakti-app:
+   build:
+    context: ./sakti
+    dockerfile: Dockerfile
+   container_name: sakti-app
+   ports:
+     - "8001:80"
+   depends_on:
+    - sakti-db
+   env_file:
+    - ./sakti/.env
+
+  sakti-db:
+   image: postgres:16
+   container_name: sakti-db
+   restart: always
+   environment:
+    POSTGRES_DB: airnav_db
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: airnav_user
+   expose:
+     - "5432"
+   volumes:
+     - sakti_pg_data:/var/lib/postgresql/data
+
+volumes:
+  atoms_pg_data:
+  sakti_pg_data:

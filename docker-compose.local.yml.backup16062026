@@ -1,0 +1,225 @@
+services:
+  # ─────────────── ATOMS MAINTENANCE ───────────────
+  atoms-frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    environment:
+      VITE_API_URL: ${ATOMS_API_URL:-http://localhost:8000/api}
+      VITE_SAKTI_URL: ${SAKTI_URL:-http://localhost:8001}
+      VITE_ROSTERING_FRONTEND_URL: ${ROSTERING_FRONTEND_URL:-http://localhost:5174}
+    volumes:
+      - ./atoms-maintenance/frontend_atoms-maintenance:/app
+      - atoms_frontend_node_modules:/app/node_modules
+    ports:
+      - "${ATOMS_FRONTEND_PORT:-5173}:5173"
+    depends_on:
+      - atoms-backend
+    networks:
+      - teknik_local
+
+  atoms-backend:
+    image: php:8.4-cli-alpine
+    working_dir: /var/www/html
+    command: >
+      sh -c "apk add --no-cache git zip unzip postgresql-client libpq-dev oniguruma-dev icu-dev libzip-dev libpng-dev libjpeg-turbo-dev freetype-dev libwebp-dev autoconf g++ make linux-headers &&
+             docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && docker-php-ext-install pdo pdo_pgsql mbstring zip intl bcmath gd exif &&
+             curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer &&
+             composer install --no-interaction --optimize-autoloader &&
+             php artisan migrate --force &&
+             php artisan serve --host=0.0.0.0 --port=8000"
+    environment:
+      APP_NAME: ATOMS
+      APP_ENV: local
+      APP_KEY: ${ATOMS_APP_KEY}
+      APP_DEBUG: "true"
+      APP_URL: ${ATOMS_BACKEND_URL:-http://localhost:8000}
+      APP_FRONTEND_URL: ${ATOMS_FRONTEND_URL:-http://localhost:5173}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      DB_CONNECTION: pgsql
+      DB_HOST: atoms-db
+      DB_PORT: 5432
+      DB_DATABASE: ${ATOMS_DB_DATABASE:-atoms}
+      DB_USERNAME: ${ATOMS_DB_USERNAME:-atoms}
+      DB_PASSWORD: ${ATOMS_DB_PASSWORD:-atoms_password}
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      MAIL_MAILER: log
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ROSTERING_API_URL: ${ROSTERING_API_URL:-http://rostering-backend:8000}
+      ROSTERING_FRONTEND_URL: ${ROSTERING_FRONTEND_URL:-http://localhost:5174}
+      ROSTERING_DB_HOST: rostering-db
+      ROSTERING_DB_PORT: 5432
+      ROSTERING_DB_DATABASE: ${ROSTERING_DB_DATABASE:-rostering}
+      ROSTERING_DB_USERNAME: ${ROSTERING_DB_USERNAME:-rostering}
+      ROSTERING_DB_PASSWORD: ${ROSTERING_DB_PASSWORD:-rostering_password}
+    volumes:
+      - ./atoms-maintenance/backend_atoms-maintenance:/var/www/html
+      - atoms_backend_vendor:/var/www/html/vendor
+    ports:
+      - "${ATOMS_BACKEND_PORT:-8000}:8000"
+    depends_on:
+      atoms-db:
+        condition: service_healthy
+    networks:
+      - teknik_local
+
+  atoms-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${ATOMS_DB_DATABASE:-atoms}
+      POSTGRES_USER: ${ATOMS_DB_USERNAME:-atoms}
+      POSTGRES_PASSWORD: ${ATOMS_DB_PASSWORD:-atoms_password}
+    volumes:
+      - atoms_db_data:/var/lib/postgresql/data
+    ports:
+      - "${ATOMS_DB_PORT:-5434}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ATOMS_DB_USERNAME:-atoms} -d ${ATOMS_DB_DATABASE:-atoms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - teknik_local
+
+  # ─────────────── ATOMS ROSTERING ───────────────
+  rostering-frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    environment:
+      VITE_API_URL: ${ROSTERING_API_URL_PUBLIC:-http://localhost:8002/api}
+      VITE_MAINTENANCE_URL: ${ATOMS_FRONTEND_URL:-http://localhost:5173}
+    volumes:
+      - ./atoms-rostering/frontend_atoms:/app
+      - rostering_frontend_node_modules:/app/node_modules
+    ports:
+      - "${ROSTERING_FRONTEND_PORT:-5174}:5173"
+    depends_on:
+      - rostering-backend
+    networks:
+      - teknik_local
+
+  rostering-backend:
+    image: php:8.4-cli-alpine
+    working_dir: /var/www/html
+    command: >
+      sh -c "apk add --no-cache git zip unzip postgresql-client libpq-dev oniguruma-dev icu-dev libzip-dev libpng-dev libjpeg-turbo-dev freetype-dev libwebp-dev autoconf g++ make linux-headers &&
+             docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && docker-php-ext-install pdo pdo_pgsql mbstring zip intl bcmath gd exif &&
+             curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer &&
+             composer install --no-interaction --optimize-autoloader &&
+             php artisan migrate --force &&
+             php artisan serve --host=0.0.0.0 --port=8000"
+    environment:
+      APP_NAME: ATOMS-Rostering
+      APP_ENV: local
+      APP_KEY: ${ROSTERING_APP_KEY}
+      APP_DEBUG: "true"
+      APP_URL: ${ROSTERING_BACKEND_URL:-http://localhost:8002}
+      DB_CONNECTION: pgsql
+      DB_HOST: rostering-db
+      DB_PORT: 5432
+      DB_DATABASE: ${ROSTERING_DB_DATABASE:-rostering}
+      DB_USERNAME: ${ROSTERING_DB_USERNAME:-rostering}
+      DB_PASSWORD: ${ROSTERING_DB_PASSWORD:-rostering_password}
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost:5173,localhost:5174}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5174,http://172.19.38.157:5174,http://172.19.38.157:5173}
+    volumes:
+      - ./atoms-rostering/backend_atoms:/var/www/html
+      - rostering_backend_vendor:/var/www/html/vendor
+    ports:
+      - "${ROSTERING_BACKEND_PORT:-8002}:8000"
+    depends_on:
+      rostering-db:
+        condition: service_healthy
+    networks:
+      - teknik_local
+
+  rostering-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${ROSTERING_DB_DATABASE:-rostering}
+      POSTGRES_USER: ${ROSTERING_DB_USERNAME:-rostering}
+      POSTGRES_PASSWORD: ${ROSTERING_DB_PASSWORD:-rostering_password}
+    volumes:
+      - rostering_db_data:/var/lib/postgresql/data
+    ports:
+      - "${ROSTERING_DB_PORT:-5436}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ROSTERING_DB_USERNAME:-rostering} -d ${ROSTERING_DB_DATABASE:-rostering}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - teknik_local
+
+  # ─────────────── SAKTI (TIDAK DIUBAH) ───────────────
+  sakti:
+    build:
+      context: ./sakti
+      dockerfile: Dockerfile
+      target: app
+    environment:
+      APP_NAME: SAKTI
+      APP_ENV: local
+      APP_KEY: ${SAKTI_APP_KEY:-base64:5EHPpt5IdgfUMUI/BQ+9btirkl+5p73VRPw7gNJn4SQ=}
+      APP_DEBUG: "true"
+      APP_URL: ${SAKTI_URL:-http://localhost:8001}
+      DB_CONNECTION: pgsql
+      DB_HOST: sakti-db
+      DB_PORT: 5432
+      DB_DATABASE: ${SAKTI_DB_DATABASE:-sakti}
+      DB_USERNAME: ${SAKTI_DB_USERNAME:-sakti}
+      DB_PASSWORD: ${SAKTI_DB_PASSWORD:-sakti_password}
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      FILESYSTEM_DISK: local
+    volumes:
+      - sakti_storage_data:/var/www/html/storage/app/public
+      - sakti_logs_data:/var/www/html/storage/logs
+    ports:
+      - "${SAKTI_PORT:-8001}:80"
+    depends_on:
+      sakti-db:
+        condition: service_healthy
+    networks:
+      - teknik_local
+
+  sakti-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${SAKTI_DB_DATABASE:-sakti}
+      POSTGRES_USER: ${SAKTI_DB_USERNAME:-sakti}
+      POSTGRES_PASSWORD: ${SAKTI_DB_PASSWORD:-sakti_password}
+    volumes:
+      - sakti_db_data:/var/lib/postgresql/data
+    ports:
+      - "${SAKTI_DB_PORT:-5435}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SAKTI_DB_USERNAME:-sakti} -d ${SAKTI_DB_DATABASE:-sakti}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - teknik_local
+
+volumes:
+  atoms_frontend_node_modules:
+  atoms_backend_vendor:
+  atoms_db_data:
+  rostering_frontend_node_modules:
+  rostering_backend_vendor:
+  rostering_db_data:
+  sakti_db_data:
+  sakti_storage_data:
+  sakti_logs_data:
+
+networks:
+  teknik_local:
+    driver: bridge
+
