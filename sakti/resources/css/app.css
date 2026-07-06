@@ -1,0 +1,151 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Inter', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* SAKTI Light Theme - AirNav Palette */
+:root {
+    --background: #F8F9FA;
+    --foreground: #222E6A;
+    --card: #FFFFFF;
+    --card-foreground: #222E6A;
+    --popover: #FFFFFF;
+    --popover-foreground: #222E6A;
+    --primary: #222E6A;
+    --primary-foreground: #FFFFFF;
+    --secondary: #A0A4C9;
+    --secondary-foreground: #222E6A;
+    --muted: #E8EAF6;
+    --muted-foreground: #4D5488;
+    --accent: #E8EAF6;
+    --accent-foreground: #222E6A;
+    --destructive: #D32F2F;
+    --destructive-foreground: #FFFFFF;
+    --border: #A0A4C9;
+    --input: #A0A4C9;
+    --ring: #222E6A;
+    --chart-1: #222E6A;
+    --chart-2: #454D7C;
+    --chart-3: #4D5488;
+    --chart-4: #7D81B0;
+    --chart-5: #A0A4C9;
+    --radius: 0.5rem;
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #222E6A;
+    --sidebar-primary: #222E6A;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #E8EAF6;
+    --sidebar-accent-foreground: #222E6A;
+    --sidebar-border: #A0A4C9;
+    --sidebar-ring: #222E6A;
+}
+
+.dark {
+    --background: #11152B; /* Darker navy for dark mode background */
+    --foreground: #FFFFFF;
+    --card: #1A1F3C;
+    --card-foreground: #FFFFFF;
+    --popover: #1A1F3C;
+    --popover-foreground: #FFFFFF;
+    --primary: #7D81B0;
+    --primary-foreground: #11152B;
+    --secondary: #454D7C;
+    --secondary-foreground: #FFFFFF;
+    --muted: #222E6A;
+    --muted-foreground: #A0A4C9;
+    --accent: #4D5488;
+    --accent-foreground: #FFFFFF;
+    --destructive: #EF5350;
+    --destructive-foreground: #FFFFFF;
+    --border: #4D5488;
+    --input: #4D5488;
+    --ring: #7D81B0;
+    --chart-1: #A0A4C9;
+    --chart-2: #7D81B0;
+    --chart-3: #4D5488;
+    --chart-4: #454D7C;
+    --chart-5: #222E6A;
+    --sidebar: #1A1F3C;
+    --sidebar-foreground: #FFFFFF;
+    --sidebar-primary: #7D81B0;
+    --sidebar-primary-foreground: #1A1F3C;
+    --sidebar-accent: #454D7C;
+    --sidebar-accent-foreground: #FFFFFF;
+    --sidebar-border: #4D5488;
+    --sidebar-ring: #7D81B0;
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        overflow-x: hidden;
+    }
+
+    img,
+    video,
+    canvas {
+        max-width: 100%;
+    }
+}

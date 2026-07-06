@@ -1,0 +1,1014 @@
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import type { ReactNode } from 'react';
+import type { User, Notification } from '../types';
+import type { RosterPeriod } from '../modules/roster/types/roster';
+import type { LeaveRequest } from '../modules/roster/types/leaveRequest';
+import type { ActivityLog, ActivityLogStatistics } from '../modules/activity-log/repository/activityLogService';
+import { adminService } from '../services/adminService';
+import { notificationService } from '../modules/notifications/repository/notificationService';
+import { rosterService } from '../modules/roster/repository/rosterService';
+import { activityLogService } from '../modules/activity-log/repository/activityLogService';
+import { useAuth } from '../modules/auth/core/AuthContext';
+
+type NotificationCategory = 'inbox' | 'starred' | 'sent' | 'trash' | 'roster' | 'drafts' | 'scheduled';
+
+interface NotificationsByCategory {
+  inbox: Notification[];
+  starred: Notification[];
+  sent: Notification[];
+  trash: Notification[];
+  roster: Notification[];
+  drafts: Notification[];
+  scheduled: Notification[];
+}
+
+interface NotificationStats {
+  inbox: number;
+  starred: number;
+  sent: number;
+  trash: number;
+  roster: number;
+  drafts: number;
+  scheduled: number;
+}
+
+interface DataCacheContextType {
+  users: User[];
+  notifications: Notification[];
+  notificationsByCategory: NotificationsByCategory;
+  notificationStats: NotificationStats;
+  rosters: RosterPeriod[];
+  rosterDetails: Record<number, RosterPeriod>;
+  recentActivities: ActivityLog[];
+  activityStatistics: ActivityLogStatistics | null;
+  unreadNotificationCount: number;
+  isLoading: boolean;
+  isInitialized: boolean;
+  loadingStates: {
+    users: boolean;
+    notifications: boolean;
+    rosters: boolean;
+    rosterDetails: boolean;
+    activities: boolean;
+  };
+  systemStats: {
+    totalUsers: number;
+    activeUsers: number;
+    totalRosters: number;
+    pendingTasks: number;
+  };
+  loadUsers: () => Promise<void>;
+  loadNotifications: () => Promise<void>;
+  loadNotificationsByCategory: (category?: NotificationCategory) => Promise<void>;
+  loadRosters: () => Promise<void>;
+  loadRosterDetails: () => Promise<void>;
+  loadRosterDetail: (rosterId: number) => Promise<RosterPeriod | null>;
+  getRosterDetail: (rosterId: number) => RosterPeriod | null;
+  loadRecentActivities: () => Promise<void>;
+  loadActivityStatistics: () => Promise<void>;
+  loadAllData: () => Promise<void>;
+  addUser: (user: User) => void;
+  updateUser: (userId: number | string, updatedUser: User) => void;
+  removeUser: (userId: number | string) => void;
+  replaceUser: (tempId: number, realUser: User) => void;
+  refreshUsers: () => Promise<void>;
+  markNotificationAsRead: (id: number) => void;
+  markAllNotificationsAsRead: () => void;
+  refreshNotifications: () => Promise<void>;
+  refreshNotificationsByCategory: (category?: NotificationCategory) => Promise<void>;
+  toggleNotificationStar: (id: number) => void;
+  removeNotificationFromCategory: (id: number, category: NotificationCategory) => void;
+  moveNotificationToTrash: (id: number, fromCategory: NotificationCategory) => void;
+  restoreNotificationFromTrash: (notification: Notification) => void;
+  addNotificationToSent: (notification: Notification) => void;
+  updateNotificationInCache: (id: number, updates: Partial<Notification>) => void;
+  refreshRosters: () => Promise<void>;
+  addRoster: (roster: RosterPeriod) => void;
+  updateRosterInList: (rosterId: number, updates: Partial<RosterPeriod>) => void;
+  updateRosterDetail: (rosterId: number, updatedRoster: RosterPeriod) => void;
+  applyApprovedLeaveToRosterCache: (leaveRequest: LeaveRequest) => void;
+  refreshActivities: () => Promise<void>;
+}
+
+const DataCacheContext = createContext<DataCacheContextType | undefined>(undefined);
+
+export const DataCacheProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationsByCategory, setNotificationsByCategory] = useState<NotificationsByCategory>({
+    inbox: [],
+    starred: [],
+    sent: [],
+    trash: [],
+    roster: [],
+    drafts: [],
+    scheduled: [],
+  });
+  const [notificationStats, setNotificationStats] = useState<NotificationStats>({
+    inbox: 0,
+    starred: 0,
+    sent: 0,
+    trash: 0,
+    roster: 0,
+    drafts: 0,
+    scheduled: 0,
+  });
+  const [rosters, setRosters] = useState<RosterPeriod[]>([]);
+  const [rosterDetails, setRosterDetails] = useState<Record<number, RosterPeriod>>({});
+  const [recentActivities, setRecentActivities] = useState<ActivityLog[]>([]);
+  const [activityStatistics, setActivityStatistics] = useState<ActivityLogStatistics | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [loadingStates, setLoadingStates] = useState({
+    users: false,
+    notifications: false,
+    rosters: false,
+    rosterDetails: false,
+    activities: false
+  });
+  const { isAuthenticated, user } = useAuth();
+  
+  // Track if initial load has been triggered to prevent multiple calls
+  const hasInitialLoadStartedRef = useRef(false);
+  const isLoadingAllDataRef = useRef(false);
+  const lastUserIdRef = useRef<number | null>(null);
+
+  // Calculate unread notifications count from inbox category
+  const unreadNotificationCount = useMemo(() => {
+    // Prioritize notificationsByCategory.inbox for accurate count
+    const inboxNotifications = notificationsByCategory.inbox;
+    if (inboxNotifications.length > 0) {
+      return inboxNotifications.filter(n => !n.is_read).length;
+    }
+    // Fallback to general notifications
+    return notifications.filter(n => !n.is_read).length;
+  }, [notificationsByCategory.inbox, notifications]);
+
+  // Calculate system stats
+  const systemStats = {
+    totalUsers: users.length,
+    activeUsers: users.filter(u => u.is_active).length,
+    totalRosters: rosters.length,
+    pendingTasks: notifications.filter(n => !n.is_read).length
+  };
+
+  // Load users data when first time or when user login
+  const loadUsers = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    // Prevent duplicate calls
+    if (loadingStates.users) return;
+    
+    setLoadingStates(prev => ({ ...prev, users: true }));
+    try {
+      // Request all users without pagination for caching
+      const response = await adminService.getUsers({ all: 'true' });
+      // Handle both array and pagination response
+      const usersData = Array.isArray(response) ? response : (response.data || []);
+      setUsers(usersData);
+    } catch (error) {
+      console.error('Failed to load users cache:', error);
+      setUsers([]);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, users: false }));
+    }
+  }, [isAuthenticated, loadingStates.users]);
+
+  // Load rosters data
+  const loadRosters = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    // Prevent duplicate calls
+    if (loadingStates.rosters) return;
+    
+    setLoadingStates(prev => ({ ...prev, rosters: true }));
+    try {
+      const response: any = await rosterService.getRosters();
+      // Handle direct array response
+      if (Array.isArray(response)) {
+        setRosters(response);
+      } else if (response?.data && Array.isArray(response.data)) {
+        setRosters(response.data);
+      } else {
+        setRosters([]);
+      }
+    } catch (error) {
+      console.error('Failed to load rosters cache:', error);
+      setRosters([]);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, rosters: false }));
+    }
+  }, [isAuthenticated, loadingStates.rosters]);
+
+  // Load all roster details (eager loading)
+  const loadRosterDetails = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    // Prevent duplicate calls
+    if (loadingStates.rosterDetails) return;
+    
+    setLoadingStates(prev => ({ ...prev, rosterDetails: true }));
+    try {
+      // Get list of rosters if not loaded yet
+      let rosterList = rosters;
+      if (rosterList.length === 0) {
+        const response: any = await rosterService.getRosters();
+        rosterList = Array.isArray(response) ? response : (response?.data || []);
+      }
+      
+      // Load details for each roster in parallel
+      const detailsPromises = rosterList.map(roster => 
+        rosterService.getRoster(roster.id)
+          .catch(err => {
+            console.error(`Failed to load details for roster ${roster.id}:`, err);
+            return null;
+          })
+      );
+      
+      const detailsArray = await Promise.all(detailsPromises);
+      
+      // Create a map of roster details
+      const detailsMap: Record<number, RosterPeriod> = {};
+      detailsArray.forEach(response => {
+        if (response) {
+          // Merge roster_period with all_employees and all_shifts
+          const roster = {
+            ...response.roster_period,
+            all_employees: response.all_employees,
+            all_shifts: response.all_shifts
+          };
+          console.log(`📥 loadRosterDetails: Loaded roster ${roster.id}:`, {
+            roster_days_count: roster.roster_days?.length,
+            all_employees_count: roster.all_employees?.length,
+            all_shifts_count: roster.all_shifts?.length
+          });
+          detailsMap[roster.id] = roster;
+        }
+      });
+      
+      console.log('📦 loadRosterDetails: Setting rosterDetails cache with', Object.keys(detailsMap).length, 'rosters');
+      setRosterDetails(detailsMap);
+    } catch (error) {
+      console.error('Failed to load roster details cache:', error);
+      setRosterDetails({});
+    } finally {
+      setLoadingStates(prev => ({ ...prev, rosterDetails: false }));
+    }
+  }, [isAuthenticated, rosters, loadingStates.rosterDetails]);
+
+  // Load single roster detail on-demand (lazy loading with cache)
+  const loadRosterDetail = useCallback(async (rosterId: number): Promise<RosterPeriod | null> => {
+    if (!isAuthenticated) return null;
+    
+    // Check if already in cache
+    if (rosterDetails[rosterId]) {
+      return rosterDetails[rosterId];
+    }
+    
+    // Load from API
+    setLoadingStates(prev => ({ ...prev, rosterDetails: true }));
+    try {
+      const response = await rosterService.getRoster(rosterId);
+      
+      // Merge roster_period with all_employees and all_shifts
+      const detail = {
+        ...response.roster_period,
+        all_employees: response.all_employees,
+        all_shifts: response.all_shifts
+      };
+      
+      // Store in cache
+      setRosterDetails(prev => ({
+        ...prev,
+        [rosterId]: detail
+      }));
+      
+      return detail;
+    } catch (error) {
+      console.error(`Failed to load roster detail ${rosterId}:`, error);
+      return null;
+    } finally {
+      setLoadingStates(prev => ({ ...prev, rosterDetails: false }));
+    }
+  }, [isAuthenticated, rosterDetails]);
+
+  // Get roster detail from cache (synchronous)
+  const getRosterDetail = useCallback((rosterId: number): RosterPeriod | null => {
+    const cached = rosterDetails[rosterId] || null;
+    console.log(`📦 getRosterDetail(${rosterId}):`, cached ? {
+      id: cached.id,
+      roster_days_count: cached.roster_days?.length,
+      all_employees_count: cached.all_employees?.length,
+      all_shifts_count: cached.all_shifts?.length
+    } : 'NOT IN CACHE');
+    return cached;
+  }, [rosterDetails]);
+
+  // Update roster detail in cache
+  const updateRosterDetail = useCallback((rosterId: number, updatedRoster: RosterPeriod) => {
+    setRosterDetails(prev => ({
+      ...prev,
+      [rosterId]: updatedRoster
+    }));
+  }, []);
+
+  // Apply final approved leave directly into in-memory roster cache (no hard refresh needed).
+  const applyApprovedLeaveToRosterCache = useCallback((leaveRequest: LeaveRequest) => {
+    if (leaveRequest.status !== 'approved') {
+      return;
+    }
+
+    if (!leaveRequest.start_date || !leaveRequest.end_date || !leaveRequest.employee_id) {
+      return;
+    }
+
+    const leaveMapping = (() => {
+      switch (leaveRequest.request_type) {
+        case 'doctor_leave':
+          return { shiftName: 'cuti_sakit', notes: 'CS - Cuti Sakit' };
+        case 'external_duty':
+          return { shiftName: 'dinas_luar', notes: 'DL - Dinas Luar' };
+        case 'educational_assignment':
+          return { shiftName: 'dinas_luar', notes: 'TP - Tugas Pendidikan' };
+        case 'annual_leave':
+        default:
+          return { shiftName: 'cuti_tahunan', notes: 'CT - Cuti Tahunan' };
+      }
+    })();
+
+    setRosterDetails((prev) => {
+      let hasAnyRosterChanged = false;
+      const next: Record<number, RosterPeriod> = { ...prev };
+
+      Object.entries(prev).forEach(([rosterIdKey, rosterDetail]) => {
+        if (!rosterDetail?.roster_days?.length) {
+          return;
+        }
+
+        const leaveShift = rosterDetail.all_shifts?.find((shift) =>
+          shift.name.toLowerCase() === leaveMapping.shiftName
+        );
+
+        let rosterChanged = false;
+        const nextRosterDays = rosterDetail.roster_days.map((rosterDay) => {
+          if (
+            !rosterDay.work_date ||
+            rosterDay.work_date < leaveRequest.start_date ||
+            rosterDay.work_date > leaveRequest.end_date
+          ) {
+            return rosterDay;
+          }
+
+          const currentAssignments = rosterDay.shift_assignments || [];
+          const assignmentIndex = currentAssignments.findIndex(
+            (assignment) => assignment.employee_id === leaveRequest.employee_id
+          );
+
+          if (assignmentIndex >= 0) {
+            const targetAssignment = currentAssignments[assignmentIndex];
+            const updatedAssignment = {
+              ...targetAssignment,
+              shift_id: leaveShift?.id ?? targetAssignment.shift_id,
+              notes: leaveMapping.notes,
+              span_days: 1,
+              shift: leaveShift ?? targetAssignment.shift,
+            };
+
+            const updatedAssignments = [...currentAssignments];
+            updatedAssignments[assignmentIndex] = updatedAssignment;
+            rosterChanged = true;
+
+            return {
+              ...rosterDay,
+              shift_assignments: updatedAssignments,
+            };
+          }
+
+          const employee = rosterDetail.all_employees?.find((item) => item.id === leaveRequest.employee_id);
+          if (!employee) {
+            return rosterDay;
+          }
+
+          const newAssignment = {
+            id: -(Number(rosterDay.id) * 100000 + leaveRequest.employee_id),
+            roster_day_id: rosterDay.id,
+            employee_id: leaveRequest.employee_id,
+            shift_id: leaveShift?.id ?? null,
+            notes: leaveMapping.notes,
+            span_days: 1,
+            created_at: new Date().toISOString(),
+            employee,
+            shift: leaveShift ?? null,
+          };
+
+          rosterChanged = true;
+
+          return {
+            ...rosterDay,
+            shift_assignments: [...currentAssignments, newAssignment],
+          };
+        });
+
+        if (rosterChanged) {
+          hasAnyRosterChanged = true;
+          next[Number(rosterIdKey)] = {
+            ...rosterDetail,
+            roster_days: nextRosterDays,
+          };
+        }
+      });
+
+      return hasAnyRosterChanged ? next : prev;
+    });
+  }, []);
+
+  // Load notifications data
+  const loadNotifications = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    // Prevent duplicate calls
+    if (loadingStates.notifications) return;
+    
+    setLoadingStates(prev => ({ ...prev, notifications: true }));
+    try {
+      const response = await notificationService.getNotifications();
+      
+      // Handle paginated response - extract data array
+      if (response && response.data && Array.isArray(response.data)) {
+        setNotifications(response.data);
+      } else {
+        setNotifications([]);
+      }
+    } catch (error) {
+      console.error('Failed to load notifications cache:', error);
+      setNotifications([]);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, notifications: false }));
+    }
+  }, [isAuthenticated, loadingStates.notifications]);
+
+  // Load notifications by category (all categories at once)
+  const loadNotificationsByCategory = useCallback(async (singleCategory?: NotificationCategory) => {
+    if (!isAuthenticated) return;
+    
+    setLoadingStates(prev => ({ ...prev, notifications: true }));
+    try {
+      if (singleCategory) {
+        // Skip API call for roster, drafts, and scheduled categories as they're generated locally
+        if (singleCategory === 'roster' || singleCategory === 'drafts' || singleCategory === 'scheduled') return;
+        
+        // Load only one category (legacy, still supported)
+        const response = await notificationService.getNotifications({ category: singleCategory as 'inbox' | 'sent' | 'starred' | 'trash' });
+        const data = response?.data || [];
+        const total = response?.total || 0;
+        
+        setNotificationsByCategory(prev => ({
+          ...prev,
+          [singleCategory]: data,
+        }));
+        setNotificationStats(prev => ({
+          ...prev,
+          [singleCategory]: total,
+        }));
+      } else {
+        // Load all categories in single request
+        const response = await notificationService.getAllNotifications({
+          page: 1,
+          per_page: 30,
+        });
+        
+        setNotificationsByCategory({
+          inbox: response.data?.inbox || [],
+          starred: response.data?.starred || [],
+          sent: response.data?.sent || [],
+          trash: response.data?.trash || [],
+          roster: [], // Roster notifications are generated locally
+          drafts: [], // Drafts are managed locally
+          scheduled: [], // Scheduled notifications are managed locally
+        });
+        
+        setNotificationStats({
+          inbox: response.stats?.inbox || 0,
+          starred: response.stats?.starred || 0,
+          sent: response.stats?.sent || 0,
+          trash: response.stats?.trash || 0,
+          roster: 0, // Will be updated when roster data is loaded
+          drafts: 0, // Will be managed locally
+          scheduled: 0, // Will be managed locally
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load notifications by category:', error);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, notifications: false }));
+    }
+  }, [isAuthenticated]);
+
+  // Load recent activities data
+  const loadRecentActivities = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    setLoadingStates(prev => ({ ...prev, activities: true }));
+    try {
+      const response = await activityLogService.getRecentActivities();
+      if (response && response.data && Array.isArray(response.data)) {
+        setRecentActivities(response.data);
+      } else {
+        setRecentActivities([]);
+      }
+    } catch (error) {
+      console.error('Failed to load activities cache:', error);
+      setRecentActivities([]);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, activities: false }));
+    }
+  }, [isAuthenticated]);
+
+  // Load activity statistics
+  const loadActivityStatistics = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const response = await activityLogService.getStatistics();
+      if (response && response.data) {
+        setActivityStatistics(response.data);
+      } else {
+        setActivityStatistics(null);
+      }
+    } catch (error) {
+      console.error('Failed to load activity statistics:', error);
+      setActivityStatistics(null);
+    }
+  }, [isAuthenticated]);
+
+  // Load all data including roster details
+  const loadAllData = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    // Prevent multiple simultaneous calls
+    if (isLoadingAllDataRef.current || isInitialized) return;
+    
+    isLoadingAllDataRef.current = true;
+    setIsLoading(true);
+    
+    try {
+      console.log('🚀 Starting initial data load...');
+      
+      // Load essential data first
+      await Promise.all([
+        loadUsers(),
+        loadNotifications(),
+        loadNotificationsByCategory(),
+        loadRosters(),
+        loadRecentActivities(),
+        loadActivityStatistics()
+      ]);
+      
+      console.log('✅ Essential data loaded');
+      
+      // Then load roster details after rosters are loaded
+      await loadRosterDetails();
+      
+      console.log('✅ All data loaded successfully');
+      setIsInitialized(true);
+    } catch (error) {
+      console.error('❌ Failed to load initial data:', error);
+    } finally {
+      setIsLoading(false);
+      isLoadingAllDataRef.current = false;
+    }
+  }, [isAuthenticated, isInitialized, loadUsers, loadNotifications, loadNotificationsByCategory, loadRosters, loadRosterDetails, loadRecentActivities, loadActivityStatistics]);
+
+  // Auto-load when user authenticated - only once!
+  useEffect(() => {
+    if (isAuthenticated && !isInitialized && !hasInitialLoadStartedRef.current) {
+      console.log('🔐 User authenticated, starting data load...');
+      hasInitialLoadStartedRef.current = true;
+      loadAllData();
+    }
+    
+    // Reset cache when user logs out
+    if (!isAuthenticated && isInitialized) {
+      console.log('👋 User logged out, clearing cache...');
+      // Clear all cached data
+      setUsers([]);
+      setNotifications([]);
+      setNotificationsByCategory({
+        inbox: [],
+        starred: [],
+        sent: [],
+        trash: [],
+        roster: [],
+        drafts: [],
+        scheduled: [],
+      });
+      setNotificationStats({
+        inbox: 0,
+        starred: 0,
+        sent: 0,
+        trash: 0,
+        roster: 0,
+        drafts: 0,
+        scheduled: 0,
+      });
+      setRosters([]);
+      setRosterDetails({});
+      setRecentActivities([]);
+      setActivityStatistics(null);
+      setIsInitialized(false);
+      hasInitialLoadStartedRef.current = false;
+    }
+  }, [isAuthenticated, isInitialized, loadAllData]);
+
+  // Handle account switch in same browser session (without full page reload)
+  useEffect(() => {
+    const currentUserId = user?.id ? Number(user.id) : null;
+
+    if (!isAuthenticated || currentUserId === null) {
+      lastUserIdRef.current = null;
+      return;
+    }
+
+    if (lastUserIdRef.current !== null && lastUserIdRef.current !== currentUserId) {
+      // Clear user-scoped caches so previous account data does not leak/stale.
+      setNotifications([]);
+      setNotificationsByCategory({
+        inbox: [],
+        starred: [],
+        sent: [],
+        trash: [],
+        roster: [],
+        drafts: [],
+        scheduled: [],
+      });
+      setNotificationStats({
+        inbox: 0,
+        starred: 0,
+        sent: 0,
+        trash: 0,
+        roster: 0,
+        drafts: 0,
+        scheduled: 0,
+      });
+
+      // Force re-initialization for the new account.
+      setIsInitialized(false);
+      hasInitialLoadStartedRef.current = false;
+    }
+
+    lastUserIdRef.current = currentUserId;
+  }, [isAuthenticated, user?.id]);
+
+  // Auto refresh on focus/visibility intentionally disabled to reduce repeated GET load.
+
+  // Add new user to cache
+  const addUser = useCallback((user: User) => {
+    setUsers(prev => [user, ...prev]);
+  }, []);
+
+  // Update existing user in cache
+  const updateUser = useCallback((userId: number | string, updatedUser: User) => {
+    setUsers(prev => prev.map(u => String(u.id) === String(userId) ? updatedUser : u));
+  }, []);
+
+  // Remove user from cache
+  const removeUser = useCallback((userId: number | string) => {
+    setUsers(prev => prev.filter(u => String(u.id) !== String(userId)));
+  }, []);
+
+  // Replace temporary user with real user (for optimistic create)
+  const replaceUser = useCallback((tempId: number, realUser: User) => {
+    setUsers(prev => prev.map(u => u.id === tempId ? realUser : u));
+  }, []);
+
+  // Refresh users from server
+  const refreshUsers = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const response = await adminService.getUsers({});
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Failed to refresh users:', error);
+    }
+  }, [isAuthenticated]);
+
+  // Mark notification as read
+  const markNotificationAsRead = useCallback((id: number) => {
+    setNotifications(prev => prev.map(n => 
+      n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
+    ));
+  }, []);
+
+  // Mark all notifications as read
+  const markAllNotificationsAsRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => 
+      !n.is_read ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
+    ));
+  }, []);
+
+  // Refresh notifications from server
+  const refreshNotifications = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const response = await notificationService.getNotifications();
+      
+      // Handle paginated response - extract data array
+      if (response && response.data && Array.isArray(response.data)) {
+        setNotifications(response.data);
+      } else {
+        setNotifications([]);
+      }
+    } catch (error) {
+      console.error('Failed to refresh notifications:', error);
+    }
+  }, [isAuthenticated]);
+
+  // Refresh notifications by category
+  const refreshNotificationsByCategory = useCallback(async (category?: NotificationCategory) => {
+    await loadNotificationsByCategory(category);
+  }, [loadNotificationsByCategory]);
+
+  // Toggle notification star in cache
+  const toggleNotificationStar = useCallback((id: number) => {
+    setNotificationsByCategory(prev => {
+      const newState = { ...prev };
+      
+      // Find the notification in any category
+      let targetNotification: Notification | undefined;
+      
+      (['inbox', 'starred', 'sent', 'trash'] as NotificationCategory[]).forEach(cat => {
+        const found = prev[cat].find(n => n.id === id);
+        if (found && !targetNotification) {
+          targetNotification = found;
+        }
+      });
+      
+      if (!targetNotification) return prev;
+      
+      const newStarredStatus = !targetNotification.is_starred;
+      
+      // Update is_starred in all categories where notification exists
+      (['inbox', 'starred', 'sent', 'trash'] as NotificationCategory[]).forEach(cat => {
+        newState[cat] = prev[cat].map(n => 
+          n.id === id ? { ...n, is_starred: newStarredStatus } : n
+        );
+      });
+      
+      // If starring: add to starred category if not already there
+      if (newStarredStatus) {
+        const alreadyInStarred = prev.starred.some(n => n.id === id);
+        if (!alreadyInStarred) {
+          newState.starred = [{ ...targetNotification, is_starred: true }, ...newState.starred];
+        }
+      } else {
+        // If unstarring: remove from starred category
+        newState.starred = newState.starred.filter(n => n.id !== id);
+      }
+      
+      return newState;
+    });
+    
+    // Update stats for starred category
+    setNotificationStats(prev => {
+      // Find notification to check current star status
+      let isCurrentlyStarred = false;
+      (['inbox', 'sent', 'starred', 'trash'] as NotificationCategory[]).some(cat => {
+        const found = notificationsByCategory[cat]?.find(n => n.id === id);
+        if (found) {
+          isCurrentlyStarred = found.is_starred;
+          return true;
+        }
+        return false;
+      });
+      
+      // Toggle: if currently starred, decrease count; if not, increase
+      return {
+        ...prev,
+        starred: isCurrentlyStarred ? Math.max(0, prev.starred - 1) : prev.starred + 1,
+      };
+    });
+  }, [notificationsByCategory]);
+
+  // Remove notification from a category in cache
+  const removeNotificationFromCategory = useCallback((id: number, category: NotificationCategory) => {
+    setNotificationsByCategory(prev => ({
+      ...prev,
+      [category]: prev[category].filter(n => n.id !== id),
+    }));
+    setNotificationStats(prev => ({
+      ...prev,
+      [category]: Math.max(0, prev[category] - 1),
+    }));
+  }, []);
+
+  // Move notification to trash (remove from ALL categories, add to trash)
+  const moveNotificationToTrash = useCallback((id: number, fromCategory: NotificationCategory) => {
+    setNotificationsByCategory(prev => {
+      // Find notification from the source category
+      const notification = prev[fromCategory].find(n => n.id === id);
+      if (!notification) return prev;
+      
+      // Remove from ALL categories (inbox, starred, sent) since notification can exist in multiple
+      return {
+        inbox: prev.inbox.filter(n => n.id !== id),
+        starred: prev.starred.filter(n => n.id !== id),
+        sent: prev.sent.filter(n => n.id !== id),
+        trash: [{ ...notification, deleted_at: new Date().toISOString() }, ...prev.trash],
+        roster: prev.roster.filter(n => n.id !== id),
+        drafts: prev.drafts,
+        scheduled: prev.scheduled,
+      };
+    });
+    
+    // Update stats - decrement for categories where notification existed
+    setNotificationStats(prev => ({
+      ...prev,
+      [fromCategory]: Math.max(0, prev[fromCategory] - 1),
+      trash: prev.trash + 1,
+    }));
+  }, []);
+
+  // Restore notification from trash to inbox
+  const restoreNotificationFromTrash = useCallback((notification: Notification) => {
+    setNotificationsByCategory(prev => ({
+      ...prev,
+      trash: prev.trash.filter(n => n.id !== notification.id),
+      inbox: [{ ...notification, deleted_at: null }, ...prev.inbox],
+      roster: prev.roster,
+    }));
+    setNotificationStats(prev => ({
+      ...prev,
+      trash: Math.max(0, prev.trash - 1),
+      inbox: prev.inbox + 1,
+    }));
+  }, []);
+
+  // Add notification to sent category
+  const addNotificationToSent = useCallback((notification: Notification) => {
+    setNotificationsByCategory(prev => ({
+      ...prev,
+      sent: [notification, ...prev.sent],
+      roster: prev.roster,
+    }));
+    setNotificationStats(prev => ({
+      ...prev,
+      sent: prev.sent + 1,
+    }));
+  }, []);
+
+  // Update notification in all categories
+  const updateNotificationInCache = useCallback((id: number, updates: Partial<Notification>) => {
+    setNotificationsByCategory(prev => {
+      const newState = { ...prev };
+      (['inbox', 'starred', 'sent', 'trash', 'roster'] as NotificationCategory[]).forEach(cat => {
+        newState[cat] = prev[cat].map(n => 
+          n.id === id ? { ...n, ...updates } : n
+        );
+      });
+      return newState;
+    });
+  }, []);
+
+  // Add new roster to cache
+  const addRoster = useCallback((roster: RosterPeriod) => {
+    console.log('🆕 addRoster called:', {
+      id: roster.id,
+      month: roster.month,
+      year: roster.year,
+      roster_days_count: roster.roster_days?.length,
+      all_employees_count: roster.all_employees?.length,
+      all_shifts_count: roster.all_shifts?.length
+    });
+    setRosters(prev => [...prev, roster]);
+    // Also add to rosterDetails cache if it has all roster_days loaded
+    if (roster.roster_days) {
+      console.log(`✅ Adding roster ${roster.id} to rosterDetails cache`);
+      setRosterDetails(prev => ({ ...prev, [roster.id]: roster }));
+    } else {
+      console.log(`⚠️ Roster ${roster.id} has no roster_days, not adding to rosterDetails cache`);
+    }
+  }, []);
+
+  // Update a roster in the list (for optimistic updates)
+  const updateRosterInList = useCallback((rosterId: number, updates: Partial<RosterPeriod>) => {
+    console.log('📝 updateRosterInList called:', { rosterId, updates });
+    setRosters(prev => prev.map(roster => 
+      roster.id === rosterId ? { ...roster, ...updates } : roster
+    ));
+    // Also update in rosterDetails cache if exists
+    setRosterDetails(prev => {
+      if (prev[rosterId]) {
+        return { ...prev, [rosterId]: { ...prev[rosterId], ...updates } };
+      }
+      return prev;
+    });
+  }, []);
+
+  // Refresh rosters from server
+  const refreshRosters = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const response: any = await rosterService.getRosters();
+      // Handle direct array response
+      if (Array.isArray(response)) {
+        setRosters(response);
+      } else if (response?.data && Array.isArray(response.data)) {
+        setRosters(response.data);
+      } else {
+        setRosters([]);
+      }
+    } catch (error) {
+      console.error('Failed to refresh rosters:', error);
+    }
+  }, [isAuthenticated]);
+
+  // Refresh activities from server
+  const refreshActivities = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const [activitiesResponse, statisticsResponse] = await Promise.all([
+        activityLogService.getRecentActivities(),
+        activityLogService.getStatistics()
+      ]);
+
+      if (activitiesResponse && activitiesResponse.data && Array.isArray(activitiesResponse.data)) {
+        setRecentActivities(activitiesResponse.data);
+      } else {
+        setRecentActivities([]);
+      }
+
+      if (statisticsResponse && statisticsResponse.data) {
+        setActivityStatistics(statisticsResponse.data);
+      } else {
+        setActivityStatistics(null);
+      }
+    } catch (error) {
+      console.error('Failed to refresh activities:', error);
+    }
+  }, [isAuthenticated]);
+
+  return (
+    <DataCacheContext.Provider
+      value={{
+        users,
+        notifications,
+        notificationsByCategory,
+        notificationStats,
+        rosters,
+        rosterDetails,
+        recentActivities,
+        activityStatistics,
+        unreadNotificationCount,
+        isLoading,
+        isInitialized,
+        loadingStates,
+        systemStats,
+        loadUsers,
+        loadNotifications,
+        loadNotificationsByCategory,
+        loadRosters,
+        loadRosterDetails,
+        loadRosterDetail,
+        getRosterDetail,
+        loadRecentActivities,
+        loadActivityStatistics,
+        loadAllData,
+        addUser,
+        updateUser,
+        removeUser,
+        replaceUser,
+        refreshUsers,
+        markNotificationAsRead,
+        markAllNotificationsAsRead,
+        refreshNotifications,
+        refreshNotificationsByCategory,
+        toggleNotificationStar,
+        removeNotificationFromCategory,
+        moveNotificationToTrash,
+        restoreNotificationFromTrash,
+        addNotificationToSent,
+        updateNotificationInCache,
+        refreshRosters,
+        addRoster,
+        updateRosterInList,
+        updateRosterDetail,
+        applyApprovedLeaveToRosterCache,
+        refreshActivities,
+      }}
+    >
+      {children}
+    </DataCacheContext.Provider>
+  );
+};
+
+export const useDataCache = (): DataCacheContextType => {
+  const context = useContext(DataCacheContext);
+  if (!context) {
+    throw new Error('useDataCache must be used within a DataCacheProvider');
+  }
+  return context;
+};

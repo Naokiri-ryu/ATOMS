@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts (dihasilkan di dalam container)
+public/build/
+public/hot/
+bootstrap/cache/*.php
+
+# Environment
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# Dev/test files
+.git/
+.github/
+.vscode/
+tests/
+*.test.*
+
+# Logs
+storage/logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
