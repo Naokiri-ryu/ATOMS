@@ -930,24 +930,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     setItemValues((prev) => ({ ...prev, [itemId]: { ...prev[itemId], [cellKey]: val } }));
   };
 
-  // ─── Drag-select helpers ────────────────────────────────────────────────
-
-  // All non-disabled, non-mode, non-suplai cell compositeKeys in row order
-  const selectableCells = useMemo(() => {
-    if (!record) return [];
-    const out: string[] = [];
-    record.items.forEach((item) => {
-      if (isModeRow(item) || isSuplaiRow(item)) return;
-      flatCells.forEach((cell) => {
-        if (!getItemDisabled(item.id, cell.key)) {
-          out.push(`${item.id}__${cell.key}`);
-        }
-      });
-    });
-    return out;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [record, flatCells, draftItemMeta]);
-
   /** Return all compositeKeys in the rectangular range between two keys */
   const getRangeKeys = useCallback((a: string, b: string): Set<string> => {
     if (!record) return new Set();
@@ -981,8 +963,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     }
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [record, flatCells, draftItemMeta]);
-
+  }, [record, flatCells, draftItemMeta]);  
   const handleCellMouseDown = useCallback((compositeKey: string, e: React.MouseEvent) => {
     if (isCompleted) return;
     // Allow default input focus on single click without shift
@@ -991,30 +972,31 @@ export const TfpAobGroundDetailPage: React.FC = () => {
       setIsDragging(true);
       setSelectedCells(new Set([compositeKey]));
     } else {
-      // Shift+click: extend selection
-      if (dragStart) {
-        setSelectedCells(getRangeKeys(dragStart, compositeKey));
-      } else {
-        setSelectedCells(new Set([compositeKey]));
-        setDragStart(compositeKey);
-      }
+    const anchor = dragStart ?? (selectedCells.size > 0 ? [...selectedCells][0] : null);
+    if (anchor) {
+      setSelectedCells(getRangeKeys(anchor, compositeKey));
+    } else {
+      setSelectedCells(new Set([compositeKey]));
+      setDragStart(compositeKey);
     }
-  }, [isCompleted, dragStart, getRangeKeys]);
+  }
+  }, [isCompleted, dragStart, selectedCells, getRangeKeys]);
 
   const handleCellMouseEnter = useCallback((compositeKey: string) => {
     if (!isDragging || !dragStart) return;
     setSelectedCells(getRangeKeys(dragStart, compositeKey));
   }, [isDragging, dragStart, getRangeKeys]);
 
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+      setDragStart(null);
+  };
 
   // Global mouseup to stop drag even if released outside table
-  useEffect(() => {
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => window.removeEventListener('mouseup', handleMouseUp);
-  }, [handleMouseUp]);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, []);
 
   // Global keydown for Ctrl+C / Ctrl+V on selected cells
   useEffect(() => {
@@ -1086,6 +1068,25 @@ export const TfpAobGroundDetailPage: React.FC = () => {
             const targetItem = record.items[targetR];
             if (!targetItem || isModeRow(targetItem) || isSuplaiRow(targetItem)) return;
             if (getItemDisabled(targetItemId, targetCellKey)) return;
+
+            const flatCellIndex = flatCells.findIndex(fc => fc.key === targetCellKey);
+            if (flatCellIndex > 0) {
+              // Cek cell sebelumnya apakah merge ke cell ini
+              for (let checkIdx = flatCellIndex - 1; checkIdx >= 0; checkIdx--) {
+                const prevCell = flatCells[checkIdx];
+                const prevMergeSpan = getItemMerge(targetItemId, prevCell.key);
+                if (prevMergeSpan > 1) {
+                  // Cell sebelumnya merge, cek apakah mencakup cell ini
+                  const mergeEndIndex = checkIdx + prevMergeSpan - 1;
+                  if (mergeEndIndex >= flatCellIndex) {
+                    // Target cell adalah bagian dari merged cell, skip
+                    console.warn(`Cannot paste to merged cell: ${targetCellKey}`);
+                    return;
+                  }
+                }
+              }
+            }
+
             next[targetItemId] = { ...(next[targetItemId] ?? {}), [targetCellKey]: clipboardCells.get(srcKey) ?? '' };
           });
           return next;

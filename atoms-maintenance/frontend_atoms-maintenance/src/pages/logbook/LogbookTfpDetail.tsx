@@ -947,7 +947,17 @@ export const LogbookTfpDetail: React.FC = () => {
             )}
           </div>
 
-          {!shiftLocked[noteShift] && (
+          {!shiftLocked[noteShift] ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+                <Lock size={20} className="mx-auto text-amber-500 mb-2" />
+                <p className="text-sm font-semibold text-amber-700">
+                  Shift {SHIFT_LABEL[noteShift]} sudah ditandatangani
+                </p>
+                <p className="text-xs text-amber-600 mt-1">
+                  Catatan tidak dapat ditambahkan atau diubah untuk shift yang sudah ditandatangani.
+                </p>
+              </div>
+            ) : (
             <form onSubmit={handleAddNote} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div>
