@@ -471,6 +471,16 @@ export const LogbookCnsdDetail: React.FC = () => {
 
   const [noteShift, setNoteShift] = useState<'pagi' | 'siang' | 'malam'>('pagi');
   const [noteTime, setNoteTime] = useState(getCurrentTime());
+
+  useEffect(() => {
+  const shiftRanges = {
+    pagi: '07:00',
+    siang: '13:00',
+    malam: '19:00',
+  };
+  setNoteTime(shiftRanges[noteShift]);
+  }, [noteShift]);
+
   const [noteActivity, setNoteActivity] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
 
@@ -592,6 +602,25 @@ export const LogbookCnsdDetail: React.FC = () => {
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!record || !noteActivity.trim()) return;
+
+    if (noteTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(noteTime)) {
+      setErrorMessage('Format waktu tidak valid. Gunakan format HH:MM (00:00 - 23:59).');
+      return;
+    }
+
+    console.log('🔍 handleAddNote called:', {
+      noteShift,
+      shiftLocked,
+      is_signed_pagi: record.is_signed_pagi,
+      is_signed_siang: record.is_signed_siang,
+      is_signed_malam: record.is_signed_malam,
+    });
+
+    if (shiftLocked[noteShift]) {
+      setErrorMessage(`Shift ${SHIFT_LABEL[noteShift]} sudah ditandatangani. Catatan tidak dapat ditambahkan.`);
+      return;
+    }
+
     setIsAddingNote(true);
     setErrorMessage(null);
     try {
@@ -1017,48 +1046,63 @@ export const LogbookCnsdDetail: React.FC = () => {
             )}
           </div>
 
-          {!shiftLocked[noteShift] && (
-            <form onSubmit={handleAddNote} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Shift</label>
-                  <select
-                    value={noteShift}
-                    onChange={(e) => setNoteShift(e.target.value as 'pagi' | 'siang' | 'malam')}
-                    className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  >
-                    <option value="pagi">Pagi</option>
-                    <option value="siang">Siang</option>
-                    <option value="malam">Malam</option>
-                  </select>
+          {!shiftLocked[noteShift] ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+                <Lock size={20} className="mx-auto text-amber-500 mb-2" />
+                <p className="text-sm font-semibold text-amber-700">
+                  Shift {SHIFT_LABEL[noteShift]} sudah ditandatangani
+                </p>
+                <p className="text-xs text-amber-600 mt-1">
+                  Catatan tidak dapat ditambahkan atau diubah untuk shift yang sudah ditandatangani.
+                </p>
+              </div>
+            ) : (
+
+              <form onSubmit={handleAddNote} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Shift</label>
+                    <select
+                      value={noteShift}
+                      onChange={(e) => setNoteShift(e.target.value as 'pagi' | 'siang' | 'malam')}
+                      className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                    >
+                      <option value="pagi">Pagi</option>
+                      <option value="siang">Siang</option>
+                      <option value="malam">Malam</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Jam</label>
+                    <input
+                      type="time"
+                      value={noteTime}
+                      onChange={(e) => setNoteTime(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Jam</label>
-                  <input
-                    type="time"
-                    value={noteTime}
-                    onChange={(e) => setNoteTime(e.target.value)}
-                    className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Kegiatan / Catatan</label>
+                  <textarea
+                    value={noteActivity}
+                    onChange={(e) => setNoteActivity(e.target.value)}
+                    rows={3}
+                    maxLength={500} 
+                    placeholder="Tulis kegiatan atau catatan operasional..."
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent resize-none"
                   />
+                  <div className="text-right text-[10px] text-slate-400 mt-1">
+                    {noteActivity.length}/500 karakter
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Kegiatan / Catatan</label>
-                <textarea
-                  value={noteActivity}
-                  onChange={(e) => setNoteActivity(e.target.value)}
-                  rows={3}
-                  placeholder="Tulis kegiatan atau catatan operasional..."
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent resize-none"
-                />
-              </div>
-              <div className="flex justify-end">
-                <Button type="submit" isLoading={isAddingNote} disabled={!noteActivity.trim()} size="sm" className="gap-1.5">
-                  <Plus size={14} /> Tambah Catatan
-                </Button>
-              </div>
-            </form>
-          )}
+                <div className="flex justify-end">
+                  <Button type="submit" isLoading={isAddingNote} disabled={!noteActivity.trim()} size="sm" className="gap-1.5">
+                    <Plus size={14} /> Tambah Catatan
+                  </Button>
+                </div>
+              </form>
+            )}
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             {record.notes.length === 0 ? (
@@ -1074,6 +1118,14 @@ export const LogbookCnsdDetail: React.FC = () => {
                 {(['pagi', 'siang', 'malam'] as const).map((shift) => {
                   const notes = notesByShift[shift];
                   if (notes.length === 0) return null;
+
+                  const sortedNotes = [...notes].sort((a, b) => {
+                    if (!a.time && !b.time) return 0;
+                    if (!a.time) return 1;  // Notes tanpa time di akhir
+                    if (!b.time) return -1;
+                    return a.time.localeCompare(b.time);
+                  });
+
                   return (
                     <div key={shift}>
                       <div className={`sticky top-0 z-10 px-4 py-1.5 border-b border-gray-100 ${shiftColors[shift]} backdrop-blur-sm bg-opacity-95`}>
