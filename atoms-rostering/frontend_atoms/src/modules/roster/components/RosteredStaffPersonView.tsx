@@ -260,7 +260,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
 
   const shiftOptions = getShiftOptions();
   const specialStatusOptions = [
-    { label: 'Cuti Kepentingan', note: 'Cuti Kepentingan' },
+    { label: 'Cuti Tahunan', note: 'Cuti Tahunan' },
     { label: 'Cuti Sakit', note: 'Cuti Sakit' },
     { label: 'TPO Malang', note: 'TPO Malang' },
     { label: 'TPO Dhoho', note: 'TPO Dhoho' },
@@ -3311,12 +3311,12 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                 <span className="text-gray-700">Libur</span>
               </div>
               <div className="flex items-center gap-3 text-xs sm:text-sm">
-                <div className="w-16 h-7 rounded-lg bg-yellow-400 text-gray-900 shadow-sm flex items-center justify-center font-semibold text-[10px] sm:text-xs">CK</div>
-                <span className="text-gray-700">Cuti Kepentingan</span>
+                <div className="w-16 h-7 rounded-lg bg-yellow-400 text-gray-900 shadow-sm flex items-center justify-center font-semibold text-[10px] sm:text-xs">CT</div>
+                <span className="text-gray-700">Cuti Tahunan</span>
               </div>
               <div className="flex items-center gap-3 text-xs sm:text-sm">
-                <div className="w-16 h-7 rounded-lg bg-yellow-400 text-gray-900 shadow-sm flex items-center justify-center font-semibold text-[10px] sm:text-xs">CS</div>
-                <span className="text-gray-700">Cuti Sakit</span>
+                <div className="w-16 h-7 rounded-lg bg-yellow-400 text-gray-900 shadow-sm flex items-center justify-center font-semibold text-[10px] sm:text-xs">CAP</div>
+                <span className="text-gray-700">Cuti Alasan Penting</span>
               </div>
               <div className="flex items-center gap-3 text-xs sm:text-sm">
                 <div className="w-16 h-7 rounded-lg bg-yellow-400 text-gray-900 shadow-sm flex items-center justify-center font-semibold text-[10px] sm:text-xs">TPO</div>

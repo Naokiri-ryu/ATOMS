@@ -74,8 +74,15 @@ class WorkOrderService
             $query->where(function ($q) use ($search) {
                 $searchPattern = '%' . $search . '%';
                 $q->where('wo_number', 'ILIKE', $searchPattern)
-                  ->orWhere('description', 'ILIKE', $searchPattern);
+                  ->orWhere('description', 'ILIKE', $searchPattern)
+                  ->orWhere('technician_name', 'ILIKE', $searchPattern)
+                  ->orWhere('manager_name_snapshot', 'ILIKE', $searchPattern)
+                  ->orWhere('supervisor_name_snapshot', 'ILIKE', $searchPattern)
+                  ->orWhereHas('personnel.user', function ($personelQuery) use ($searchPattern) {
+                      $personelQuery->where('name', 'ILIKE', $searchPattern);
+                  });
             });
+            $query->distinct();
         }
 
         // Year filter — extract year from shift_date

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   FileText,
   Plus,
@@ -35,6 +35,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 export const WorkOrderListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const isGm = user?.role === 'General Manager';
   const isTeknisi = user?.role === 'Teknisi CNSD' || user?.role === 'Teknisi TFP';
@@ -49,13 +51,16 @@ export const WorkOrderListPage: React.FC = () => {
   // Teknisi cannot create WO. Everyone else with WO access can.
   const canCreateWo = !!user?.role && !isTeknisi;
 
-  // ── Filter state ───────────────────────────────────────
-  const [searchQuery, setSearchQuery] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
-  const [divisionFilter, setDivisionFilter] = useState('');
-  const [shiftFilter, setShiftFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  // ── Filter state — restore from URL params ───────────────
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [dateFilter, setDateFilter] = useState(searchParams.get('date') || '');
+  const [yearFilter, setYearFilter] = useState(searchParams.get('year') || '');
+  const [divisionFilter, setDivisionFilter] = useState(searchParams.get('division') || '');
+  const [shiftFilter, setShiftFilter] = useState(searchParams.get('shift') || '');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
+
+  // Ref to track the last location we synced
+  const lastLocationRef = useRef(location.search);
 
   // ── API data state ─────────────────────────────────────
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
@@ -72,6 +77,20 @@ export const WorkOrderListPage: React.FC = () => {
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
+  // ── Detect external URL changes (back button navigation) and restore filters ──
+  useEffect(() => {
+    if (location.search !== lastLocationRef.current) {
+      // URL changed externally (e.g., back button), restore filters
+      setSearchQuery(searchParams.get('search') || '');
+      setDateFilter(searchParams.get('date') || '');
+      setYearFilter(searchParams.get('year') || '');
+      setDivisionFilter(searchParams.get('division') || '');
+      setShiftFilter(searchParams.get('shift') || '');
+      setStatusFilter(searchParams.get('status') || '');
+      lastLocationRef.current = location.search;
+    }
+  }, [location.search, searchParams]);
+
   useEffect(() => {
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(() => {
@@ -81,6 +100,23 @@ export const WorkOrderListPage: React.FC = () => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     };
   }, [searchQuery]);
+
+  // ── Sync filters to URL params ─────────────────────────
+  useEffect(() => {
+    const newParams = new URLSearchParams();
+    if (searchQuery) newParams.set('search', searchQuery);
+    if (dateFilter) newParams.set('date', dateFilter);
+    if (yearFilter) newParams.set('year', yearFilter);
+    if (divisionFilter) newParams.set('division', divisionFilter);
+    if (shiftFilter) newParams.set('shift', shiftFilter);
+    if (statusFilter) newParams.set('status', statusFilter);
+    const newSearch = newParams.toString();
+    const currentSearch = searchParams.toString();
+    if (newSearch !== currentSearch) {
+      setSearchParams(newParams, { replace: true });
+      lastLocationRef.current = newSearch ? `?${newSearch}` : '';
+    }
+  }, [searchQuery, dateFilter, yearFilter, divisionFilter, shiftFilter, statusFilter, searchParams, setSearchParams]);
 
   // ── Load available years once ─────────────────────────
   useEffect(() => {
@@ -131,6 +167,7 @@ export const WorkOrderListPage: React.FC = () => {
     setDivisionFilter('');
     setShiftFilter('');
     setStatusFilter('');
+    setSearchParams({}, { replace: true });
   };
 
   // ── Modal handlers ────────────────────────────────────
@@ -213,7 +250,7 @@ export const WorkOrderListPage: React.FC = () => {
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Cari nomor WO atau deskripsi..."
+              placeholder="Cari nomor WO, deskripsi, atau nama terkait..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 h-10 rounded-lg border border-gray-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
@@ -393,11 +430,11 @@ export const WorkOrderListPage: React.FC = () => {
                 {displayed.map((wo) => (
                   <tr
                     key={wo.id}
-                    onClick={() => navigate(`/work-orders/${wo.id}`)}
+                    onClick={() => navigate(`/work-orders/${wo.id}?${searchParams.toString()}`)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        navigate(`/work-orders/${wo.id}`);
+                        navigate(`/work-orders/${wo.id}?${searchParams.toString()}`);
                       }
                     }}
                     tabIndex={0}

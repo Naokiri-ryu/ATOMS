@@ -334,11 +334,11 @@ class LeaveRequestController extends Controller
             ];
 
             if ($request->request_type === LeaveRequest::TYPE_ANNUAL_LEAVE) {
-                $subtype = (string) $request->input('annual_leave_subtype', 'cuti_kepentingan');
+                $subtype = (string) $request->input('annual_leave_subtype', 'cuti tahunan');
                 $subtypeLabel = match ($subtype) {
                     'cuti_bersalin' => 'Cuti Bersalin',
                     'cuti_tahunan' => 'Cuti Tahunan',
-                    default => 'Cuti Kepentingan',
+                    default => 'Cuti Tahunan',
                 };
 
                 $existingReason = trim((string) ($request->reason ?? ''));
