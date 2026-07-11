@@ -148,8 +148,8 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   };
 
   const getLeaveTypeLabel = (request: LeaveRequest) => {
-    if (request.request_type === 'doctor_leave') return 'Cuti Sakit';
-    if (request.request_type === 'annual_leave') return 'Cuti Kepentingan';
+    if (request.request_type === 'doctor_leave') return 'Cuti Alasan Penting';
+    if (request.request_type === 'annual_leave') return 'Cuti Tahunan';
     if (request.request_type === 'external_duty') {
       return request.institution ? `TPO - ${request.institution}` : 'TPO';
     }

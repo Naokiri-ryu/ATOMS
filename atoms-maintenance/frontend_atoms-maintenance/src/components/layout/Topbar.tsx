@@ -4,7 +4,7 @@ import {
   Bell, LogOut, Menu, X, Clock,
   LayoutDashboard, FileText, CheckSquare, Activity,
   Plane, Zap, Users, ClipboardList, BookOpen, Inbox,
-  Monitor as MonitorIcon, ChevronDown,
+  Monitor as MonitorIcon, ChevronDown, Home,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotification } from '@/hooks/useNotification';
@@ -198,6 +198,16 @@ export const Topbar: React.FC = () => {
 
           {/* ── Right action cluster ── */}
           {/* Shift badge REMOVED from topbar — visible in Dashboard page header instead */}
+
+          {/* ── Home button ── */}
+          <button
+            onClick={() => { window.location.href = 'http://localhost:5658/home'; }}
+            className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
+            aria-label="Kembali ke halaman utama"
+            title="Home"
+          >
+            <Home size={18} aria-hidden="true" />
+          </button>
 
           {/* ── Notification bell ── */}
           <div className="relative shrink-0">

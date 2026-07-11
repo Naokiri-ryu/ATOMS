@@ -205,7 +205,7 @@ const LeaveRequestApprovalModal: React.FC<LeaveRequestApprovalModalProps> = ({
     }
 
     if (activeLeaveRequest.request_type === 'annual_leave') {
-      return 'Cuti Kepentingan';
+      return 'Cuti Tahunan';
     }
 
     if (activeLeaveRequest.request_type === 'external_duty') {

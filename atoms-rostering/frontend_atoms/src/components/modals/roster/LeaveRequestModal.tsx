@@ -18,15 +18,14 @@ interface LeaveRequestModalProps {
 
 const LEAVE_TYPES = [
   { value: 'doctor_leave', label: 'Cuti Sakit' },
-  { value: 'annual_leave', label: 'Cuti Kepentingan' },
+  { value: 'annual_leave', label: 'Cuti Tahunan' },
   { value: 'external_duty', label: 'TPO' },
   { value: 'educational_assignment', label: 'Tugas Pendidikan' },
 ];
 
 const ANNUAL_LEAVE_SUBTYPES = [
-  { value: 'cuti_kepentingan', label: 'Cuti Kepentingan' },
-  { value: 'cuti_bersalin', label: 'Cuti Bersalin' },
   { value: 'cuti_tahunan', label: 'Cuti Tahunan' },
+  { value: 'cuti_bersalin', label: 'Cuti Bersalin' },
 ];
 
 const TPO_CITIES = [
@@ -41,7 +40,7 @@ const LEAVE_REQUEST_ROLLED_BACK_EVENT = 'leave-request:create-rolled-back';
 
 const REQUEST_TYPE_NAMES: Record<string, string> = {
   doctor_leave: 'Cuti Sakit',
-  annual_leave: 'Cuti Kepentingan',
+  annual_leave: 'Cuti Tahunan',
   external_duty: 'TPO',
   educational_assignment: 'Tugas Pendidikan',
 };
@@ -49,7 +48,7 @@ const REQUEST_TYPE_NAMES: Record<string, string> = {
 const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, onSuccess, rosterMonth, rosterYear }) => {
   const { user } = useAuth();
   const [requestType, setRequestType] = useState('');
-  const [annualLeaveSubtype, setAnnualLeaveSubtype] = useState('cuti_kepentingan');
+  const [annualLeaveSubtype, setAnnualLeaveSubtype] = useState('cuti_tahunan');
   const [reason, setReason] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -120,7 +119,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
   const resetForm = () => {
     setRequestType('');
-    setAnnualLeaveSubtype('cuti_kepentingan');
+    setAnnualLeaveSubtype('cuti_tahunan');
     setReason('');
     setStartDate('');
     setEndDate('');
@@ -143,7 +142,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
   useEffect(() => {
     if (requestType !== 'annual_leave') {
-      setAnnualLeaveSubtype('cuti_kepentingan');
+      setAnnualLeaveSubtype('cuti_tahunan');
     }
   }, [requestType]);
 
@@ -283,7 +282,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
     }
 
     if (requestType === 'annual_leave' && !annualLeaveSubtype) {
-      toast.error('Silakan pilih jenis cuti kepentingan');
+      toast.error('Silakan pilih jenis cuti tahunan');
       return;
     }
     
@@ -356,7 +355,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
       const formData = new FormData();
       formData.append('request_type', requestType);
       if (requestType === 'annual_leave') {
-        formData.append('annual_leave_subtype', annualLeaveSubtype || 'cuti_kepentingan');
+        formData.append('annual_leave_subtype', annualLeaveSubtype || 'cuti_tahunan');
       }
       formData.append('start_date', startDate);
       formData.append('end_date', endDate);
@@ -622,7 +621,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
               {/* Annual Leave Subtype */}
               <div>
                 <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
-                  Jenis Cuti Kepentingan
+                  Jenis Cuti Tahunan
                 </label>
                 <Select
                   options={ANNUAL_LEAVE_SUBTYPES}

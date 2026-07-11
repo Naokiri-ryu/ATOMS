@@ -138,24 +138,75 @@ const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
 
 // ─── Cell value input ──────────────────────────────────────────────────────
 
+// [TAMBAH] Interface diperluas dengan props clipboard + drag-fill
 interface CellInputProps {
   isDisabled: boolean;
   isCompleted: boolean;
   value: string;
   onChange: (val: string) => void;
+  // props copy-paste
+  cellKey: string;
+  isCopied: boolean;
+  onCopy: (key: string, val: string) => void;
+  onPaste: (key: string) => void;
+  // props drag-fill
+  isDragSource: boolean;
+  isDragHighlight: boolean;
+  onDragStart: () => void;
 }
 
-const CellInput: React.FC<CellInputProps> = ({ isDisabled, isCompleted, value, onChange }) => {
+// [UBAH] CellInput: copy-paste (Ctrl+C/V) + drag-fill handle di pojok kanan bawah
+const CellInput: React.FC<CellInputProps> = ({
+  isDisabled, isCompleted, value, onChange,
+  cellKey, isCopied, onCopy, onPaste,
+  isDragSource, isDragHighlight, onDragStart,
+}) => {
   if (isDisabled) return <div className="w-full h-7 rounded" aria-hidden="true" />;
   if (isCompleted) return <span className="text-xs text-slate-700">{value || '—'}</span>;
+
+  // Tentukan style border berdasarkan kondisi aktif
+  const borderClass = (() => {
+    if (isDragSource)    return 'border-emerald-500 ring-1 ring-emerald-300 bg-emerald-50';
+    if (isDragHighlight) return 'border-emerald-400 border-dashed bg-emerald-50/60';
+    if (isCopied)        return 'border-amber-400 border-dashed ring-1 ring-amber-300 bg-amber-50';
+    return 'border-slate-300 focus:ring-brand-primary';
+  })();
+
   return (
-    <input
-      type="text"
-      inputMode="decimal"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full h-7 px-2 text-center text-xs rounded border border-slate-300 bg-white focus:ring-1 focus:ring-brand-primary focus:outline-none"
-    />
+    // [TAMBAH] wrapper relative agar drag handle bisa diposisikan absolut
+    <div className="relative group/cell">
+      <input
+        type="text"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        // [TAMBAH] handler keyboard Ctrl+C dan Ctrl+V
+        onKeyDown={(e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+            e.preventDefault();
+            onCopy(cellKey, value);
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+            e.preventDefault();
+            onPaste(cellKey);
+          }
+        }}
+        // [UBAH] border dinamis: amber = copied, hijau = drag
+        className={cn(
+          'w-full h-7 px-2 text-center text-xs rounded border bg-white focus:ring-1 focus:outline-none',
+          borderClass,
+        )}
+      />
+      {/* [TAMBAH] Drag handle — kotak hijau kecil di pojok kanan bawah, mirip Excel */}
+      <div
+        title="Drag ke bawah untuk isi baris berikutnya"
+        className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-sm cursor-crosshair translate-x-1/2 translate-y-1/2 opacity-0 group-hover/cell:opacity-100 transition-opacity z-10 select-none"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          onDragStart();
+        }}
+      />
+    </div>
   );
 };
 
@@ -521,6 +572,17 @@ export const TfpAobLt12DetailPage: React.FC = () => {
   const [editingFacilityId, setEditingFacilityId] = useState<number | null>(null);
   const [editingFacilityName, setEditingFacilityName] = useState('');
 
+  // [TAMBAH] State clipboard untuk fitur copy-paste antar sel
+  const [copiedCell, setCopiedCell] = useState<{ key: string; value: string } | null>(null);
+
+  // [TAMBAH] State drag-fill: sumber drag + baris yang sedang di-hover
+  const [dragState, setDragState] = useState<{
+    sourceItemId: number;
+    cellKey: string;
+    value: string;
+  } | null>(null);
+  const [dragOverItemId, setDragOverItemId] = useState<number | null>(null);
+
   const [draftConfig, setDraftConfig] = useState<TfpAobLt12ColumnsConfig | null>(null);
   const [draftItemMeta, setDraftItemMeta] = useState<Record<number, {
     is_disabled_map: Record<string, boolean>;
@@ -839,6 +901,67 @@ export const TfpAobLt12DetailPage: React.FC = () => {
   const setItemCell = (itemId: number, cellKey: string, val: string) => {
     setItemValues((prev) => ({ ...prev, [itemId]: { ...prev[itemId], [cellKey]: val } }));
   };
+
+  // [TAMBAH] Handler copy: simpan key + nilai ke state clipboard
+  const handleCopy = useCallback((key: string, val: string) => {
+    setCopiedCell({ key, value: val });
+  }, []);
+
+  // [TAMBAH] Handler paste: terapkan nilai clipboard ke sel tujuan
+  // compositeKey format: "itemId__cellKey"
+  const handlePaste = useCallback((targetKey: string) => {
+    if (!copiedCell) return;
+    const sep = targetKey.indexOf('__');
+    if (sep === -1) return;
+    const itemId = Number(targetKey.slice(0, sep));
+    const cellKey = targetKey.slice(sep + 2);
+    if (isNaN(itemId)) return;
+    setItemValues((prev) => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], [cellKey]: copiedCell.value },
+    }));
+  }, [copiedCell]);
+
+  // [TAMBAH] Handler drag-fill: mulai drag dari sebuah sel
+  const handleDragStart = useCallback((itemId: number, cellKey: string, value: string) => {
+    setDragState({ sourceItemId: itemId, cellKey, value });
+    setDragOverItemId(itemId);
+  }, []);
+
+  // [TAMBAH] Handler drag-fill: commit isi ke semua baris dalam range saat mouse dilepas
+  const handleDragEnd = useCallback(() => {
+    if (!dragState || dragOverItemId === null || !record) {
+      setDragState(null);
+      setDragOverItemId(null);
+      return;
+    }
+    const items = record.items;
+    const sourceIdx = items.findIndex((it) => it.id === dragState.sourceItemId);
+    const targetIdx = items.findIndex((it) => it.id === dragOverItemId);
+    if (sourceIdx !== -1 && targetIdx !== -1) {
+      const minIdx = Math.min(sourceIdx, targetIdx);
+      const maxIdx = Math.max(sourceIdx, targetIdx);
+      setItemValues((prev) => {
+        const next = { ...prev };
+        for (let i = minIdx; i <= maxIdx; i++) {
+          const itId = items[i].id;
+          if (!getItemDisabled(itId, dragState.cellKey)) {
+            next[itId] = { ...next[itId], [dragState.cellKey]: dragState.value };
+          }
+        }
+        return next;
+      });
+    }
+    setDragState(null);
+    setDragOverItemId(null);
+  }, [dragState, dragOverItemId, record, getItemDisabled]);
+
+  // [TAMBAH] Global mouseup: commit drag-fill saat tombol mouse dilepas di mana saja
+  useEffect(() => {
+    if (!dragState) return;
+    window.addEventListener('mouseup', handleDragEnd);
+    return () => window.removeEventListener('mouseup', handleDragEnd);
+  }, [dragState, handleDragEnd]);
 
   const setFacilityField = (facilityId: number, field: 'kondisi' | 'keterangan', val: string) => {
     setFacilityValues((prev) => ({ ...prev, [facilityId]: { ...prev[facilityId], [field]: val } }));
@@ -1170,10 +1293,42 @@ export const TfpAobLt12DetailPage: React.FC = () => {
                       return;
                     }
 
+                    // [TAMBAH] compositeKey = "itemId__cellKey" agar handlePaste tahu target baris
+                    const compositeKey = `${item.id}__${cell.key}`;
                     renderedCells.push(
-                      <td key={cell.key} colSpan={colspan} className={cn(tdCell, disabled && 'bg-slate-100')}>
-                        <CellInput isDisabled={disabled} isCompleted={isCompleted}
-                          value={val} onChange={(v) => setItemCell(item.id, cell.key, v)} />
+                      // [TAMBAH] onMouseEnter untuk highlight range drag saat mouse melewati baris
+                      <td key={cell.key} colSpan={colspan}
+                        className={cn(tdCell, disabled && 'bg-slate-100')}
+                        onMouseEnter={() => { if (dragState) setDragOverItemId(item.id); }}
+                      >
+                        <CellInput
+                          isDisabled={disabled}
+                          isCompleted={isCompleted}
+                          value={val}
+                          onChange={(v) => setItemCell(item.id, cell.key, v)}
+                          // [TAMBAH] props copy-paste
+                          cellKey={compositeKey}
+                          isCopied={copiedCell?.key === compositeKey}
+                          onCopy={handleCopy}
+                          onPaste={handlePaste}
+                          // [TAMBAH] props drag-fill
+                          isDragSource={dragState?.sourceItemId === item.id && dragState?.cellKey === cell.key}
+                          isDragHighlight={
+                            dragState !== null &&
+                            dragState.cellKey === cell.key &&
+                            dragOverItemId !== null &&
+                            (() => {
+                              const items = record.items;
+                              const srcIdx = items.findIndex((it) => it.id === dragState.sourceItemId);
+                              const overIdx = items.findIndex((it) => it.id === dragOverItemId);
+                              const curIdx = items.findIndex((it) => it.id === item.id);
+                              const min = Math.min(srcIdx, overIdx);
+                              const max = Math.max(srcIdx, overIdx);
+                              return curIdx >= min && curIdx <= max;
+                            })()
+                          }
+                          onDragStart={() => handleDragStart(item.id, cell.key, val)}
+                        />
                       </td>
                     );
                   });
