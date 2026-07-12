@@ -167,6 +167,18 @@ const HomeFooter: React.FC = () => {
               />
               <span className="text-sm font-medium opacity-90">UGM</span>
             </div>
+            {/* <div className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
+              <img 
+                src="/assets/icon/logougm.svg" 
+                alt="UGM Logo" 
+                className="h-8 w-auto"
+                width={32}
+                height={32}
+                loading="lazy"
+                decoding="async"
+              />
+              <span className="text-sm font-medium opacity-90">POLINEMA</span>
+            </div> */}
           </div>
         </div>
 
