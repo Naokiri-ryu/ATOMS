@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\Cnsd\CnsdVccsMeterController;
 use App\Http\Controllers\Api\V1\Cnsd\CnsdVccsFreqMeterController;
 use App\Http\Controllers\Api\V1\Cnsd\CnsdAsmgcsMeterController;
 use App\Http\Controllers\Api\V1\Tfp\TfpAobGroundController;
+use App\Http\Controllers\Api\V1\Tfp\TfpGensetDvorController;
 use App\Http\Controllers\Api\V1\Tfp\TfpAobLt12Controller;
 use App\Http\Controllers\Api\V1\Tfp\TfpTransmitterTxController;
 use App\Http\Controllers\Api\V1\Tfp\TfpTowerController;
@@ -435,6 +436,33 @@ Route::prefix('v1')->group(function () {
             Route::put('/{id}/facilities/{facilityId}', [TfpAobGroundController::class, 'updateFacility'])->whereNumber(['id', 'facilityId']);
             Route::delete('/{id}/facilities/{facilityId}', [TfpAobGroundController::class, 'deleteFacility'])->whereNumber(['id', 'facilityId']);
             Route::put('/{id}/facilities-reorder',     [TfpAobGroundController::class, 'reorderFacilities'])->whereNumber('id');
+        });
+
+        // ─── TFP Performance Check Genset DVOR (Teknik Fasilitas Penunjang) ───
+        Route::prefix('tfp/genset-dvor')->group(function () {
+            Route::get('/template', [TfpGensetDvorController::class, 'template']);
+            Route::get('/years',    [TfpGensetDvorController::class, 'years']);
+            Route::get('/',         [TfpGensetDvorController::class, 'index']);
+            Route::post('/', [TfpGensetDvorController::class, 'store'])
+                ->middleware('role:Admin,Manager Teknik,Supervisor CNSD,Supervisor TFP,Teknisi TFP');
+            Route::get('/{id}',     [TfpGensetDvorController::class, 'show'])->whereNumber('id');
+            Route::put('/{id}',     [TfpGensetDvorController::class, 'update'])->whereNumber('id');
+            Route::put('/{id}/genset-fields', [TfpGensetDvorController::class, 'updateGensetFields'])->whereNumber('id');
+            Route::post('/{id}/sign', [TfpGensetDvorController::class, 'sign'])->whereNumber('id');
+            Route::delete('/{id}', [TfpGensetDvorController::class, 'destroy'])
+                ->whereNumber('id')
+                ->middleware('role:Admin,Manager Teknik,Supervisor CNSD,Supervisor TFP');
+
+            // Structural edit (Edit Mode) — controller enforces role guard
+            Route::put('/{id}/structure',              [TfpGensetDvorController::class, 'saveStructure'])->whereNumber('id');
+            Route::post('/{id}/parameters',            [TfpGensetDvorController::class, 'addParameter'])->whereNumber('id');
+            Route::put('/{id}/parameters/{paramId}',   [TfpGensetDvorController::class, 'updateParameter'])->whereNumber(['id', 'paramId']);
+            Route::delete('/{id}/parameters/{paramId}', [TfpGensetDvorController::class, 'deleteParameter'])->whereNumber(['id', 'paramId']);
+            Route::put('/{id}/parameters-reorder',     [TfpGensetDvorController::class, 'reorderParameters'])->whereNumber('id');
+            Route::post('/{id}/facilities',            [TfpGensetDvorController::class, 'addFacility'])->whereNumber('id');
+            Route::put('/{id}/facilities/{facilityId}', [TfpGensetDvorController::class, 'updateFacility'])->whereNumber(['id', 'facilityId']);
+            Route::delete('/{id}/facilities/{facilityId}', [TfpGensetDvorController::class, 'deleteFacility'])->whereNumber(['id', 'facilityId']);
+            Route::put('/{id}/facilities-reorder',     [TfpGensetDvorController::class, 'reorderFacilities'])->whereNumber('id');
         });
 
         // ─── TFP Performance Check AOB Lantai 1 & 2 ───────────

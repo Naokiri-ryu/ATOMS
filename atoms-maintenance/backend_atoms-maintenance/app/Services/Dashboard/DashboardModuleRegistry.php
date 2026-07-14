@@ -27,6 +27,7 @@ use App\Models\Grounding\GroundingReportRecord;
 use App\Models\Tfp\TfpAobGroundRecord;
 use App\Models\Tfp\TfpAobLt12Record;
 use App\Models\Tfp\TfpDvorRecord;
+use App\Models\Tfp\TfpGensetDvorRecord;
 use App\Models\Tfp\TfpGlidepathRecord;
 use App\Models\Tfp\TfpLocalizerRecord;
 use App\Models\Tfp\TfpRadarRecord;
@@ -109,7 +110,7 @@ class DashboardModuleRegistry
              'division' => 'CNSD', 'group' => 'CNSD Meter Reading',
              'route' => '/cnsd/asmgcs-meter',        'model' => CnsdAsmgcsMeterRecord::class],
 
-            // ─── TFP Performance Check (8 modul) ────────────────────────
+            // ─── TFP Performance Check (9 modul) ────────────────────────
             ['key' => 'tfp-aob-ground',     'label' => 'Performance Check AOB Lantai Ground',
              'division' => 'TFP', 'group' => 'TFP Performance',
              'route' => '/tfp/aob-ground',    'model' => TfpAobGroundRecord::class],
@@ -134,6 +135,9 @@ class DashboardModuleRegistry
             ['key' => 'tfp-glidepath',      'label' => 'Performance Check Gedung Glide Path',
              'division' => 'TFP', 'group' => 'TFP Performance',
              'route' => '/tfp/glidepath',     'model' => TfpGlidepathRecord::class],
+            ['key' => 'tfp-genset-dvor',    'label' => 'Performance Check Genset DVOR',
+             'division' => 'TFP', 'group' => 'TFP Performance',
+             'route' => '/tfp/genset-dvor',   'model' => TfpGensetDvorRecord::class],
 
             // ─── Ground Check (5 modul, CNSD) ───────────────────────────
             ['key' => 'gc-adc',  'label' => 'Ground Check ADC',
@@ -177,4 +181,4 @@ class DashboardModuleRegistry
     {
         return array_map(static fn ($m) => $m['key'], self::modules());
     }
-}
+}   
