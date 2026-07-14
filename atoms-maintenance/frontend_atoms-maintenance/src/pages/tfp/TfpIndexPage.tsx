@@ -19,6 +19,7 @@ const TFP_CATEGORIES: TfpCategory[] = [
   { id: 6, code: 'TFP-006', name: 'VOR (TFP)',                           location: 'Shelter VOR',        is_active_mvp: true, sort_order: 6 },
   { id: 7, code: 'TFP-007', name: 'Localizer (TFP)',                     location: 'Shelter Localizer',  is_active_mvp: true, sort_order: 7 },
   { id: 8, code: 'TFP-008', name: 'Glide Path (TFP)',                    location: 'Shelter Glide Path', is_active_mvp: true, sort_order: 8 },
+  { id: 9, code: 'TFP-009', name: 'Genset DVOR (TFP)',                   location: 'Shelter VOR',        is_active_mvp: true, sort_order: 9 },
 ];
 
 /**
@@ -37,6 +38,7 @@ const TFP_ACTIVE_ROUTES: Record<string, string> = {
   'TFP-006': '/tfp/dvor',            // Performance Check Gedung DVOR (VOR)
   'TFP-007': '/tfp/localizer',       // Performance Check Gedung Localizer
   'TFP-008': '/tfp/glidepath',       // Performance Check Gedung Glide Path
+  'TFP-009': '/tfp/dvor-genset',     // Performance Check Genset DVOR (VOR)
 };
 
 /**

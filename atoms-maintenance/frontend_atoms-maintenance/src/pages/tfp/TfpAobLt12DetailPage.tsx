@@ -136,77 +136,66 @@ const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
   );
 };
 
-// ─── Cell value input ──────────────────────────────────────────────────────
+// ─── Cell value input (drag-select + copy-paste + navigasi keyboard) ──────
 
-// [TAMBAH] Interface diperluas dengan props clipboard + drag-fill
 interface CellInputProps {
   isDisabled: boolean;
   isCompleted: boolean;
   value: string;
   onChange: (val: string) => void;
-  // props copy-paste
-  cellKey: string;
-  isCopied: boolean;
-  onCopy: (key: string, val: string) => void;
-  onPaste: (key: string) => void;
-  // props drag-fill
-  isDragSource: boolean;
-  isDragHighlight: boolean;
-  onDragStart: () => void;
+  compositeKey: string;
+  isSelected: boolean;
+  isClipboard: boolean;
+  onMouseDown: (key: string, e: React.MouseEvent) => void;
+  onMouseEnter: (key: string) => void;
+  // ── Props navigasi keyboard ──
+  rowIndex?: number;
+  cellKey?: string;
+  onNavigate?: (targetRowIndex: number, targetCellKey: string) => void;
 }
 
-// [UBAH] CellInput: copy-paste (Ctrl+C/V) + drag-fill handle di pojok kanan bawah
 const CellInput: React.FC<CellInputProps> = ({
   isDisabled, isCompleted, value, onChange,
-  cellKey, isCopied, onCopy, onPaste,
-  isDragSource, isDragHighlight, onDragStart,
+  compositeKey, isSelected, isClipboard, onMouseDown, onMouseEnter,
+  rowIndex, cellKey, onNavigate,
 }) => {
   if (isDisabled) return <div className="w-full h-7 rounded" aria-hidden="true" />;
   if (isCompleted) return <span className="text-xs text-slate-700">{value || '—'}</span>;
 
-  // Tentukan style border berdasarkan kondisi aktif
-  const borderClass = (() => {
-    if (isDragSource)    return 'border-emerald-500 ring-1 ring-emerald-300 bg-emerald-50';
-    if (isDragHighlight) return 'border-emerald-400 border-dashed bg-emerald-50/60';
-    if (isCopied)        return 'border-amber-400 border-dashed ring-1 ring-amber-300 bg-amber-50';
-    return 'border-slate-300 focus:ring-brand-primary';
-  })();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!onNavigate || rowIndex === undefined || !cellKey) return;
+
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      onNavigate(rowIndex + 1, cellKey);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      onNavigate(rowIndex - 1, cellKey);
+    }
+  };
 
   return (
-    // [TAMBAH] wrapper relative agar drag handle bisa diposisikan absolut
-    <div className="relative group/cell">
-      <input
-        type="text"
-        inputMode="decimal"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        // [TAMBAH] handler keyboard Ctrl+C dan Ctrl+V
-        onKeyDown={(e) => {
-          if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-            e.preventDefault();
-            onCopy(cellKey, value);
-          }
-          if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-            e.preventDefault();
-            onPaste(cellKey);
-          }
-        }}
-        // [UBAH] border dinamis: amber = copied, hijau = drag
-        className={cn(
-          'w-full h-7 px-2 text-center text-xs rounded border bg-white focus:ring-1 focus:outline-none',
-          borderClass,
-        )}
-      />
-      {/* [TAMBAH] Drag handle — kotak hijau kecil di pojok kanan bawah, mirip Excel */}
-      <div
-        title="Drag ke bawah untuk isi baris berikutnya"
-        className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-sm cursor-crosshair translate-x-1/2 translate-y-1/2 opacity-0 group-hover/cell:opacity-100 transition-opacity z-10 select-none"
-        onMouseDown={(e) => {
-          e.preventDefault();
-          onDragStart();
-        }}
-      />
-    </div>
+    <input
+      type="text"
+      inputMode="decimal"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={handleKeyDown}
+      onMouseDown={(e) => onMouseDown(compositeKey, e)}
+      onMouseEnter={() => onMouseEnter(compositeKey)}
+      data-row-index={rowIndex}
+      data-cell-key={cellKey}
+      className={cn(
+        'w-full h-7 px-2 text-center text-xs rounded border bg-white focus:ring-1 focus:outline-none select-none',
+        isSelected && isClipboard
+          ? 'border-emerald-500 ring-1 ring-emerald-400 bg-emerald-50'
+          : isSelected
+          ? 'border-sky-400 ring-1 ring-sky-300 bg-sky-50'
+          : isClipboard
+          ? 'border-amber-400 border-dashed ring-1 ring-amber-300 bg-amber-50'
+          : 'border-slate-300 focus:ring-brand-primary',
+      )}
+    />
   );
 };
 
@@ -572,16 +561,13 @@ export const TfpAobLt12DetailPage: React.FC = () => {
   const [editingFacilityId, setEditingFacilityId] = useState<number | null>(null);
   const [editingFacilityName, setEditingFacilityName] = useState('');
 
-  // [TAMBAH] State clipboard untuk fitur copy-paste antar sel
-  const [copiedCell, setCopiedCell] = useState<{ key: string; value: string } | null>(null);
+  // ─── Multi-cell drag-select & copy-paste state ─────────────────────────
+  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  const [clipboardCells, setClipboardCells] = useState<Map<string, string>>(new Map());
+  const [dragStart, setDragStart] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // [TAMBAH] State drag-fill: sumber drag + baris yang sedang di-hover
-  const [dragState, setDragState] = useState<{
-    sourceItemId: number;
-    cellKey: string;
-    value: string;
-  } | null>(null);
-  const [dragOverItemId, setDragOverItemId] = useState<number | null>(null);
+  const isCompleted = record?.status === 'completed' ?? false;
 
   const [draftConfig, setDraftConfig] = useState<TfpAobLt12ColumnsConfig | null>(null);
   const [draftItemMeta, setDraftItemMeta] = useState<Record<number, {
@@ -625,11 +611,12 @@ export const TfpAobLt12DetailPage: React.FC = () => {
 
   useEffect(() => { void fetchRecord(); }, [fetchRecord]);
 
-  useEffect(() => {
-    const onFocus = () => void fetchRecord();
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [fetchRecord]);
+  // ── Dikommentari agar tidak mengganggu navigasi keyboard & drag-select ──
+  // useEffect(() => {
+  //   const onFocus = () => void fetchRecord();
+  //   window.addEventListener('focus', onFocus);
+  //   return () => window.removeEventListener('focus', onFocus);
+  // }, [fetchRecord]);
 
   // ─── Computed: effective config + meta ─────────────────────────────────
 
@@ -641,8 +628,6 @@ export const TfpAobLt12DetailPage: React.FC = () => {
   const flatCells = useMemo(() => flattenColumns(effectiveConfig), [effectiveConfig]);
   const flatKeys = useMemo(() => flatCells.map((c) => c.key), [flatCells]);
 
-  // Hide sub-column header row when all panels have exactly one sub-column —
-  // keeps the table compact for forms like AOB Lt 1&2 with single-value panels.
   const hasMultiSubCols = useMemo(
     () => effectiveConfig.some((p) => p.sub_columns.length > 1),
     [effectiveConfig],
@@ -902,66 +887,193 @@ export const TfpAobLt12DetailPage: React.FC = () => {
     setItemValues((prev) => ({ ...prev, [itemId]: { ...prev[itemId], [cellKey]: val } }));
   };
 
-  // [TAMBAH] Handler copy: simpan key + nilai ke state clipboard
-  const handleCopy = useCallback((key: string, val: string) => {
-    setCopiedCell({ key, value: val });
-  }, []);
+  // ─── Drag-select + copy-paste logic ─────────────────────────────────────
 
-  // [TAMBAH] Handler paste: terapkan nilai clipboard ke sel tujuan
-  // compositeKey format: "itemId__cellKey"
-  const handlePaste = useCallback((targetKey: string) => {
-    if (!copiedCell) return;
-    const sep = targetKey.indexOf('__');
-    if (sep === -1) return;
-    const itemId = Number(targetKey.slice(0, sep));
-    const cellKey = targetKey.slice(sep + 2);
-    if (isNaN(itemId)) return;
-    setItemValues((prev) => ({
-      ...prev,
-      [itemId]: { ...prev[itemId], [cellKey]: copiedCell.value },
-    }));
-  }, [copiedCell]);
+  const getRangeKeys = useCallback((a: string, b: string): Set<string> => {
+    if (!record) return new Set();
+    const parseKey = (k: string) => {
+      const sep = k.indexOf('__');
+      return { itemId: Number(k.slice(0, sep)), cellKey: k.slice(sep + 2) };
+    };
+    const { itemId: aItemId, cellKey: aCellKey } = parseKey(a);
+    const { itemId: bItemId, cellKey: bCellKey } = parseKey(b);
 
-  // [TAMBAH] Handler drag-fill: mulai drag dari sebuah sel
-  const handleDragStart = useCallback((itemId: number, cellKey: string, value: string) => {
-    setDragState({ sourceItemId: itemId, cellKey, value });
-    setDragOverItemId(itemId);
-  }, []);
+    const itemIds = record.items.map((i) => i.id);
+    const cellKeys = flatCells.map((c) => c.key);
 
-  // [TAMBAH] Handler drag-fill: commit isi ke semua baris dalam range saat mouse dilepas
-  const handleDragEnd = useCallback(() => {
-    if (!dragState || dragOverItemId === null || !record) {
-      setDragState(null);
-      setDragOverItemId(null);
-      return;
-    }
-    const items = record.items;
-    const sourceIdx = items.findIndex((it) => it.id === dragState.sourceItemId);
-    const targetIdx = items.findIndex((it) => it.id === dragOverItemId);
-    if (sourceIdx !== -1 && targetIdx !== -1) {
-      const minIdx = Math.min(sourceIdx, targetIdx);
-      const maxIdx = Math.max(sourceIdx, targetIdx);
-      setItemValues((prev) => {
-        const next = { ...prev };
-        for (let i = minIdx; i <= maxIdx; i++) {
-          const itId = items[i].id;
-          if (!getItemDisabled(itId, dragState.cellKey)) {
-            next[itId] = { ...next[itId], [dragState.cellKey]: dragState.value };
-          }
+    const r1 = itemIds.indexOf(aItemId), r2 = itemIds.indexOf(bItemId);
+    const c1 = cellKeys.indexOf(aCellKey), c2 = cellKeys.indexOf(bCellKey);
+    if (r1 < 0 || r2 < 0 || c1 < 0 || c2 < 0) return new Set([a]);
+
+    const rMin = Math.min(r1, r2), rMax = Math.max(r1, r2);
+    const cMin = Math.min(c1, c2), cMax = Math.max(c1, c2);
+
+    const result = new Set<string>();
+    for (let r = rMin; r <= rMax; r++) {
+      const item = record.items[r];
+      if (isModeRow(item) || isSuplaiRow(item)) continue;
+      for (let c = cMin; c <= cMax; c++) {
+        const cell = flatCells[c];
+        if (cell && !getItemDisabled(item.id, cell.key)) {
+          result.add(`${item.id}__${cell.key}`);
         }
-        return next;
-      });
+      }
     }
-    setDragState(null);
-    setDragOverItemId(null);
-  }, [dragState, dragOverItemId, record, getItemDisabled]);
+    return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [record, flatCells, draftItemMeta]);
 
-  // [TAMBAH] Global mouseup: commit drag-fill saat tombol mouse dilepas di mana saja
+  const handleCellMouseDown = useCallback((compositeKey: string, e: React.MouseEvent) => {
+    if (isCompleted) return;
+    if (!e.shiftKey) {
+      setDragStart(compositeKey);
+      setIsDragging(true);
+      setSelectedCells(new Set([compositeKey]));
+    } else {
+      const anchor = dragStart ?? (selectedCells.size > 0 ? [...selectedCells][0] : null);
+      if (anchor) {
+        setSelectedCells(getRangeKeys(anchor, compositeKey));
+      } else {
+        setSelectedCells(new Set([compositeKey]));
+        setDragStart(compositeKey);
+      }
+    }
+  }, [isCompleted, dragStart, selectedCells, getRangeKeys]);
+
+  const handleCellMouseEnter = useCallback((compositeKey: string) => {
+    if (!isDragging || !dragStart) return;
+    setSelectedCells(getRangeKeys(dragStart, compositeKey));
+  }, [isDragging, dragStart, getRangeKeys]);
+
   useEffect(() => {
-    if (!dragState) return;
-    window.addEventListener('mouseup', handleDragEnd);
-    return () => window.removeEventListener('mouseup', handleDragEnd);
-  }, [dragState, handleDragEnd]);
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+      setDragStart(null);
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, []);
+
+  // Global Ctrl+C / Ctrl+V for multi-cell
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!record || isCompleted) return;
+      const isCopy = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c';
+      const isPaste = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v';
+      const isEscape = e.key === 'Escape';
+
+      if (isEscape) {
+        setSelectedCells(new Set());
+        setDragStart(null);
+        return;
+      }
+
+      if (isCopy && selectedCells.size > 0) {
+        e.preventDefault();
+        const map = new Map<string, string>();
+        selectedCells.forEach((ck) => {
+          const sep = ck.indexOf('__');
+          const itemId = Number(ck.slice(0, sep));
+          const cellKey = ck.slice(sep + 2);
+          map.set(ck, itemValues[itemId]?.[cellKey] ?? '');
+        });
+        setClipboardCells(map);
+        return;
+      }
+
+      if (isPaste && clipboardCells.size > 0 && selectedCells.size > 0) {
+        e.preventDefault();
+        const parseKey = (k: string) => {
+          const sep = k.indexOf('__');
+          return { itemId: Number(k.slice(0, sep)), cellKey: k.slice(sep + 2) };
+        };
+        const itemIds = record.items.map((i) => i.id);
+        const cellKeys = flatCells.map((c) => c.key);
+
+        const toCoord = (k: string) => {
+          const { itemId, cellKey } = parseKey(k);
+          return { r: itemIds.indexOf(itemId), c: cellKeys.indexOf(cellKey) };
+        };
+
+        const cbKeys = [...clipboardCells.keys()];
+        const cbCoords = cbKeys.map(toCoord);
+        const cbRMin = Math.min(...cbCoords.map((x) => x.r));
+        const cbCMin = Math.min(...cbCoords.map((x) => x.c));
+
+        const selCoords = [...selectedCells].map(toCoord);
+        const selRMin = Math.min(...selCoords.map((x) => x.r));
+        const selCMin = Math.min(...selCoords.map((x) => x.c));
+
+        const deltaR = selRMin - cbRMin;
+        const deltaC = selCMin - cbCMin;
+
+        setItemValues((prev) => {
+          const next = { ...prev };
+          cbKeys.forEach((srcKey, i) => {
+            const { r, c } = cbCoords[i];
+            const targetR = r + deltaR;
+            const targetC = c + deltaC;
+            if (targetR < 0 || targetR >= itemIds.length) return;
+            if (targetC < 0 || targetC >= cellKeys.length) return;
+            const targetItemId = itemIds[targetR];
+            const targetCellKey = cellKeys[targetC];
+            const targetItem = record.items[targetR];
+            if (!targetItem || isModeRow(targetItem) || isSuplaiRow(targetItem)) return;
+            if (getItemDisabled(targetItemId, targetCellKey)) return;
+
+            const flatCellIndex = flatCells.findIndex(fc => fc.key === targetCellKey);
+            if (flatCellIndex > 0) {
+              for (let checkIdx = flatCellIndex - 1; checkIdx >= 0; checkIdx--) {
+                const prevCell = flatCells[checkIdx];
+                const prevMergeSpan = getItemMerge(targetItemId, prevCell.key);
+                if (prevMergeSpan > 1) {
+                  const mergeEndIndex = checkIdx + prevMergeSpan - 1;
+                  if (mergeEndIndex >= flatCellIndex) {
+                    return;
+                  }
+                }
+              }
+            }
+
+            next[targetItemId] = { ...(next[targetItemId] ?? {}), [targetCellKey]: clipboardCells.get(srcKey) ?? '' };
+          });
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [record, isCompleted, selectedCells, clipboardCells, itemValues, flatCells, draftItemMeta]);
+
+  // ─── Navigasi keyboard (Enter / Arrow Up/Down) ──────────────────────────
+  const navigateToCell = useCallback((targetRowIndex: number, targetCellKey: string) => {
+    if (!record) return;
+
+    let finalRowIndex = targetRowIndex;
+    if (finalRowIndex < 0) finalRowIndex = 0;
+    if (finalRowIndex >= record.items.length) finalRowIndex = record.items.length - 1;
+
+    requestAnimationFrame(() => {
+      const escapedKey = targetCellKey.replace(/([.#:[\]+>~,])/g, '\\$1');
+      const selector = `input[data-row-index="${finalRowIndex}"][data-cell-key="${escapedKey}"]`;
+      
+      const el = document.querySelector(selector) as HTMLInputElement | null;
+      if (el) {
+        el.focus();
+        el.select();
+      } else {
+        const fallbackEl = document.querySelector(
+          `input[data-row-index="${finalRowIndex}"]`
+        ) as HTMLInputElement | null;
+        if (fallbackEl) {
+          fallbackEl.focus();
+          fallbackEl.select();
+        }
+      }
+    });
+  }, [record]);
 
   const setFacilityField = (facilityId: number, field: 'kondisi' | 'keterangan', val: string) => {
     setFacilityValues((prev) => ({ ...prev, [facilityId]: { ...prev[facilityId], [field]: val } }));
@@ -991,7 +1103,6 @@ export const TfpAobLt12DetailPage: React.FC = () => {
     );
   }
 
-  const isCompleted = record.status === 'completed';
   const showStructureControls = editMode && canEditStructure && !isCompleted;
 
   const totalCellCount = flatCells.length;
@@ -1148,7 +1259,37 @@ export const TfpAobLt12DetailPage: React.FC = () => {
               {record.items.length} parameter · {effectiveConfig.length} panel
             </span>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" style={{ userSelect: isDragging ? 'none' : undefined }}>
+            {/* Selection toolbar */}
+            {!isCompleted && !showStructureControls && (selectedCells.size > 0 || clipboardCells.size > 0) && (
+              <div className="px-3 py-1.5 bg-sky-50 border-b border-sky-100 flex items-center gap-3 flex-wrap text-[11px]">
+                {selectedCells.size > 0 && (
+                  <span className="text-sky-700 font-semibold flex items-center gap-1">
+                    <CheckSquare size={12} />
+                    {selectedCells.size} sel terpilih
+                  </span>
+                )}
+                {clipboardCells.size > 0 && (
+                  <span className="text-amber-700 font-semibold flex items-center gap-1">
+                    <span className="inline-block w-2.5 h-2.5 rounded border-2 border-dashed border-amber-500" />
+                    {clipboardCells.size} sel disalin
+                  </span>
+                )}
+                <span className="text-slate-400 hidden sm:inline">·</span>
+                <span className="text-slate-500 hidden sm:inline">
+                  Drag untuk pilih • Ctrl+C salin • Ctrl+V tempel • Esc batal
+                </span>
+                {selectedCells.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedCells(new Set()); setDragStart(null); }}
+                    className="ml-auto text-slate-400 hover:text-slate-600 inline-flex items-center gap-0.5"
+                  >
+                    <X size={11} /> Batal pilih
+                  </button>
+                )}
+              </div>
+            )}
             <table className="w-full text-xs border-collapse" style={{ minWidth: Math.max(800, 220 + totalCellCount * 90 + aksiColWidth) }}>
               <thead>
                 <tr className="bg-slate-100 text-slate-700">
@@ -1293,41 +1434,24 @@ export const TfpAobLt12DetailPage: React.FC = () => {
                       return;
                     }
 
-                    // [TAMBAH] compositeKey = "itemId__cellKey" agar handlePaste tahu target baris
                     const compositeKey = `${item.id}__${cell.key}`;
                     renderedCells.push(
-                      // [TAMBAH] onMouseEnter untuk highlight range drag saat mouse melewati baris
                       <td key={cell.key} colSpan={colspan}
-                        className={cn(tdCell, disabled && 'bg-slate-100')}
-                        onMouseEnter={() => { if (dragState) setDragOverItemId(item.id); }}
-                      >
+                        className={cn(tdCell, disabled && 'bg-slate-100')}>
                         <CellInput
                           isDisabled={disabled}
                           isCompleted={isCompleted}
                           value={val}
                           onChange={(v) => setItemCell(item.id, cell.key, v)}
-                          // [TAMBAH] props copy-paste
-                          cellKey={compositeKey}
-                          isCopied={copiedCell?.key === compositeKey}
-                          onCopy={handleCopy}
-                          onPaste={handlePaste}
-                          // [TAMBAH] props drag-fill
-                          isDragSource={dragState?.sourceItemId === item.id && dragState?.cellKey === cell.key}
-                          isDragHighlight={
-                            dragState !== null &&
-                            dragState.cellKey === cell.key &&
-                            dragOverItemId !== null &&
-                            (() => {
-                              const items = record.items;
-                              const srcIdx = items.findIndex((it) => it.id === dragState.sourceItemId);
-                              const overIdx = items.findIndex((it) => it.id === dragOverItemId);
-                              const curIdx = items.findIndex((it) => it.id === item.id);
-                              const min = Math.min(srcIdx, overIdx);
-                              const max = Math.max(srcIdx, overIdx);
-                              return curIdx >= min && curIdx <= max;
-                            })()
-                          }
-                          onDragStart={() => handleDragStart(item.id, cell.key, val)}
+                          compositeKey={compositeKey}
+                          isSelected={selectedCells.has(compositeKey)}
+                          isClipboard={clipboardCells.has(compositeKey)}
+                          onMouseDown={handleCellMouseDown}
+                          onMouseEnter={handleCellMouseEnter}
+                          // Props navigasi keyboard
+                          rowIndex={idx}
+                          cellKey={cell.key}
+                          onNavigate={navigateToCell}
                         />
                       </td>
                     );

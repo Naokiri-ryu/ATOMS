@@ -57,18 +57,18 @@ const HomeFooter: React.FC = () => {
               enhance safety protocols, and optimize resource allocation for modern aviation facilities.
             </p>
             <div className="flex items-center gap-4">
-              <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-                <Facebook className="h-5 w-5" />
-              </button>
-              <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-                <Twitter className="h-5 w-5" />
-              </button>
-              <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-                <Instagram className="h-5 w-5" />
-              </button>
-              <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-                <Linkedin className="h-5 w-5" />
-              </button>
+              <a href="https://www.facebook.com/airnavindonesia/" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+              <Facebook className="h-5 w-5" />
+              </a>
+              <a href="https://x.com/airnavindonesia" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+              <Twitter className="h-5 w-5" />
+              </a>
+              <a href="https://www.instagram.com/airnavindonesia/" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+              <Instagram className="h-5 w-5" />
+              </a>
+              <a href="https://id.linkedin.com/company/airnav-indonesia" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+              <Linkedin className="h-5 w-5" />
+              </a>
             </div>
           </div>
 
