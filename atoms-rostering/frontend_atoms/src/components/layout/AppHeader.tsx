@@ -54,7 +54,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onProfileClick, onLogoutClick }) 
           <div className="flex items-center space-x-4">
             <div 
               className="w-12 h-12 bg-white rounded-xl flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/home')}
             >
               <img 
                 src="/assets/icon/logoairnav.svg" 

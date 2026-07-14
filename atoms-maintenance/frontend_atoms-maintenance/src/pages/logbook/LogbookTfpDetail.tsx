@@ -464,6 +464,18 @@ export const LogbookTfpDetail: React.FC = () => {
     malam: !!record?.is_signed_malam || isReadOnlyViewer,
   };
   const canSign = user?.role === 'Manager Teknik';
+  // True only once pagi + siang + malam are ALL locked (signed or read-only viewer).
+  const allShiftsLocked = shiftLocked.pagi && shiftLocked.siang && shiftLocked.malam;
+
+  // Auto-advance the note form to the next unsigned shift once the currently
+  // selected shift gets signed (e.g. pagi signed → jump to siang), so the
+  // technician doesn't have to manually switch the dropdown mid-shift.
+  useEffect(() => {
+    if (!shiftLocked[noteShift]) return;
+    const order: ShiftKey[] = ['pagi', 'siang', 'malam'];
+    const nextUnlocked = order.find((shift) => !shiftLocked[shift]);
+    if (nextUnlocked && nextUnlocked !== noteShift) setNoteShift(nextUnlocked);
+  }, [shiftLocked.pagi, shiftLocked.siang, shiftLocked.malam, noteShift]);
   // Delete logbook: Admin / MT / Supervisor (lintas divisi, MT-equivalent).
   const canDelete =
     user?.role === 'Admin' ||
@@ -947,58 +959,76 @@ export const LogbookTfpDetail: React.FC = () => {
             )}
           </div>
 
-          {!shiftLocked[noteShift] ? (
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
-                <Lock size={20} className="mx-auto text-amber-500 mb-2" />
-                <p className="text-sm font-semibold text-amber-700">
-                  Shift {SHIFT_LABEL[noteShift]} sudah ditandatangani
-                </p>
-                <p className="text-xs text-amber-600 mt-1">
-                  Catatan tidak dapat ditambahkan atau diubah untuk shift yang sudah ditandatangani.
-                </p>
-              </div>
-            ) : (
-            <form onSubmit={handleAddNote} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Shift</label>
-                  <select
-                    value={noteShift}
-                    onChange={(e) => setNoteShift(e.target.value as 'pagi' | 'siang' | 'malam')}
-                    className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  >
-                    <option value="pagi">Pagi</option>
-                    <option value="siang">Siang</option>
-                    <option value="malam">Malam</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Jam</label>
-                  <input
-                    type="time"
-                    value={noteTime}
-                    onChange={(e) => setNoteTime(e.target.value)}
-                    className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  />
-                </div>
-              </div>
+          {allShiftsLocked ? (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+          <Lock size={20} className="mx-auto text-amber-500 mb-2" />
+          <p className="text-sm font-semibold text-amber-700">Semua shift sudah ditandatangani</p>
+          <p className="text-xs text-amber-600 mt-1">
+            Catatan tidak dapat ditambahkan lagi untuk logbook ini.
+          </p>
+        </div>
+        ) : (
+        <form onSubmit={handleAddNote} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Shift</label>
+              <select
+                value={noteShift}
+                onChange={(e) => setNoteShift(e.target.value as 'pagi' | 'siang' | 'malam')}
+                className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+              >
+                <option value="pagi">Pagi</option>
+                <option value="siang">Siang</option>
+                <option value="malam">Malam</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Jam</label>
+              <input
+                type="time"
+                value={noteTime}
+                onChange={(e) => setNoteTime(e.target.value)}
+                disabled={shiftLocked[noteShift]}
+                className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-400"
+              />
+            </div>
+          </div>
+
+          {shiftLocked[noteShift] ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+              <Lock size={20} className="mx-auto text-amber-500 mb-2" />
+              <p className="text-sm font-semibold text-amber-700">
+                Shift {SHIFT_LABEL[noteShift]} sudah ditandatangani
+              </p>
+              <p className="text-xs text-amber-600 mt-1">
+                Catatan tidak dapat ditambahkan atau diubah untuk shift ini. Pilih shift lain di atas untuk menambah catatan.
+              </p>
+            </div>
+          ) : (
+            <>
               <div>
                 <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Kegiatan / Catatan</label>
                 <textarea
                   value={noteActivity}
                   onChange={(e) => setNoteActivity(e.target.value)}
                   rows={3}
+                  maxLength={500} 
                   placeholder="Tulis kegiatan atau catatan operasional..."
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent resize-none"
                 />
+                <div className="text-right text-[10px] text-slate-400 mt-1">
+                  {noteActivity.length}/500 karakter
+                </div>
               </div>
               <div className="flex justify-end">
                 <Button type="submit" isLoading={isAddingNote} disabled={!noteActivity.trim()} size="sm" className="gap-1.5">
                   <Plus size={14} /> Tambah Catatan
                 </Button>
               </div>
-            </form>
+            </>
           )}
+        </form>
+      )}
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             {record.notes.length === 0 ? (
