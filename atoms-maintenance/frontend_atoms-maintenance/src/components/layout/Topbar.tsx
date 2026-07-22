@@ -11,6 +11,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { cn } from '@/lib/utils';
 import { MonitorSettingsModal } from '@/components/layout/MonitorSettingsModal';
 import type { Notification } from '@/types';
+import { getRosteringUrl } from '@/config';
 
 // Roles allowed to rotate the kiosk monitor password (must match backend
 // route middleware: `role:Admin,Manager Teknik,Supervisor CNSD,Supervisor TFP`).
@@ -201,7 +202,7 @@ export const Topbar: React.FC = () => {
 
           {/* ── Home button ── */}
           <button
-            onClick={() => { window.location.href = 'http://172.19.38.157:5658/home'; }}
+            onClick={() => { window.location.href = `${getRosteringUrl()}/home`; }}
             className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
             aria-label="Kembali ke halaman utama"
             title="Home"

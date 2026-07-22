@@ -113,6 +113,8 @@ const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
 
 // ─── Cell value input (drag-select + copy-paste + navigasi keyboard) ──────
 
+// ─── Cell value input (drag-select + copy-paste + navigasi keyboard) ──────
+
 interface CellInputProps {
   isDisabled: boolean;
   isCompleted: boolean;
@@ -123,10 +125,9 @@ interface CellInputProps {
   isClipboard: boolean;
   onMouseDown: (key: string, e: React.MouseEvent) => void;
   onMouseEnter: (key: string) => void;
-  // ── Props navigasi keyboard ──
-  rowIndex?: number;
-  cellKey?: string;
-  onNavigate?: (targetRowIndex: number, targetCellKey: string) => void;
+  rowIndex: number;
+  cellKey: string;
+  onNavigate: (e: React.KeyboardEvent<HTMLInputElement>, rowIndex: number, cellKey: string) => void;
 }
 
 const CellInput: React.FC<CellInputProps> = ({
@@ -138,14 +139,9 @@ const CellInput: React.FC<CellInputProps> = ({
   if (isCompleted) return <span className="text-xs text-slate-700">{value || '—'}</span>;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!onNavigate || rowIndex === undefined || !cellKey) return;
-
-    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Enter') {
       e.preventDefault();
-      onNavigate(rowIndex + 1, cellKey);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      onNavigate(rowIndex - 1, cellKey);
+      onNavigate(e, rowIndex, cellKey);
     }
   };
 
@@ -1017,32 +1013,94 @@ export const TfpRadarDetailPage: React.FC = () => {
   }, [record, isCompleted, selectedCells, clipboardCells, itemValues, flatCells, draftItemMeta]);
 
   // ─── Navigasi keyboard (Enter / Arrow Up/Down) ──────────────────────────
-  const navigateToCell = useCallback((targetRowIndex: number, targetCellKey: string) => {
+    // ─── BARU: Navigasi keyboard yang robust untuk semua arah ───────────────
+  const handleCellKeyDown = useCallback((
+    e: React.KeyboardEvent<HTMLInputElement>,
+    currentRowIndex: number,
+    currentCellKey: string
+  ) => {
     if (!record) return;
+    
+    const cellKeys = flatCells.map((c) => c.key);
+    const currentColIndex = cellKeys.indexOf(currentCellKey);
+    if (currentColIndex === -1) return;
 
-    let finalRowIndex = targetRowIndex;
-    if (finalRowIndex < 0) finalRowIndex = 0;
-    if (finalRowIndex >= record.items.length) finalRowIndex = record.items.length - 1;
+    let nextRowIndex = currentRowIndex;
+    let nextColIndex = currentColIndex;
 
-    requestAnimationFrame(() => {
-      const escapedKey = targetCellKey.replace(/([.#:[\]+>~,])/g, '\\$1');
-      const selector = `input[data-row-index="${finalRowIndex}"][data-cell-key="${escapedKey}"]`;
+    if (e.key === 'ArrowUp') {
+      nextRowIndex = Math.max(0, currentRowIndex - 1);
+    } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      nextRowIndex = Math.min(record.items.length - 1, currentRowIndex + 1);
+    } else if (e.key === 'ArrowLeft') {
+      nextColIndex = Math.max(0, currentColIndex - 1);
+    } else if (e.key === 'ArrowRight') {
+      nextColIndex = Math.min(cellKeys.length - 1, currentColIndex + 1);
+    } else {
+      return;
+    }
+
+    const isValidCell = (rIdx: number, cIdx: number) => {
+      if (rIdx < 0 || rIdx >= record.items.length) return false;
+      if (cIdx < 0 || cIdx >= cellKeys.length) return false;
+      const item = record.items[rIdx];
+      if (isModeRow(item) || isSuplaiRow(item)) return false;
+      if (getItemDisabled(item.id, cellKeys[cIdx])) return false;
       
-      const el = document.querySelector(selector) as HTMLInputElement | null;
-      if (el) {
-        el.focus();
-        el.select();
-      } else {
-        const fallbackEl = document.querySelector(
-          `input[data-row-index="${finalRowIndex}"]`
-        ) as HTMLInputElement | null;
-        if (fallbackEl) {
-          fallbackEl.focus();
-          fallbackEl.select();
+      // Pastikan cell ini bukan bagian dari merge yang di-skip (bukan cell awal merge)
+      for (let i = cIdx - 1; i >= 0; i--) {
+        const checkKey = cellKeys[i];
+        const mergeSpan = getItemMerge(item.id, checkKey);
+        if (mergeSpan > 1 && i + mergeSpan - 1 >= cIdx) {
+          return false; 
         }
       }
-    });
-  }, [record]);
+      return true;
+    };
+
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter') {
+      const direction = e.key === 'ArrowUp' ? -1 : 1;
+      let r = nextRowIndex;
+      let found = false;
+      while (r >= 0 && r < record.items.length) {
+        if (isValidCell(r, nextColIndex)) {
+          nextRowIndex = r;
+          found = true;
+          break;
+        }
+        r += direction;
+      }
+      if (!found) nextRowIndex = currentRowIndex;
+    } else {
+      const direction = e.key === 'ArrowLeft' ? -1 : 1;
+      let c = nextColIndex;
+      let found = false;
+      while (c >= 0 && c < cellKeys.length) {
+        if (isValidCell(currentRowIndex, c)) {
+          nextColIndex = c;
+          found = true;
+          break;
+        }
+        c += direction;
+      }
+      if (!found) nextColIndex = currentColIndex;
+    }
+
+    const targetItem = record.items[nextRowIndex];
+    const targetCellKey = cellKeys[nextColIndex];
+
+    if (targetItem && targetCellKey) {
+      requestAnimationFrame(() => {
+        const escapedKey = targetCellKey.replace(/([.#:[\]+>~,])/g, '\\$1');
+        const selector = `input[data-row-index="${nextRowIndex}"][data-cell-key="${escapedKey}"]`;
+        const el = document.querySelector(selector) as HTMLInputElement | null;
+        if (el) {
+          el.focus();
+          el.select();
+        }
+      });
+    }
+  }, [record, flatCells, getItemDisabled, getItemMerge, isModeRow, isSuplaiRow]);
 
   const setFacilityField = (facilityId: number, field: 'kondisi' | 'keterangan', val: string) => {
     setFacilityValues((prev) => ({ ...prev, [facilityId]: { ...prev[facilityId], [field]: val } }));
@@ -1401,7 +1459,7 @@ export const TfpRadarDetailPage: React.FC = () => {
                     const compositeKey = `${item.id}__${cell.key}`;
                     renderedCells.push(
                       <td key={cell.key} colSpan={colspan} className={cn(tdCell, disabled && 'bg-slate-100')}>
-                        <CellInput
+                       <CellInput
                           isDisabled={disabled}
                           isCompleted={isCompleted}
                           value={val}
@@ -1411,10 +1469,9 @@ export const TfpRadarDetailPage: React.FC = () => {
                           isClipboard={clipboardCells.has(compositeKey)}
                           onMouseDown={handleCellMouseDown}
                           onMouseEnter={handleCellMouseEnter}
-                          // Props navigasi keyboard
                           rowIndex={idx}
                           cellKey={cell.key}
-                          onNavigate={navigateToCell}
+                          onNavigate={handleCellKeyDown}
                         />
                       </td>
                     );

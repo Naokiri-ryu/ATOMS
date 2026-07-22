@@ -28,17 +28,20 @@ import {
 import { Button } from '@/components/common/Button';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ShiftBadge } from '@/components/common/ShiftBadge';
-import { tfpAobGroundService } from '@/services/tfpAobGroundService';
-import { TfpAobGroundSignaturePanel } from './components/TfpAobGroundSignaturePanel';
+import { tfpGensetDvorService } from '@/services/tfpGensetDvorService';
+import { TfpGensetDvorSignaturePanel } from './components/TfpGensetDvorSignaturePanel';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import type {
-  TfpAobGroundRecordDetail,
-  TfpAobGroundItem,
-  TfpAobGroundFacility,
-  TfpAobGroundColumnsConfig,
-  TfpAobGroundPanel,
-} from '@/types/tfpAobGround';
+  TfpGensetDvorRecordDetail,
+  TfpGensetDvorItem,
+  TfpGensetDvorFacility,
+  TfpGensetDvorColumnsConfig,
+  TfpGensetDvorPanel,
+  TfpGensetDvorStatusOperasi,
+  TfpGensetDvorStatusMasterSlave,
+  TfpGensetDvorFuelLevel,
+} from '@/types/tfpGensetDvor';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -47,14 +50,14 @@ const cellKeyOf = (panelId: string, subKey: string) => `${panelId}.${subKey}`;
 
 /** Flatten a columns_config into an ordered list of cell descriptors. */
 interface FlatCell {
-  panel: TfpAobGroundPanel;
+  panel: TfpGensetDvorPanel;
   subKey: string;
   subLabel: string;
   key: string;
   index: number;
 }
 
-const flattenColumns = (config: TfpAobGroundColumnsConfig): FlatCell[] => {
+const flattenColumns = (config: TfpGensetDvorColumnsConfig): FlatCell[] => {
   const out: FlatCell[] = [];
   let i = 0;
   for (const panel of config) {
@@ -71,14 +74,8 @@ const flattenColumns = (config: TfpAobGroundColumnsConfig): FlatCell[] => {
   return out;
 };
 
-const isModeRow = (item: TfpAobGroundItem): boolean =>
-  item.parameter_name.toLowerCase().startsWith('mode');
-
-const isSuplaiRow = (item: TfpAobGroundItem): boolean =>
-  item.parameter_name.toLowerCase().startsWith('suplai aktif');
-
-// Kondisi options for facility rows
-const KONDISI_OPTIONS = ['Baik', 'Rusak', 'Tidak Ada'] as const;
+// Kondisi options for facility rows (Genset DVOR: only Baik / Tidak Baik)
+const KONDISI_OPTIONS = ['Baik', 'Tidak Baik'] as const;
 
 // Slug a user-typed label into a stable key (matches backend slug function)
 const slugify = (raw: string): string =>
@@ -237,7 +234,7 @@ const EditCell: React.FC<EditCellProps> = ({ isDisabled, isSelected, colspan, on
 // ─── Inline structure-edit popover for parameter rename ───────────────────
 
 interface ParamEditFormProps {
-  item: TfpAobGroundItem;
+  item: TfpGensetDvorItem;
   onSave: (patch: { parameter_number?: string | null; parameter_name?: string; unit?: string | null }) => Promise<void>;
   onCancel: () => void;
 }
@@ -370,7 +367,7 @@ const RowActionBtn: React.FC<{
 interface AddPanelModalProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (panel: TfpAobGroundPanel) => void;
+  onAdd: (panel: TfpGensetDvorPanel) => void;
   existingIds: string[];
 }
 
@@ -503,7 +500,7 @@ const AddPanelModal: React.FC<AddPanelModalProps> = ({ open, onClose, onAdd, exi
 // ─── Panel/Sub-column header in Edit Mode ──────────────────────────────────
 
 interface PanelHeaderEditProps {
-  panel: TfpAobGroundPanel;
+  panel: TfpGensetDvorPanel;
   onRename: (newLabel: string) => void;
   onDelete: () => void;
   onAddSub: () => void;
@@ -583,7 +580,7 @@ const PanelHeaderEdit: React.FC<PanelHeaderEditProps> = ({
 
 // ─── Main component ────────────────────────────────────────────────────────
 
-export const TfpAobGroundDetailPage: React.FC = () => {
+export const TfpGensetDvorDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -594,7 +591,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     user?.role === 'Manager Teknik' ||
     user?.role === 'Supervisor TFP';
 
-  const [record, setRecord] = useState<TfpAobGroundRecordDetail | null>(null);
+  const [record, setRecord] = useState<TfpGensetDvorRecordDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingStructure, setIsSavingStructure] = useState(false);
@@ -607,6 +604,13 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     Record<number, { kondisi: string; keterangan: string }>
   >({});
   const [timeFilled, setTimeFilled] = useState<string>('');
+
+  // Genset-specific fields
+  const [catatan, setCatatan] = useState<string>('');
+  const [statusOperasi, setStatusOperasi] = useState<TfpGensetDvorStatusOperasi | null>(null);
+  const [statusMasterSlave, setStatusMasterSlave] = useState<TfpGensetDvorStatusMasterSlave | null>(null);
+  const [fuelLevel, setFuelLevel] = useState<TfpGensetDvorFuelLevel | null>(null);
+  const [isSavingGensetFields, setIsSavingGensetFields] = useState(false);
 
   // Edit Mode state
   const [editMode, setEditMode] = useState(false);
@@ -627,7 +631,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
   const isCompleted = record?.status === 'completed' ?? false;
 
   // Structural draft state (only used while in Edit Mode, persisted via Simpan Struktur)
-  const [draftConfig, setDraftConfig] = useState<TfpAobGroundColumnsConfig | null>(null);
+  const [draftConfig, setDraftConfig] = useState<TfpGensetDvorColumnsConfig | null>(null);
   const [draftItemMeta, setDraftItemMeta] = useState<Record<number, {
     is_disabled_map: Record<string, boolean>;
     merge_map: Record<string, number>;
@@ -636,9 +640,15 @@ export const TfpAobGroundDetailPage: React.FC = () => {
 
   // ─── Data loading ───────────────────────────────────────────────────────
 
-  const hydrate = (data: TfpAobGroundRecordDetail) => {
+  const hydrate = (data: TfpGensetDvorRecordDetail) => {
     setRecord(data);
     setTimeFilled(data.time_filled ?? new Date().toTimeString().slice(0, 5));
+
+    // Genset-specific fields
+    setCatatan(data.catatan ?? '');
+    setStatusOperasi(data.status_operasi ?? null);
+    setStatusMasterSlave(data.status_master_slave ?? null);
+    setFuelLevel(data.fuel_level ?? null);
 
     const iv: Record<number, Record<string, string>> = {};
     data.items.forEach((item) => {
@@ -661,7 +671,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     if (!id) return;
     setIsLoading(true);
     try {
-      const data = await tfpAobGroundService.getRecord(Number(id));
+      const data = await tfpGensetDvorService.getRecord(Number(id));
       hydrate(data);
     } catch {
       setErrorMessage('Gagal memuat data form. Coba refresh halaman.');
@@ -683,7 +693,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
 
   // ─── Computed: effective columns_config & per-item meta ────────────────
 
-  const effectiveConfig: TfpAobGroundColumnsConfig = useMemo(
+  const effectiveConfig: TfpGensetDvorColumnsConfig = useMemo(
     () => draftConfig ?? record?.columns_config ?? [],
     [draftConfig, record],
   );
@@ -744,7 +754,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
 
       const isValidTime = /^([01]\d|2[0-3]):[0-5]\d$/.test(timeFilled.trim());
 
-      const updated = await tfpAobGroundService.updateRecord(record.id, {
+      const updated = await tfpGensetDvorService.updateRecord(record.id, {
         items: itemsPayload,
         facilities: facilitiesPayload,
         time_filled: isValidTime ? timeFilled.trim() : null,
@@ -761,6 +771,35 @@ export const TfpAobGroundDetailPage: React.FC = () => {
       }
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // ─── Genset-specific fields save ───────────────────────────────────────
+
+  const handleSaveGensetFields = async () => {
+    if (!record) return;
+    setIsSavingGensetFields(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const updated = await tfpGensetDvorService.updateGensetFields(record.id, {
+        catatan: catatan.trim() || null,
+        status_operasi: statusOperasi,
+        status_master_slave: statusMasterSlave,
+        fuel_level: fuelLevel,
+      });
+      hydrate(updated);
+      setSuccessMessage('Field Genset berhasil disimpan.');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        const data = err.response.data as { message?: string };
+        setErrorMessage(data.message ?? 'Gagal menyimpan field Genset.');
+      } else {
+        setErrorMessage('Gagal menyimpan field Genset. Coba lagi.');
+      }
+    } finally {
+      setIsSavingGensetFields(false);
     }
   };
 
@@ -783,7 +822,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
           merge_map: draft?.merge_map ?? it.merge_map ?? {},
         };
       });
-      const updated = await tfpAobGroundService.saveStructure(record.id, {
+      const updated = await tfpGensetDvorService.saveStructure(record.id, {
         columns_config: config,
         items: itemPatches,
       });
@@ -853,7 +892,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
   };
 
   // Columns_config mutations operate on draftConfig (initialized from server config)
-  const mutateConfig = (fn: (cfg: TfpAobGroundColumnsConfig) => TfpAobGroundColumnsConfig) => {
+  const mutateConfig = (fn: (cfg: TfpGensetDvorColumnsConfig) => TfpGensetDvorColumnsConfig) => {
     setDraftConfig((prev) => {
       const base = prev ?? (record?.columns_config ?? []);
       return fn(JSON.parse(JSON.stringify(base)));
@@ -891,13 +930,13 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     }));
   };
 
-  const handleAddPanel = (panel: TfpAobGroundPanel) => {
+  const handleAddPanel = (panel: TfpGensetDvorPanel) => {
     mutateConfig((cfg) => [...cfg, panel]);
   };
 
   // ─── Existing structure ops (parameters / facilities CRUD via dedicated endpoints) ──
 
-  const withStructureError = async (fn: () => Promise<TfpAobGroundRecordDetail>) => {
+  const withStructureError = async (fn: () => Promise<TfpGensetDvorRecordDetail>) => {
     setErrorMessage(null);
     try {
       const updated = await fn();
@@ -913,14 +952,14 @@ export const TfpAobGroundDetailPage: React.FC = () => {
   };
 
   const handleAddParameter = (data: { parameter_name: string; parameter_number?: string | null; unit?: string | null }) =>
-    withStructureError(() => tfpAobGroundService.addParameter(record!.id, data));
+    withStructureError(() => tfpGensetDvorService.addParameter(record!.id, data));
 
   const handleUpdateParameter = (paramId: number, patch: { parameter_number?: string | null; parameter_name?: string; unit?: string | null }) =>
-    withStructureError(() => tfpAobGroundService.updateParameter(record!.id, paramId, patch));
+    withStructureError(() => tfpGensetDvorService.updateParameter(record!.id, paramId, patch));
 
   const handleDeleteParameter = (paramId: number, name: string) => {
     if (!window.confirm(`Hapus parameter "${name}"? Data nilai yang sudah diisi akan ikut hilang.`)) return;
-    void withStructureError(() => tfpAobGroundService.deleteParameter(record!.id, paramId));
+    void withStructureError(() => tfpGensetDvorService.deleteParameter(record!.id, paramId));
   };
 
   const handleMoveParameter = (idx: number, dir: -1 | 1) => {
@@ -929,18 +968,18 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     const target = idx + dir;
     if (target < 0 || target >= ids.length) return;
     [ids[idx], ids[target]] = [ids[target], ids[idx]];
-    void withStructureError(() => tfpAobGroundService.reorderParameters(record.id, ids));
+    void withStructureError(() => tfpGensetDvorService.reorderParameters(record.id, ids));
   };
 
   const handleAddFacility = (name: string) =>
-    withStructureError(() => tfpAobGroundService.addFacility(record!.id, { facility_name: name }));
+    withStructureError(() => tfpGensetDvorService.addFacility(record!.id, { facility_name: name }));
 
   const handleUpdateFacility = (facilityId: number, name: string) =>
-    withStructureError(() => tfpAobGroundService.updateFacility(record!.id, facilityId, { facility_name: name }));
+    withStructureError(() => tfpGensetDvorService.updateFacility(record!.id, facilityId, { facility_name: name }));
 
   const handleDeleteFacility = (facilityId: number, name: string) => {
     if (!window.confirm(`Hapus fasilitas "${name}"?`)) return;
-    void withStructureError(() => tfpAobGroundService.deleteFacility(record!.id, facilityId));
+    void withStructureError(() => tfpGensetDvorService.deleteFacility(record!.id, facilityId));
   };
 
   const handleMoveFacility = (idx: number, dir: -1 | 1) => {
@@ -949,7 +988,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     const target = idx + dir;
     if (target < 0 || target >= ids.length) return;
     [ids[idx], ids[target]] = [ids[target], ids[idx]];
-    void withStructureError(() => tfpAobGroundService.reorderFacilities(record.id, ids));
+    void withStructureError(() => tfpGensetDvorService.reorderFacilities(record.id, ids));
   };
 
   const setItemCell = (itemId: number, cellKey: string, val: string) => {
@@ -979,7 +1018,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     const result = new Set<string>();
     for (let r = rMin; r <= rMax; r++) {
       const item = record.items[r];
-      if (isModeRow(item) || isSuplaiRow(item)) continue;
       for (let c = cMin; c <= cMax; c++) {
         const cell = flatCells[c];
         if (cell && !getItemDisabled(item.id, cell.key)) {
@@ -1092,7 +1130,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
             const targetItemId = itemIds[targetR];
             const targetCellKey = cellKeys[targetC];
             const targetItem = record.items[targetR];
-            if (!targetItem || isModeRow(targetItem) || isSuplaiRow(targetItem)) return;
+            if (!targetItem) return;
             if (getItemDisabled(targetItemId, targetCellKey)) return;
 
             const flatCellIndex = flatCells.findIndex(fc => fc.key === targetCellKey);
@@ -1177,7 +1215,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     return (
       <div className="max-w-7xl mx-auto py-20 text-center">
         <p className="text-slate-500">Form tidak ditemukan.</p>
-        <Button onClick={() => navigate('/tfp/aob-ground')} className="mt-4">
+        <Button onClick={() => navigate('/tfp/dvor-genset')} className="mt-4">
           Kembali ke Daftar
         </Button>
       </div>
@@ -1196,7 +1234,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
       <div className="flex items-center gap-2 text-xs text-slate-500">
         <button type="button" onClick={() => navigate('/tfp')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">TFP</button>
         <span>/</span>
-        <button type="button" onClick={() => navigate('/tfp/aob-ground')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">Performance Check AOB Ground</button>
+        <button type="button" onClick={() => navigate('/tfp/dvor-genset')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">Performance Check Genset DVOR</button>
         <span>/</span>
         <span className="text-slate-700 font-mono font-medium">{record.form_number}</span>
       </div>
@@ -1205,12 +1243,12 @@ export const TfpAobGroundDetailPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/tfp/aob-ground')} className="hover:bg-slate-100 mt-0.5">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/tfp/dvor-genset')} className="hover:bg-slate-100 mt-0.5">
               <ArrowLeft size={20} />
             </Button>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg font-bold text-slate-900">Performance Check AOB Lantai Ground</h1>
+                <h1 className="text-lg font-bold text-slate-900">Performance Check Genset DVOR</h1>
                 <StatusBadge status={record.status} variant="pill" />
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -1280,7 +1318,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
 
             <Button
               variant="ghost" size="sm"
-              onClick={() => navigate(`/tfp/aob-ground/${record.id}/print`)}
+              onClick={() => navigate(`/tfp/dvor-genset/${record.id}/print`)}
               className="gap-1.5 text-indigo-600 hover:bg-indigo-50"
             >
               <Printer size={15} />
@@ -1348,6 +1386,142 @@ export const TfpAobGroundDetailPage: React.FC = () => {
           {successMessage}
         </div>
       )}
+
+      {/* ─── Genset-specific fields ─── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/60">
+          <Zap size={16} className="text-orange-600" />
+          <h2 className="text-sm font-bold text-slate-800">Data Genset</h2>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Status Operasi */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Status Operasi
+              </label>
+              <div className="inline-flex rounded-md border border-slate-200 overflow-hidden shadow-sm">
+                {(['PLN_OFF', 'RUN_UP'] as const).map((opt) => {
+                  const active = statusOperasi === opt;
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      disabled={isCompleted}
+                      onClick={() => setStatusOperasi(active ? null : opt)}
+                      className={cn(
+                        'px-3 py-1.5 text-xs font-semibold transition-colors border-r border-slate-200 last:border-r-0 disabled:opacity-50 disabled:cursor-not-allowed',
+                        active
+                          ? opt === 'PLN_OFF'
+                            ? 'bg-slate-600 text-white border-slate-600'
+                            : 'bg-emerald-600 text-white border-emerald-600'
+                          : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200',
+                      )}
+                    >
+                      {opt === 'PLN_OFF' ? 'PLN OFF' : 'RUN UP'}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Status Master/Slave */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Status Master/Slave
+              </label>
+              <div className="inline-flex rounded-md border border-slate-200 overflow-hidden shadow-sm">
+                {(['Master', 'Slave'] as const).map((opt) => {
+                  const active = statusMasterSlave === opt;
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      disabled={isCompleted}
+                      onClick={() => setStatusMasterSlave(active ? null : opt)}
+                      className={cn(
+                        'px-3 py-1.5 text-xs font-semibold transition-colors border-r border-slate-200 last:border-r-0 disabled:opacity-50 disabled:cursor-not-allowed',
+                        active
+                          ? 'bg-sky-600 text-white border-sky-600'
+                          : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200',
+                      )}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Fuel Level */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Fuel Level
+              </label>
+              <div className="inline-flex rounded-md border border-slate-200 overflow-hidden shadow-sm">
+                {(['E', '1/4', '1/2', '3/4', 'F'] as const).map((opt) => {
+                  const active = fuelLevel === opt;
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      disabled={isCompleted}
+                      onClick={() => setFuelLevel(active ? null : opt)}
+                      className={cn(
+                        'px-2.5 py-1.5 text-[11px] font-semibold transition-colors border-r border-slate-200 last:border-r-0 disabled:opacity-50 disabled:cursor-not-allowed',
+                        active
+                          ? opt === 'E'
+                            ? 'bg-red-500 text-white border-red-500'
+                            : opt === 'F'
+                            ? 'bg-emerald-600 text-white border-emerald-600'
+                            : 'bg-amber-500 text-white border-amber-500'
+                          : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200',
+                      )}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Catatan */}
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Catatan
+            </label>
+            {isCompleted ? (
+              <p className="text-xs text-slate-700 bg-slate-50 rounded-lg border border-slate-200 px-3 py-2 min-h-[36px]">
+                {catatan || <span className="text-slate-400 italic">—</span>}
+              </p>
+            ) : (
+              <textarea
+                value={catatan}
+                onChange={(e) => setCatatan(e.target.value)}
+                placeholder="Catatan Genset (opsional)..."
+                rows={2}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white focus:ring-1 focus:ring-brand-primary focus:outline-none resize-none"
+              />
+            )}
+          </div>
+
+          {/* Save genset fields button */}
+          {!isCompleted && (
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSaveGensetFields}
+                isLoading={isSavingGensetFields}
+                className="gap-2 text-xs"
+                variant="outline"
+              >
+                <Save size={14} />
+                Simpan Data Genset
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* ─── Two-panel layout ─── */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 items-start">
@@ -1454,6 +1628,10 @@ export const TfpAobGroundDetailPage: React.FC = () => {
                   const isFirstRow = idx === 0;
                   const isLastRow = idx === record.items.length - 1;
 
+                  // Group label heading row
+                  const prevItem = idx > 0 ? record.items[idx - 1] : null;
+                  const showGroupLabel = item.group_label && item.group_label !== prevItem?.group_label;
+
                   const tdNo = 'px-2 py-2 text-slate-500 font-mono text-center text-[11px] border-b border-slate-100 align-middle';
                   const tdName = 'px-3 py-2 font-medium text-slate-700 text-xs border-b border-slate-100 align-middle';
                   const tdCell = 'px-1.5 py-1.5 border-b border-l border-slate-100 align-middle';
@@ -1484,8 +1662,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
                   // Render dynamic cells (skip those consumed by merge)
                   const skipKeys = new Set<string>();
                   const renderedCells: React.ReactNode[] = [];
-                  const modeRow = isModeRow(item);
-                  const suplaiRow = isSuplaiRow(item);
 
                   flatCells.forEach((cell) => {
                     if (skipKeys.has(cell.key)) return;
@@ -1540,30 +1716,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
                     // Normal value entry mode
                     const val = itemValues[item.id]?.[cell.key] ?? '';
 
-                    // Mode/Suplai toggles when applicable — first enabled cell of each panel
-                    if ((modeRow || suplaiRow) && !disabled && colspan >= 1) {
-                      const isPLNATSPanel = suplaiRow && cell.panel.id === 'panel_ats_a12';
-                      let options: readonly string[];
-                      let variant: 'mode' | 'suplai' = modeRow ? 'mode' : 'suplai';
-                      if (modeRow) options = ['Auto', 'Manual'];
-                      else if (isPLNATSPanel) options = ['PLN 1', 'PLN 2'];
-                      else options = ['PLN', 'UPS'];
-
-                      renderedCells.push(
-                        <td key={cell.key} colSpan={colspan} className={cn(tdCell, 'text-center', disabled && 'bg-slate-100')}>
-                          {isCompleted ? (
-                            <span className="text-xs text-slate-700 font-semibold">{val || '—'}</span>
-                          ) : (
-                            <ToggleButtonGroup
-                              options={options} value={val} variant={variant}
-                              onChange={(v) => setItemCell(item.id, cell.key, v)}
-                            />
-                          )}
-                        </td>
-                      );
-                      return;
-                    }
-
                     // Normal value entry mode — drag-select + copy-paste enabled
                     const compositeKey = `${item.id}__${cell.key}`;
                     renderedCells.push(
@@ -1593,6 +1745,14 @@ export const TfpAobGroundDetailPage: React.FC = () => {
 
                   return (
                     <React.Fragment key={item.id}>
+                      {showGroupLabel && (
+                        <tr className="bg-slate-100">
+                          <td colSpan={2 + totalCellCount + (showStructureControls ? 1 : 0)}
+                            className="px-3 py-2 text-xs font-bold text-slate-700 border-b border-slate-200 uppercase tracking-wider">
+                            {item.group_label}
+                          </td>
+                        </tr>
+                      )}
                       <tr className={rowBase}>
                         <td className={tdNo}>{idx + 1}</td>
                         <td className={tdName}>
@@ -1706,7 +1866,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
         </div>
       )}
 
-      <TfpAobGroundSignaturePanel record={record} onUpdated={hydrate} />
+      <TfpGensetDvorSignaturePanel record={record} onUpdated={hydrate} />
 
       <AddPanelModal
         open={showAddPanel}
@@ -1762,7 +1922,7 @@ const SubColumnHeader: React.FC<{
 // ─── FacilityRow — extracted to keep the main component readable ───────────
 
 interface FacilityRowProps {
-  facility: TfpAobGroundFacility;
+  facility: TfpGensetDvorFacility;
   idx: number;
   total: number;
   isCompleted: boolean;

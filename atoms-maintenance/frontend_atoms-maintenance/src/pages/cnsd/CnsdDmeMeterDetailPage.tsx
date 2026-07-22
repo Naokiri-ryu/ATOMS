@@ -42,14 +42,6 @@ interface SectionMeta {
   groups: Array<{ number: number | null; name: string | null }>;
 }
 
-/**
- * CNSD DME Meter Reading — detail / edit page (FORM N-5).
- *
- * Mirrors paper 011_DME. Section A (PERALATAN) with 4 groups using per-item
- * single/dual hasil layouts. FRONT PANEL, PARAMETER, POWER SUPPLY, BATTERY
- * all use TX1/TX2 dual columns. Section B (LINGKUNGAN KERJA) single HASIL.
- * Tx1/Tx2 mode (MAIN / STANDBY) editable by Manager/Supervisor.
- */
 export const CnsdDmeMeterDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -385,6 +377,7 @@ const DmeSectionPanel: React.FC<DmeSectionPanelProps> = ({
 
   const isMeterReading = sectionMeta.inputs_layout === 'meter_reading';
   const colCount = 6;
+  const editableItems = useMemo(() => items.filter((i) => !i.is_header), [items]);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -395,11 +388,11 @@ const DmeSectionPanel: React.FC<DmeSectionPanelProps> = ({
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
             {isMeterReading
-              ? 'FRONT PANEL, PARAMETER, POWER SUPPLY, dan BATTERY menggunakan kolom TX1/TX2.'
-              : 'Isi kolom HASIL PEMERIKSAAN untuk tiap kegiatan lingkungan.'}
+              ? 'FRONT PANEL, PARAMETER, POWER SUPPLY, dan BATTERY menggunakan kolom TX1/TX2. Gunakan ↑↓←→ atau Enter untuk navigasi.'
+              : 'Isi kolom HASIL PEMERIKSAAN untuk tiap kegiatan lingkungan. Gunakan ↑↓←→ atau Enter untuk navigasi.'}
           </p>
         </div>
-        <span className="text-xs font-medium text-slate-400">{items.filter((i) => !i.is_header).length} item</span>
+        <span className="text-xs font-medium text-slate-400">{editableItems.length} item</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -437,9 +430,20 @@ const DmeSectionPanel: React.FC<DmeSectionPanelProps> = ({
                       </td>
                     </tr>
                   )}
-                  {group.items.map((item) => (
-                    <DmeItemRow key={item.id} item={item} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} />
-                  ))}
+                  {group.items.map((item) => {
+                    const rowIndex = editableItems.findIndex(i => i.id === item.id);
+                    return (
+                      <DmeItemRow 
+                        key={item.id} 
+                        item={item} 
+                        rowIndex={rowIndex}
+                        totalRows={editableItems.length}
+                        isReadOnly={isReadOnly} 
+                        getValue={getValue} 
+                        onChange={onChange} 
+                      />
+                    );
+                  })}
                 </React.Fragment>
               ))
             )}
@@ -452,14 +456,87 @@ const DmeSectionPanel: React.FC<DmeSectionPanelProps> = ({
 
 interface DmeItemRowProps {
   item: CnsdDmeMeterItem;
+  rowIndex: number;
+  totalRows: number;
   isReadOnly: boolean;
   getValue: (item: CnsdDmeMeterItem, field: keyof CnsdDmeMeterItem) => string;
   onChange: (itemId: number, field: keyof CnsdDmeMeterItem, value: string | null) => void;
 }
 
-const DmeItemRow: React.FC<DmeItemRowProps> = ({ item, isReadOnly, getValue, onChange }) => {
+const DmeItemRow: React.FC<DmeItemRowProps> = ({ 
+  item, rowIndex, totalRows, isReadOnly, getValue, onChange 
+}) => {
   const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
   const isDual = item.hasil_layout === 'dual';
+  
+  const availableFields = isDual 
+    ? (['hasil_1', 'hasil_2', 'keterangan'] as const) 
+    : (['hasil_1', 'keterangan'] as const);
+
+  const focusInput = (targetRow: number, preferredField: string) => {
+    let el = document.querySelector(`input[data-row="${targetRow}"][data-field="${preferredField}"]`) as HTMLInputElement;
+    
+    if (el) {
+      el.focus();
+      el.select();
+      return;
+    }
+    
+    if (preferredField === 'hasil_2') {
+      el = document.querySelector(`input[data-row="${targetRow}"][data-field="keterangan"]`) as HTMLInputElement;
+    } else if (preferredField === 'keterangan') {
+      el = document.querySelector(`input[data-row="${targetRow}"][data-field="hasil_1"]`) as HTMLInputElement;
+    }
+    
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, currentField: typeof availableFields[number]) => {
+    if (isReadOnly) return;
+
+    const currentFieldIdx = availableFields.indexOf(currentField);
+
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      const nextRow = rowIndex + 1;
+      if (nextRow < totalRows) {
+        focusInput(nextRow, currentField);
+      }
+    } 
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevRow = rowIndex - 1;
+      if (prevRow >= 0) {
+        focusInput(prevRow, currentField);
+      }
+    } 
+    else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (currentFieldIdx < availableFields.length - 1) {
+        focusInput(rowIndex, availableFields[currentFieldIdx + 1]);
+      } else {
+        if (rowIndex + 1 < totalRows) {
+          focusInput(rowIndex + 1, availableFields[0]);
+        }
+      }
+    } 
+    else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentFieldIdx > 0) {
+        focusInput(rowIndex, availableFields[currentFieldIdx - 1]);
+      } else {
+        if (rowIndex - 1 >= 0) {
+          const prevRowFields = document.querySelector(`input[data-row="${rowIndex - 1}"]`) 
+            ? (document.querySelector(`input[data-row="${rowIndex - 1}"][data-field="hasil_2"]`) ? ['hasil_1', 'hasil_2', 'keterangan'] : ['hasil_1', 'keterangan'])
+            : ['hasil_1', 'keterangan'];
+          focusInput(rowIndex - 1, prevRowFields[prevRowFields.length - 1]);
+        }
+      }
+    }
+  };
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
@@ -471,19 +548,59 @@ const DmeItemRow: React.FC<DmeItemRowProps> = ({ item, isReadOnly, getValue, onC
       {isDual ? (
         <>
           <td className="px-2 py-2 align-middle">
-            <input type="text" className={inputClass} placeholder="TX1" value={getValue(item, 'hasil_1')} onChange={(e) => onChange(item.id, 'hasil_1', e.target.value)} disabled={isReadOnly} />
+            <input 
+              type="text" 
+              className={inputClass} 
+              placeholder="TX1" 
+              value={getValue(item, 'hasil_1')} 
+              onChange={(e) => onChange(item.id, 'hasil_1', e.target.value)} 
+              disabled={isReadOnly}
+              data-row={rowIndex}
+              data-field="hasil_1"
+              onKeyDown={(e) => handleKeyDown(e, 'hasil_1')}
+            />
           </td>
           <td className="px-2 py-2 align-middle">
-            <input type="text" className={inputClass} placeholder="TX2" value={getValue(item, 'hasil_2')} onChange={(e) => onChange(item.id, 'hasil_2', e.target.value)} disabled={isReadOnly} />
+            <input 
+              type="text" 
+              className={inputClass} 
+              placeholder="TX2" 
+              value={getValue(item, 'hasil_2')} 
+              onChange={(e) => onChange(item.id, 'hasil_2', e.target.value)} 
+              disabled={isReadOnly}
+              data-row={rowIndex}
+              data-field="hasil_2"
+              onKeyDown={(e) => handleKeyDown(e, 'hasil_2')}
+            />
           </td>
         </>
       ) : (
         <td colSpan={2} className="px-2 py-2 align-middle">
-          <input type="text" className={inputClass} placeholder="..." value={getValue(item, 'hasil_1')} onChange={(e) => onChange(item.id, 'hasil_1', e.target.value)} disabled={isReadOnly} />
+          <input 
+            type="text" 
+            className={inputClass} 
+            placeholder="..." 
+            value={getValue(item, 'hasil_1')} 
+            onChange={(e) => onChange(item.id, 'hasil_1', e.target.value)} 
+            disabled={isReadOnly}
+            data-row={rowIndex}
+            data-field="hasil_1"
+            onKeyDown={(e) => handleKeyDown(e, 'hasil_1')}
+          />
         </td>
       )}
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, 'keterangan')} onChange={(e) => onChange(item.id, 'keterangan', e.target.value)} disabled={isReadOnly} />
+        <input 
+          type="text" 
+          className={inputClass} 
+          placeholder="Catatan" 
+          value={getValue(item, 'keterangan')} 
+          onChange={(e) => onChange(item.id, 'keterangan', e.target.value)} 
+          disabled={isReadOnly}
+          data-row={rowIndex}
+          data-field="keterangan"
+          onKeyDown={(e) => handleKeyDown(e, 'keterangan')}
+        />
       </td>
     </tr>
   );

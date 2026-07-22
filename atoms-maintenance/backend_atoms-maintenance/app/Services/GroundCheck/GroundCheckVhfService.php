@@ -28,6 +28,13 @@ use RuntimeException;
  *   - maintenanceItems     : Form 2 "Pelaksanaan Kegiatan Pemeliharaan Pencegahan"
  *
  * Signatures immutable. Never writes to rostering DB.
+ *
+ * [UBAH] Opsi A diterapkan pada createRecord(): pengecekan "sudah ada record
+ * untuk tanggal + shift yang sama" dihapus, sehingga sekarang boleh membuat
+ * lebih dari 1 Ground Check VHF pada tanggal & shift yang sama.
+ * findExistingRecord() tetap dipertahankan (masih dipakai controller untuk
+ * menampilkan info existing_record pada respons 409 kasus lain, dan bisa
+ * berguna untuk fitur lain di masa depan), tapi tidak lagi memblokir create.
  */
 class GroundCheckVhfService
 {
@@ -119,13 +126,20 @@ class GroundCheckVhfService
         $date      = $data['date'];
         $shiftType = $data['shift_type'];
 
-        $existing = $this->findExistingRecord($formType, $date, $shiftType);
-        if ($existing) {
-            throw new RuntimeException(
-                'Ground Check VHF untuk tanggal ' . $date . ' shift ' . $shiftType . ' sudah ada.',
-                409
-            );
-        }
+        // [DIHAPUS - Opsi A] Pengecekan "sudah ada record untuk tanggal + shift
+        // yang sama" dihapus. Sebelumnya di sini ada:
+        //
+        //   $existing = $this->findExistingRecord($formType, $date, $shiftType);
+        //   if ($existing) {
+        //       throw new RuntimeException(
+        //           'Ground Check VHF untuk tanggal ' . $date . ' shift ' . $shiftType . ' sudah ada.',
+        //           409
+        //       );
+        //   }
+        //
+        // Sekarang lebih dari 1 record boleh dibuat untuk tanggal & shift yang
+        // sama. generateFormNumber() di bawah tetap menjamin form_number unik
+        // per hari (pakai counter -001, -002, dst.) jadi tidak akan bentrok.
 
         $rosterContext = $this->resolveRosterContext($shiftType, $date);
 
