@@ -113,6 +113,12 @@ import { LogbookTfpDetail } from '@/pages/logbook/LogbookTfpDetail';
 import { LogbookTfpPrintView } from '@/pages/logbook/LogbookTfpPrintView';
 import { MonitorPage } from '@/pages/monitor/MonitorPage';
 import { ComingSoonPage } from '@/pages/shared/ComingSoonPage';
+import { TfpGensetDvorListPage } from '@/pages/tfp/TfpGensetDVORListPage';
+import { TfpGensetDvorDetailPage } from '@/pages/tfp/TfpGensetDVORDetailPage';
+import { TfpGensetDvorPrintView } from '@/pages/tfp/TfpGensetDVORPrintView';
+import { TfpGensetRadarListPage } from '@/pages/tfp/TfpGensetRadarListPage';
+import { TfpGensetRadarDetailPage } from '@/pages/tfp/TfpGensetRadarDetailPage';
+import { TfpGensetRadarPrintView } from '@/pages/tfp/TfpGensetRadarPrintView';
 
 export const router = createBrowserRouter([
   {
@@ -162,6 +168,8 @@ export const router = createBrowserRouter([
       { path: '/ground-check/dvor/:id/print', element: <GroundCheckDvorPrintView /> },
       { path: '/logbooks/tfp/:id/print', element: <LogbookTfpPrintView /> },
       { path: '/logbooks/cnsd/:id/print', element: <LogbookCnsdPrintView /> },
+      { path: '/tfp/dvor-genset/:id/print', element: <TfpGensetDvorPrintView /> },
+      { path: '/tfp/genset-radar/:id/print', element: <TfpGensetRadarPrintView /> },
       {
         element: <AppShell />,
         children: [
@@ -254,6 +262,11 @@ export const router = createBrowserRouter([
           { path: '/tfp/glidepath', element: <TfpGlidepathListPage /> },
           { path: '/tfp/glidepath/:id', element: <TfpGlidepathDetailPage /> },
           { path: '/tfp/:code/coming-soon', element: <ComingSoonPage /> },
+          { path: '/tfp/dvor-genset', element: <TfpGensetDvorListPage /> },
+          { path: '/tfp/dvor-genset/:id', element: <TfpGensetDvorDetailPage /> },
+          { path: '/tfp/genset-radar', element: <TfpGensetRadarListPage /> },
+          { path: '/tfp/genset-radar/new', element: <TfpGensetRadarDetailPage /> },
+          { path: '/tfp/genset-radar/:id', element: <TfpGensetRadarDetailPage /> },
 
           // Ground Check
           { path: '/ground-check', element: <GroundCheckIndexPage /> },

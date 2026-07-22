@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\V1\Reporting\ReportingDamageReportController;
 use App\Http\Controllers\Api\V1\Reporting\ReportingPersonController;
 use App\Http\Controllers\Api\V1\Logbook\LogbookTfpController;
 use App\Http\Controllers\Api\V1\Logbook\LogbookCnsdController;
+use App\Http\Controllers\Api\V1\Tfp\TfpGensetRadarController;
 
 Route::prefix('v1')->group(function () {
     // ─── Public Auth Routes ────────────────────────────────────────────────
@@ -452,6 +453,15 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{id}', [TfpGensetDvorController::class, 'destroy'])
                 ->whereNumber('id')
                 ->middleware('role:Admin,Manager Teknik,Supervisor CNSD,Supervisor TFP');
+
+        // TFP Genset Radar Routes
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::get('/tfp/genset-radar', [TfpGensetRadarController::class, 'index']);
+            Route::get('/tfp/genset-radar/{id}', [TfpGensetRadarController::class, 'show']);
+            Route::post('/tfp/genset-radar', [TfpGensetRadarController::class, 'store']);
+            Route::put('/tfp/genset-radar/{id}', [TfpGensetRadarController::class, 'update']);
+            Route::delete('/tfp/genset-radar/{id}', [TfpGensetRadarController::class, 'destroy']);
+        });
 
             // Structural edit (Edit Mode) — controller enforces role guard
             Route::put('/{id}/structure',              [TfpGensetDvorController::class, 'saveStructure'])->whereNumber('id');

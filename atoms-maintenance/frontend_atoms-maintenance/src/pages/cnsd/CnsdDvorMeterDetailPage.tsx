@@ -42,14 +42,6 @@ interface SectionMeta {
   groups: Array<{ code: string | null; name: string | null }>;
 }
 
-/**
- * CNSD DVOR Meter Reading — detail / edit page (FORM N-5).
- *
- * Mirrors paper 010_DVOR. Section I (PERALATAN) groups A-G with single
- * HASIL PEMERIKSAAN column and limit_value. Section II (LINGKUNGAN KERJA).
- * Equipment metadata (Merk / Type / SN) and Tx1/Tx2 mode editable by
- * Manager / Supervisor.
- */
 export const CnsdDvorMeterDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -388,6 +380,7 @@ const DvorSectionPanel: React.FC<DvorSectionPanelProps> = ({
 
   const isPeralatan = sectionMeta.inputs_layout === 'single_result';
   const colCount = 5;
+  const editableItems = useMemo(() => items.filter((i) => !i.is_header), [items]);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -398,11 +391,11 @@ const DvorSectionPanel: React.FC<DvorSectionPanelProps> = ({
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
             {isPeralatan
-              ? 'Isi kolom HASIL PEMERIKSAAN untuk masing-masing parameter (sesuaikan dengan LIMIT).'
-              : 'Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan.'}
+              ? 'Isi kolom HASIL PEMERIKSAAN untuk masing-masing parameter (sesuaikan dengan LIMIT). Gunakan ↑↓←→ atau Enter untuk navigasi.'
+              : 'Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan. Gunakan ↑↓←→ atau Enter untuk navigasi.'}
           </p>
         </div>
-        <span className="text-xs font-medium text-slate-400">{items.filter((i) => !i.is_header).length} item</span>
+        <span className="text-xs font-medium text-slate-400">{editableItems.length} item</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -437,16 +430,20 @@ const DvorSectionPanel: React.FC<DvorSectionPanelProps> = ({
                       </td>
                     </tr>
                   )}
-                  {group.items.map((item, idx) => (
-                    <DvorItemRow
-                      key={item.id}
-                      item={item}
-                      rowIdx={idx + 1}
-                      isReadOnly={isReadOnly}
-                      getValue={getValue}
-                      onChange={onChange}
-                    />
-                  ))}
+                  {group.items.map((item) => {
+                    const rowIndex = editableItems.findIndex(i => i.id === item.id);
+                    return (
+                      <DvorItemRow
+                        key={item.id}
+                        item={item}
+                        rowIndex={rowIndex}
+                        totalRows={editableItems.length}
+                        isReadOnly={isReadOnly}
+                        getValue={getValue}
+                        onChange={onChange}
+                      />
+                    );
+                  })}
                 </React.Fragment>
               ))
             )}
@@ -459,18 +456,83 @@ const DvorSectionPanel: React.FC<DvorSectionPanelProps> = ({
 
 interface DvorItemRowProps {
   item: CnsdDvorMeterItem;
-  rowIdx: number;
+  rowIndex: number;
+  totalRows: number;
   isReadOnly: boolean;
   getValue: (item: CnsdDvorMeterItem, field: keyof CnsdDvorMeterItem) => string;
   onChange: (itemId: number, field: keyof CnsdDvorMeterItem, value: string | null) => void;
 }
 
-const DvorItemRow: React.FC<DvorItemRowProps> = ({ item, rowIdx, isReadOnly, getValue, onChange }) => {
+const DvorItemRow: React.FC<DvorItemRowProps> = ({ 
+  item, rowIndex, totalRows, isReadOnly, getValue, onChange 
+}) => {
   const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
+  const availableFields = ['hasil_pemeriksaan', 'keterangan'] as const;
+
+  const focusInput = (targetRow: number, preferredField: string) => {
+    let el = document.querySelector(`input[data-row="${targetRow}"][data-field="${preferredField}"]`) as HTMLInputElement;
+    
+    if (el) {
+      el.focus();
+      el.select();
+      return;
+    }
+    
+    // Fallback cerdas jika field tidak ditemukan
+    if (preferredField === 'keterangan') {
+      el = document.querySelector(`input[data-row="${targetRow}"][data-field="hasil_pemeriksaan"]`) as HTMLInputElement;
+    }
+    
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, currentField: typeof availableFields[number]) => {
+    if (isReadOnly) return;
+
+    const currentFieldIdx = availableFields.indexOf(currentField);
+
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      const nextRow = rowIndex + 1;
+      if (nextRow < totalRows) {
+        focusInput(nextRow, currentField);
+      }
+    } 
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevRow = rowIndex - 1;
+      if (prevRow >= 0) {
+        focusInput(prevRow, currentField);
+      }
+    } 
+    else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (currentFieldIdx < availableFields.length - 1) {
+        focusInput(rowIndex, availableFields[currentFieldIdx + 1]);
+      } else {
+        if (rowIndex + 1 < totalRows) {
+          focusInput(rowIndex + 1, availableFields[0]);
+        }
+      }
+    } 
+    else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentFieldIdx > 0) {
+        focusInput(rowIndex, availableFields[currentFieldIdx - 1]);
+      } else {
+        if (rowIndex - 1 >= 0) {
+          focusInput(rowIndex - 1, availableFields[availableFields.length - 1]);
+        }
+      }
+    }
+  };
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
-      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{rowIdx}</td>
+      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{rowIndex + 1}</td>
       <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.item_name}</td>
       <td className={cn('px-2 py-2 align-middle text-center text-slate-600 text-[11px]', !item.limit_value && 'text-slate-300')}>
         {item.limit_value || '—'}
@@ -483,6 +545,9 @@ const DvorItemRow: React.FC<DvorItemRowProps> = ({ item, rowIdx, isReadOnly, get
           value={getValue(item, 'hasil_pemeriksaan')}
           onChange={(e) => onChange(item.id, 'hasil_pemeriksaan', e.target.value)}
           disabled={isReadOnly}
+          data-row={rowIndex}
+          data-field="hasil_pemeriksaan"
+          onKeyDown={(e) => handleKeyDown(e, 'hasil_pemeriksaan')}
         />
       </td>
       <td className="px-2 py-2 align-middle">
@@ -493,6 +558,9 @@ const DvorItemRow: React.FC<DvorItemRowProps> = ({ item, rowIdx, isReadOnly, get
           value={getValue(item, 'keterangan')}
           onChange={(e) => onChange(item.id, 'keterangan', e.target.value)}
           disabled={isReadOnly}
+          data-row={rowIndex}
+          data-field="keterangan"
+          onKeyDown={(e) => handleKeyDown(e, 'keterangan')}
         />
       </td>
     </tr>

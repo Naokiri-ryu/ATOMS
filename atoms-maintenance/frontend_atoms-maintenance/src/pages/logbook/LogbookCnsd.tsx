@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -9,6 +9,7 @@ import {
   Filter,
   Plus,
   Printer,
+  Search,
   Trash2,
   X,
 } from 'lucide-react';
@@ -55,6 +56,20 @@ const formatDateShort = (dateStr: string): string => {
   } catch {
     return dateStr;
   }
+};
+
+// [TAMBAH] Normalisasi string untuk pencarian nama — lowercase + trim,
+// dipakai di kedua sisi (query & nama manager) supaya match tidak
+// case-sensitive dan tidak terganggu spasi berlebih.
+const normalize = (s: string): string => s.trim().toLowerCase();
+
+// [TAMBAH] Cek apakah sebuah logbook punya minimal 1 manager on-duty yang
+// namanya cocok (substring match) dengan query pencarian.
+const matchesEmployeeSearch = (lb: LogbookCnsdSummary, query: string): boolean => {
+  const q = normalize(query);
+  if (!q) return true;
+  if (!lb.managers_on_duty || lb.managers_on_duty.length === 0) return false;
+  return lb.managers_on_duty.some((mgr) => normalize(mgr.name).includes(q));
 };
 
 // ─── Create Modal ──────────────────────────────────────────
@@ -176,7 +191,10 @@ export const LogbookCnsd: React.FC = () => {
 
   const [yearFilter, setYearFilter] = useState('');
   const [signedFilter, setSignedFilter] = useState('');
+  // [TAMBAH] Query pencarian nama karyawan (Manager Teknik On Duty)
+  const [employeeSearch, setEmployeeSearch] = useState('');
 
+   // ── Data state ─────────────────────────────────────────
   const [logbooks, setLogbooks] = useState<LogbookCnsdSummary[]>([]);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -218,9 +236,19 @@ export const LogbookCnsd: React.FC = () => {
     void fetchLogbooks();
   }, [fetchLogbooks]);
 
+  // [TAMBAH] Daftar logbook setelah difilter oleh nama karyawan (client-side).
+  // Filter tahun & status TTD tetap dari server (fetchLogbooks); pencarian
+  // nama diterapkan di atas hasil yang sudah di-fetch, karena nama manager
+  // sudah ikut termuat per baris dari respons listLogbooks.
+  const filteredLogbooks = useMemo(
+    () => logbooks.filter((lb) => matchesEmployeeSearch(lb, employeeSearch)),
+    [logbooks, employeeSearch],
+  );
+
   const resetFilters = () => {
     setYearFilter('');
     setSignedFilter('');
+    setEmployeeSearch(''); // [TAMBAH]
   };
 
   const handleDelete = async (lb: LogbookCnsdSummary) => {
@@ -242,9 +270,11 @@ export const LogbookCnsd: React.FC = () => {
     }
   };
 
-  const hasActiveFilters = !!(yearFilter || signedFilter);
+  // [UBAH] hasActiveFilters & empty-state sekarang juga memperhitungkan
+  // pencarian nama karyawan
+  const hasActiveFilters = !!(yearFilter || signedFilter || employeeSearch);
   const isDBEmpty = !isLoading && !hasActiveFilters && logbooks.length === 0 && !errorMessage;
-  const isFilterEmpty = !isLoading && hasActiveFilters && logbooks.length === 0;
+  const isFilterEmpty = !isLoading && hasActiveFilters && filteredLogbooks.length === 0;
 
   const selectClass =
     'h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent min-w-0';
@@ -294,6 +324,29 @@ export const LogbookCnsd: React.FC = () => {
             <span className="hidden sm:inline">Filter</span>
           </div>
 
+          {/* [TAMBAH] Search box nama karyawan (Manager Teknik On Duty) */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={employeeSearch}
+              onChange={(e) => setEmployeeSearch(e.target.value)}
+              placeholder="Cari nama karyawan..."
+              className="h-10 w-56 rounded-lg border border-gray-300 bg-white pl-9 pr-8 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+              aria-label="Cari nama karyawan"
+            />
+            {employeeSearch && (
+              <button
+                type="button"
+                onClick={() => setEmployeeSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 rounded-full p-0.5"
+                aria-label="Hapus pencarian"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
           <select
             value={yearFilter}
             onChange={(e) => setYearFilter(e.target.value)}
@@ -330,14 +383,25 @@ export const LogbookCnsd: React.FC = () => {
 
           {!isLoading && (
             <span className="ml-auto self-center text-xs text-slate-400">
-              {totalCount > 0 ? `${totalCount} logbook` : ''}
+              {/* [UBAH] Tampilkan jumlah hasil setelah filter nama, bukan total mentah,
+                  supaya konsisten dengan apa yang benar-benar terlihat di tabel. */}
+              {hasActiveFilters
+                ? (filteredLogbooks.length > 0 ? `${filteredLogbooks.length} dari ${totalCount} logbook` : '')
+                : (totalCount > 0 ? `${totalCount} logbook` : '')}
             </span>
           )}
         </div>
 
-        {hasActiveFilters && (yearFilter || signedFilter) && (
+        {hasActiveFilters && (yearFilter || signedFilter || employeeSearch) && (
           <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-gray-100">
             <span className="text-[11px] text-slate-400 mr-1">Aktif:</span>
+            {/* [TAMBAH] chip untuk pencarian nama karyawan */}
+            {employeeSearch && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-medium px-2 py-0.5">
+                Nama: "{employeeSearch}"
+                <button onClick={() => setEmployeeSearch('')} className="ml-0.5 rounded-full hover:bg-blue-100"><X size={10} /></button>
+              </span>
+            )}
             {yearFilter && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-medium px-2 py-0.5">
                 Tahun {yearFilter}
@@ -382,7 +446,12 @@ export const LogbookCnsd: React.FC = () => {
             <div className="h-14 w-14 rounded-full bg-amber-50 flex items-center justify-center">
               <Filter size={22} className="text-amber-400" />
             </div>
-            <p className="text-base font-semibold text-slate-700">Tidak ada logbook yang sesuai filter</p>
+            {/* [UBAH] Pesan lebih spesifik kalau yang bikin kosong adalah pencarian nama */}
+            <p className="text-base font-semibold text-slate-700">
+              {employeeSearch && !yearFilter && !signedFilter
+                ? `Tidak ditemukan karyawan dengan nama "${employeeSearch}"`
+                : 'Tidak ada logbook yang sesuai filter'}
+            </p>
             <button onClick={resetFilters} className="mt-2 text-sm text-blue-600 underline hover:no-underline">
               Reset semua filter
             </button>
@@ -407,7 +476,8 @@ export const LogbookCnsd: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {logbooks.map((lb) => {
+                {/* [UBAH] pakai filteredLogbooks, bukan logbooks mentah */}
+                {filteredLogbooks.map((lb) => {
                   const status = lb.is_fully_signed
                     ? 'completed'
                     : (lb.signed_count > 0 || lb.notes_count > 0)
@@ -429,19 +499,25 @@ export const LogbookCnsd: React.FC = () => {
                       <td className="px-6 py-4">
                         {lb.managers_on_duty && lb.managers_on_duty.length > 0 ? (
                           <div className="space-y-1">
-                            {lb.managers_on_duty.map((mgr) => (
-                              <div key={`${mgr.shift}-${mgr.user_id}`} className="flex items-center gap-2">
-                                <span
-                                  className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${SHIFT_BADGE[mgr.shift]}`}
-                                >
-                                  <span className={`h-1.5 w-1.5 rounded-full ${SHIFT_DOT[mgr.shift]}`} />
-                                  {mgr.shift}
-                                </span>
-                                <span className="text-xs font-medium text-slate-700 leading-tight">
-                                  {mgr.name}
-                                </span>
-                              </div>
-                            ))}
+                            {lb.managers_on_duty.map((mgr) => {
+                              // [TAMBAH] highlight nama yang cocok dengan pencarian
+                              const isMatch = employeeSearch && normalize(mgr.name).includes(normalize(employeeSearch));
+                              return (
+                                <div key={`${mgr.shift}-${mgr.user_id}`} className="flex items-center gap-2">
+                                  <span
+                                    className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${SHIFT_BADGE[mgr.shift]}`}
+                                  >
+                                    <span className={`h-1.5 w-1.5 rounded-full ${SHIFT_DOT[mgr.shift]}`} />
+                                    {mgr.shift}
+                                  </span>
+                                  <span
+                                    className={`text-xs font-medium leading-tight ${isMatch ? 'text-blue-700 bg-blue-50 px-1 rounded' : 'text-slate-700'}`}
+                                  >
+                                    {mgr.name}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         ) : (
                           <span className="text-xs text-slate-400 italic">Roster belum dipublish</span>

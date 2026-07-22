@@ -20,7 +20,7 @@ return new class extends Migration {
             ['id' => 'panel_rd01',     'label' => 'Panel RD 01',       'sub_columns' => $single],
             ['id' => 'panel_rd02',     'label' => 'Panel RD 02',       'sub_columns' => $single],
             ['id' => 'panel_cos_rd03', 'label' => 'Panel COS (RD 03)', 'sub_columns' => $io],
-            ['id' => 'ups_topaz',      'label' => 'UPS TOPAZ',         'sub_columns' => $io],
+            ['id' => 'ups_topaz',      'label' => 'UPS GAMA',          'sub_columns' => $io],
             ['id' => 'panel_rd04',     'label' => 'Panel RD 04',       'sub_columns' => $single],
             ['id' => 'panel_rd05',     'label' => 'Panel RD 05',       'sub_columns' => $single],
             ['id' => 'panel_rd06',     'label' => 'Panel RD 06',       'sub_columns' => $single],

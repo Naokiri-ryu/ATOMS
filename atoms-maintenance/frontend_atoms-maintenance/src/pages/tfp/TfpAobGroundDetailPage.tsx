@@ -152,10 +152,9 @@ interface CellInputProps {
   isClipboard: boolean;
   onMouseDown: (key: string, e: React.MouseEvent) => void;
   onMouseEnter: (key: string) => void;
-  // ── BARU: props untuk navigasi keyboard ──
-  rowIndex?: number;
-  cellKey?: string;
-  onNavigate?: (targetRowIndex: number, targetCellKey: string) => void;
+  rowIndex: number;
+  cellKey: string;
+  onNavigate: (e: React.KeyboardEvent<HTMLInputElement>, rowIndex: number, cellKey: string) => void;
 }
 
 const CellInput: React.FC<CellInputProps> = ({
@@ -166,19 +165,15 @@ const CellInput: React.FC<CellInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!onNavigate || rowIndex === undefined || !cellKey) return;
-
-    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Enter') {
       e.preventDefault();
-      onNavigate(rowIndex + 1, cellKey);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      onNavigate(rowIndex - 1, cellKey);
+      onNavigate(e, rowIndex, cellKey);
     }
   };
 
   if (isDisabled) return <div className="w-full h-7 rounded" aria-hidden="true" />;
   if (isCompleted) return <span className="text-xs text-slate-700">{value || '—'}</span>;
+
   return (
     <input
       ref={inputRef}
@@ -401,7 +396,6 @@ const AddPanelModal: React.FC<AddPanelModalProps> = ({ open, onClose, onAdd, exi
       .filter((s) => s.label !== '');
     if (cleanSubs.length === 0) { setError('Minimal 1 sub-kolom.'); return; }
 
-    // Make sub-keys unique within this panel
     const subKeysSeen = new Set<string>();
     const finalSubs: { key: string; label: string }[] = [];
     for (const s of cleanSubs) {
@@ -557,7 +551,6 @@ const PanelHeaderEdit: React.FC<PanelHeaderEditProps> = ({
         </div>
       )}
 
-      {/* Sub-column editor row appears inline below — only the inline editing of one sub at a time */}
       {editingSub !== null && (() => {
         const sub = panel.sub_columns.find((s) => s.key === editingSub);
         if (!sub) return null;
@@ -588,7 +581,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Edit Mode permission
   const canEditStructure =
     user?.role === 'Admin' ||
     user?.role === 'Manager Teknik' ||
@@ -601,40 +593,30 @@ export const TfpAobGroundDetailPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Editable cell values: { itemId: { cellKey: stringValue } }
   const [itemValues, setItemValues] = useState<Record<number, Record<string, string>>>({});
   const [facilityValues, setFacilityValues] = useState<
     Record<number, { kondisi: string; keterangan: string }>
   >({});
   const [timeFilled, setTimeFilled] = useState<string>('');
 
-  // Edit Mode state
   const [editMode, setEditMode] = useState(false);
   const [editingParamId, setEditingParamId] = useState<number | null>(null);
   const [editingFacilityId, setEditingFacilityId] = useState<number | null>(null);
   const [editingFacilityName, setEditingFacilityName] = useState('');
 
-  // ─── Multi-cell drag-select & copy-paste state ─────────────────────────
-  // Selection: Set of compositeKey "itemId__panelId.subKey"
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
-  // Clipboard: Map compositeKey → value (copied snapshot)
   const [clipboardCells, setClipboardCells] = useState<Map<string, string>>(new Map());
-  // Drag state
   const [dragStart, setDragStart] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // isCompleted computed early so drag hooks can reference it
   const isCompleted = record?.status === 'completed' ?? false;
 
-  // Structural draft state (only used while in Edit Mode, persisted via Simpan Struktur)
   const [draftConfig, setDraftConfig] = useState<TfpAobGroundColumnsConfig | null>(null);
   const [draftItemMeta, setDraftItemMeta] = useState<Record<number, {
     is_disabled_map: Record<string, boolean>;
     merge_map: Record<string, number>;
   }>>({});
   const [showAddPanel, setShowAddPanel] = useState(false);
-
-  // ─── Data loading ───────────────────────────────────────────────────────
 
   const hydrate = (data: TfpAobGroundRecordDetail) => {
     setRecord(data);
@@ -652,7 +634,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     });
     setFacilityValues(fv);
 
-    // Reset structural draft to server state whenever we re-hydrate
     setDraftConfig(null);
     setDraftItemMeta({});
   };
@@ -671,17 +652,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
   }, [id]);
 
   useEffect(() => { void fetchRecord(); }, [fetchRecord]);
-
-  // ── PERBAIKAN: Dikommentari agar tidak mengganggu navigasi keyboard ──
-  // useEffect onFocus ini menyebabkan fetchRecord dipanggil ulang setiap kali
-  // window mendapat focus, yang akan me-reset state dan menggagalkan navigasi.
-  // useEffect(() => {
-  //   const onFocus = () => void fetchRecord();
-  //   window.addEventListener('focus', onFocus);
-  //   return () => window.removeEventListener('focus', onFocus);
-  // }, [fetchRecord]);
-
-  // ─── Computed: effective columns_config & per-item meta ────────────────
 
   const effectiveConfig: TfpAobGroundColumnsConfig = useMemo(
     () => draftConfig ?? record?.columns_config ?? [],
@@ -705,7 +675,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     return item?.merge_map?.[cellKey] ?? 1;
   };
 
-  // Mutate draft for an item — copies-from-server lazily on first touch
   const mutateItemMeta = (itemId: number, fn: (m: { is_disabled_map: Record<string, boolean>; merge_map: Record<string, number> }) => void) => {
     setDraftItemMeta((prev) => {
       const existing = prev[itemId] ?? (() => {
@@ -723,8 +692,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
       return { ...prev, [itemId]: next };
     });
   };
-
-  // ─── Value save (regular update) ───────────────────────────────────────
 
   const handleSave = async () => {
     if (!record) return;
@@ -763,8 +730,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
       setIsSaving(false);
     }
   };
-
-  // ─── Structure save (batch "Simpan Struktur") ─────────────────────────
 
   const isStructureDirty = draftConfig !== null || Object.keys(draftItemMeta).length > 0;
 
@@ -807,24 +772,17 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     setDraftItemMeta({});
   };
 
-  // ─── Cell + panel edit actions (Edit Mode) ─────────────────────────────
-
-  // Toggle disabled on a single cell across all rows is too aggressive.
-  // We let user click each cell per-row, which is the Excel-correct model.
   const toggleCellDisabled = (itemId: number, cellKey: string) => {
     mutateItemMeta(itemId, (m) => {
       if (m.is_disabled_map[cellKey]) {
         delete m.is_disabled_map[cellKey];
       } else {
         m.is_disabled_map[cellKey] = true;
-        // Disabling a cell also drops it from any merge group starting at it
         delete m.merge_map[cellKey];
       }
     });
   };
 
-  // Merge right: extend colspan of cell at `cellKey` by 1.
-  // Skip if next neighbor is disabled, in another merge, or doesn't exist.
   const mergeCellRight = (itemId: number, cellKey: string) => {
     const idx = flatKeys.indexOf(cellKey);
     if (idx < 0) return;
@@ -839,7 +797,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
 
     const nextKey = flatKeys[nextIdx];
     if (draft.is_disabled_map[nextKey]) return;
-    if (draft.merge_map[nextKey]) return; // can't absorb a starting cell
+    if (draft.merge_map[nextKey]) return;
 
     mutateItemMeta(itemId, (m) => {
       m.merge_map[cellKey] = currentSpan + 1;
@@ -852,7 +810,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     });
   };
 
-  // Columns_config mutations operate on draftConfig (initialized from server config)
   const mutateConfig = (fn: (cfg: TfpAobGroundColumnsConfig) => TfpAobGroundColumnsConfig) => {
     setDraftConfig((prev) => {
       const base = prev ?? (record?.columns_config ?? []);
@@ -894,8 +851,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
   const handleAddPanel = (panel: TfpAobGroundPanel) => {
     mutateConfig((cfg) => [...cfg, panel]);
   };
-
-  // ─── Existing structure ops (parameters / facilities CRUD via dedicated endpoints) ──
 
   const withStructureError = async (fn: () => Promise<TfpAobGroundRecordDetail>) => {
     setErrorMessage(null);
@@ -956,7 +911,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     setItemValues((prev) => ({ ...prev, [itemId]: { ...prev[itemId], [cellKey]: val } }));
   };
 
-  /** Return all compositeKeys in the rectangular range between two keys */
   const getRangeKeys = useCallback((a: string, b: string): Set<string> => {
     if (!record) return new Set();
     const parseKey = (k: string) => {
@@ -990,22 +944,22 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     return result;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [record, flatCells, draftItemMeta]);  
+
   const handleCellMouseDown = useCallback((compositeKey: string, e: React.MouseEvent) => {
     if (isCompleted) return;
-    // Allow default input focus on single click without shift
     if (!e.shiftKey) {
       setDragStart(compositeKey);
       setIsDragging(true);
       setSelectedCells(new Set([compositeKey]));
     } else {
-    const anchor = dragStart ?? (selectedCells.size > 0 ? [...selectedCells][0] : null);
-    if (anchor) {
-      setSelectedCells(getRangeKeys(anchor, compositeKey));
-    } else {
-      setSelectedCells(new Set([compositeKey]));
-      setDragStart(compositeKey);
+      const anchor = dragStart ?? (selectedCells.size > 0 ? [...selectedCells][0] : null);
+      if (anchor) {
+        setSelectedCells(getRangeKeys(anchor, compositeKey));
+      } else {
+        setSelectedCells(new Set([compositeKey]));
+        setDragStart(compositeKey);
+      }
     }
-  }
   }, [isCompleted, dragStart, selectedCells, getRangeKeys]);
 
   const handleCellMouseEnter = useCallback((compositeKey: string) => {
@@ -1017,14 +971,11 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     const handleGlobalMouseUp = () => {
       setIsDragging(false);
       setDragStart(null);
-  };
-
-  // Global mouseup to stop drag even if released outside table
+    };
     window.addEventListener('mouseup', handleGlobalMouseUp);
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, []);
 
-  // Global keydown for Ctrl+C / Ctrl+V on selected cells
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (!record || isCompleted) return;
@@ -1053,7 +1004,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
 
       if (isPaste && clipboardCells.size > 0 && selectedCells.size > 0) {
         e.preventDefault();
-        // Determine the top-left anchor of clipboard and selection
         const parseKey = (k: string) => {
           const sep = k.indexOf('__');
           return { itemId: Number(k.slice(0, sep)), cellKey: k.slice(sep + 2) };
@@ -1066,13 +1016,11 @@ export const TfpAobGroundDetailPage: React.FC = () => {
           return { r: itemIds.indexOf(itemId), c: cellKeys.indexOf(cellKey) };
         };
 
-        // Clipboard bounding box
         const cbKeys = [...clipboardCells.keys()];
         const cbCoords = cbKeys.map(toCoord);
         const cbRMin = Math.min(...cbCoords.map((x) => x.r));
         const cbCMin = Math.min(...cbCoords.map((x) => x.c));
 
-        // Selection anchor (top-left)
         const selCoords = [...selectedCells].map(toCoord);
         const selRMin = Math.min(...selCoords.map((x) => x.r));
         const selCMin = Math.min(...selCoords.map((x) => x.c));
@@ -1080,7 +1028,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
         const deltaR = selRMin - cbRMin;
         const deltaC = selCMin - cbCMin;
 
-        // Apply paste with offset
         setItemValues((prev) => {
           const next = { ...prev };
           cbKeys.forEach((srcKey, i) => {
@@ -1097,16 +1044,12 @@ export const TfpAobGroundDetailPage: React.FC = () => {
 
             const flatCellIndex = flatCells.findIndex(fc => fc.key === targetCellKey);
             if (flatCellIndex > 0) {
-              // Cek cell sebelumnya apakah merge ke cell ini
               for (let checkIdx = flatCellIndex - 1; checkIdx >= 0; checkIdx--) {
                 const prevCell = flatCells[checkIdx];
                 const prevMergeSpan = getItemMerge(targetItemId, prevCell.key);
                 if (prevMergeSpan > 1) {
-                  // Cell sebelumnya merge, cek apakah mencakup cell ini
                   const mergeEndIndex = checkIdx + prevMergeSpan - 1;
                   if (mergeEndIndex >= flatCellIndex) {
-                    // Target cell adalah bagian dari merged cell, skip
-                    console.warn(`Cannot paste to merged cell: ${targetCellKey}`);
                     return;
                   }
                 }
@@ -1129,38 +1072,94 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     setFacilityValues((prev) => ({ ...prev, [facilityId]: { ...prev[facilityId], [field]: val } }));
   };
 
-  // ─── BARU: Navigasi keyboard (Enter / Arrow Up/Down) ────────────────────
-  const navigateToCell = useCallback((targetRowIndex: number, targetCellKey: string) => {
+  // ─── BARU: Navigasi keyboard yang robust untuk semua arah ───────────────
+  const handleCellKeyDown = useCallback((
+    e: React.KeyboardEvent<HTMLInputElement>,
+    currentRowIndex: number,
+    currentCellKey: string
+  ) => {
     if (!record) return;
+    
+    const cellKeys = flatCells.map((c) => c.key);
+    const currentColIndex = cellKeys.indexOf(currentCellKey);
+    if (currentColIndex === -1) return;
 
-    let finalRowIndex = targetRowIndex;
-    if (finalRowIndex < 0) finalRowIndex = 0;
-    if (finalRowIndex >= record.items.length) finalRowIndex = record.items.length - 1;
+    let nextRowIndex = currentRowIndex;
+    let nextColIndex = currentColIndex;
 
-    // Gunakan requestAnimationFrame untuk memastikan DOM sudah ter-update
-    requestAnimationFrame(() => {
-      // Escape cellKey untuk selector yang aman
-      const escapedKey = targetCellKey.replace(/([.#:[\]+>~,])/g, '\\$1');
-      const selector = `input[data-row-index="${finalRowIndex}"][data-cell-key="${escapedKey}"]`;
+    if (e.key === 'ArrowUp') {
+      nextRowIndex = Math.max(0, currentRowIndex - 1);
+    } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      nextRowIndex = Math.min(record.items.length - 1, currentRowIndex + 1);
+    } else if (e.key === 'ArrowLeft') {
+      nextColIndex = Math.max(0, currentColIndex - 1);
+    } else if (e.key === 'ArrowRight') {
+      nextColIndex = Math.min(cellKeys.length - 1, currentColIndex + 1);
+    } else {
+      return;
+    }
+
+    const isValidCell = (rIdx: number, cIdx: number) => {
+      if (rIdx < 0 || rIdx >= record.items.length) return false;
+      if (cIdx < 0 || cIdx >= cellKeys.length) return false;
+      const item = record.items[rIdx];
+      if (isModeRow(item) || isSuplaiRow(item)) return false;
+      if (getItemDisabled(item.id, cellKeys[cIdx])) return false;
       
-      const el = document.querySelector(selector) as HTMLInputElement | null;
-      if (el) {
-        el.focus();
-        el.select();
-      } else {
-        // Fallback: cari input di row tersebut berdasarkan row-index saja
-        const fallbackEl = document.querySelector(
-          `input[data-row-index="${finalRowIndex}"]`
-        ) as HTMLInputElement | null;
-        if (fallbackEl) {
-          fallbackEl.focus();
-          fallbackEl.select();
+      // Pastikan cell ini bukan bagian dari merge yang di-skip (bukan cell awal merge)
+      for (let i = cIdx - 1; i >= 0; i--) {
+        const checkKey = cellKeys[i];
+        const mergeSpan = getItemMerge(item.id, checkKey);
+        if (mergeSpan > 1 && i + mergeSpan - 1 >= cIdx) {
+          return false; 
         }
       }
-    });
-  }, [record]);
+      return true;
+    };
 
-  // ─── Render ─────────────────────────────────────────────────────────────
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter') {
+      const direction = e.key === 'ArrowUp' ? -1 : 1;
+      let r = nextRowIndex;
+      let found = false;
+      while (r >= 0 && r < record.items.length) {
+        if (isValidCell(r, nextColIndex)) {
+          nextRowIndex = r;
+          found = true;
+          break;
+        }
+        r += direction;
+      }
+      if (!found) nextRowIndex = currentRowIndex;
+    } else {
+      const direction = e.key === 'ArrowLeft' ? -1 : 1;
+      let c = nextColIndex;
+      let found = false;
+      while (c >= 0 && c < cellKeys.length) {
+        if (isValidCell(currentRowIndex, c)) {
+          nextColIndex = c;
+          found = true;
+          break;
+        }
+        c += direction;
+      }
+      if (!found) nextColIndex = currentColIndex;
+    }
+
+    const targetItem = record.items[nextRowIndex];
+    const targetCellKey = cellKeys[nextColIndex];
+
+    if (targetItem && targetCellKey) {
+      requestAnimationFrame(() => {
+        const escapedKey = targetCellKey.replace(/([.#:[\]+>~,])/g, '\\$1');
+        const selector = `input[data-row-index="${nextRowIndex}"][data-cell-key="${escapedKey}"]`;
+        const el = document.querySelector(selector) as HTMLInputElement | null;
+        if (el) {
+          el.focus();
+          el.select();
+        }
+      });
+    }
+  }, [record, flatCells, getItemDisabled, getItemMerge, isModeRow, isSuplaiRow]);
 
   if (isLoading) {
     return (
@@ -1184,15 +1183,12 @@ export const TfpAobGroundDetailPage: React.FC = () => {
     );
   }
 
-  // isCompleted is declared above (near drag-select state) so hooks can reference it
   const showStructureControls = editMode && canEditStructure && !isCompleted;
-
   const totalCellCount = flatCells.length;
   const aksiColWidth = showStructureControls ? 132 : 0;
 
   return (
     <div className="max-w-full space-y-6 animate-fade-in pb-20">
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
         <button type="button" onClick={() => navigate('/tfp')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">TFP</button>
         <span>/</span>
@@ -1201,7 +1197,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
         <span className="text-slate-700 font-mono font-medium">{record.form_number}</span>
       </div>
 
-      {/* Header */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -1219,7 +1214,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Meta info */}
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
               <Calendar size={13} className="text-slate-400" />
@@ -1289,7 +1283,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Personnel summary */}
         <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Manager Teknik</span>
@@ -1311,7 +1304,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Edit Mode hint banner + Simpan Struktur bar */}
         {showStructureControls && (
           <div className="mt-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-center gap-2 flex-wrap">
             <Settings2 size={13} className="text-amber-600 shrink-0" />
@@ -1349,10 +1341,7 @@ export const TfpAobGroundDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* ─── Two-panel layout ─── */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 items-start">
-
-        {/* ── Parameter Pengukuran ── */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/60">
             <Zap size={16} className="text-amber-600" />
@@ -1362,7 +1351,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
             </span>
           </div>
           <div className="overflow-x-auto" style={{ userSelect: isDragging ? 'none' : undefined }}>
-            {/* Selection toolbar */}
             {!isCompleted && !showStructureControls && (selectedCells.size > 0 || clipboardCells.size > 0) && (
               <div className="px-3 py-1.5 bg-sky-50 border-b border-sky-100 flex items-center gap-3 flex-wrap text-[11px]">
                 {selectedCells.size > 0 && (
@@ -1394,7 +1382,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
             )}
             <table className="w-full text-xs border-collapse" style={{ minWidth: Math.max(800, 220 + totalCellCount * 70 + aksiColWidth) }}>
               <thead>
-                {/* Panel header row */}
                 <tr className="bg-slate-100 text-slate-700">
                   <th rowSpan={2} className="px-2 py-2 text-center font-semibold border-b border-slate-200 align-middle text-[10px] uppercase tracking-wider w-[40px]">No</th>
                   <th rowSpan={2} className="px-3 py-2 text-left font-semibold border-b border-slate-200 align-middle text-[10px] uppercase tracking-wider w-[180px]">Parameter</th>
@@ -1420,7 +1407,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
                     <th rowSpan={2} className="px-2 py-2 text-center font-semibold border-b border-l border-slate-200 align-middle text-[10px] uppercase tracking-wider" style={{ width: aksiColWidth }}>Aksi</th>
                   )}
                 </tr>
-                {/* Sub-column header row */}
                 <tr className="bg-slate-50 text-slate-500">
                   {effectiveConfig.flatMap((panel, pi) =>
                     panel.sub_columns.map((sub, si) => (
@@ -1428,7 +1414,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
                         className={cn(
                           'px-1 py-1.5 text-center font-medium border-b border-slate-200 text-[10px] uppercase tracking-wider',
                           si === 0 ? 'border-l' : '',
-                          pi === 0 && si === 0 ? '' : '',
                         )}
                       >
                         {showStructureControls && panel.sub_columns.length > 1 ? (
@@ -1481,7 +1466,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
                     </td>
                   ) : null;
 
-                  // Render dynamic cells (skip those consumed by merge)
                   const skipKeys = new Set<string>();
                   const renderedCells: React.ReactNode[] = [];
                   const modeRow = isModeRow(item);
@@ -1499,7 +1483,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
                     }
 
                     if (showStructureControls) {
-                      // Edit Mode cell — click to toggle disable. Side controls for merge.
                       renderedCells.push(
                         <td key={cell.key} colSpan={colspan} className={tdCell}>
                           <div className="flex items-center gap-0.5 justify-center">
@@ -1537,10 +1520,8 @@ export const TfpAobGroundDetailPage: React.FC = () => {
                       return;
                     }
 
-                    // Normal value entry mode
                     const val = itemValues[item.id]?.[cell.key] ?? '';
 
-                    // Mode/Suplai toggles when applicable — first enabled cell of each panel
                     if ((modeRow || suplaiRow) && !disabled && colspan >= 1) {
                       const isPLNATSPanel = suplaiRow && cell.panel.id === 'panel_ats_a12';
                       let options: readonly string[];
@@ -1564,7 +1545,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
                       return;
                     }
 
-                    // Normal value entry mode — drag-select + copy-paste enabled
                     const compositeKey = `${item.id}__${cell.key}`;
                     renderedCells.push(
                       <td
@@ -1582,10 +1562,9 @@ export const TfpAobGroundDetailPage: React.FC = () => {
                           isClipboard={clipboardCells.has(compositeKey)}
                           onMouseDown={handleCellMouseDown}
                           onMouseEnter={handleCellMouseEnter}
-                          // ── BARU: Navigasi keyboard ──
                           rowIndex={idx}
                           cellKey={cell.key}
-                          onNavigate={navigateToCell}
+                          onNavigate={handleCellKeyDown}
                         />
                       </td>
                     );
@@ -1610,7 +1589,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
             </table>
           </div>
 
-          {/* Inline forms (Edit Mode only) */}
           {showStructureControls && (
             <>
               <div className="border-t border-slate-200">
@@ -1631,7 +1609,6 @@ export const TfpAobGroundDetailPage: React.FC = () => {
           )}
         </div>
 
-        {/* ── Kondisi Fasilitas ── */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/60">
             <CheckSquare size={16} className="text-sky-600" />
@@ -1689,10 +1666,8 @@ export const TfpAobGroundDetailPage: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
 
-      </div>{/* end grid */}
-
-      {/* Save button */}
       {!isCompleted && (
         <div className="flex justify-end pt-2 border-t border-slate-100">
           <Button
@@ -1759,7 +1734,7 @@ const SubColumnHeader: React.FC<{
   );
 };
 
-// ─── FacilityRow — extracted to keep the main component readable ───────────
+// ─── FacilityRow ───────────────────────────────────────────────────────────
 
 interface FacilityRowProps {
   facility: TfpAobGroundFacility;

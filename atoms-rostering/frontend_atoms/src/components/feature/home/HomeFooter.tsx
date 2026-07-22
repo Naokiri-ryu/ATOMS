@@ -1,16 +1,16 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Globe, 
-  Twitter, 
-  Facebook, 
-  Instagram, 
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Globe,
+  Twitter,
+  Facebook,
+  Instagram,
   Linkedin,
-  ArrowUp 
-} from 'lucide-react';
+  ArrowUp,
+} from "lucide-react";
 
 const HomeFooter: React.FC = () => {
   const navigate = useNavigate();
@@ -24,12 +24,9 @@ const HomeFooter: React.FC = () => {
             srcSet="/assets/image/image14-640.webp 640w, /assets/image/image14-960.webp 960w, /assets/image/image14-1280.webp 1280w, /assets/image/image14.webp 1400w"
             sizes="100vw"
           />
-          <source
-            type="image/png"
-            srcSet="/assets/image/image14.png"
-          />
-          <img 
-            src="/assets/image/image14.webp" 
+          <source type="image/png" srcSet="/assets/image/image14.png" />
+          <img
+            src="/assets/image/image14.webp"
             alt="Background"
             className="w-full h-full object-cover"
             loading="lazy"
@@ -38,7 +35,7 @@ const HomeFooter: React.FC = () => {
           />
         </picture>
       </div>
-      
+
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
@@ -49,25 +46,48 @@ const HomeFooter: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-xl font-bold">AIRNAV Management</h3>
-                <p className="text-sm opacity-80">Integrated Aviation Solutions</p>
+                <p className="text-sm opacity-80">
+                  Integrated Aviation Solutions
+                </p>
               </div>
             </div>
             <p className="text-sm opacity-90 leading-relaxed mb-6 max-w-md">
-              Comprehensive aviation management system designed to streamline operations, 
-              enhance safety protocols, and optimize resource allocation for modern aviation facilities.
+              Comprehensive aviation management system designed to streamline
+              operations, enhance safety protocols, and optimize resource
+              allocation for modern aviation facilities.
             </p>
             <div className="flex items-center gap-4">
-              <a href="https://www.facebook.com/airnavindonesia/" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-              <Facebook className="h-5 w-5" />
+              <a
+                href="https://www.facebook.com/airnavindonesia/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <Facebook className="h-5 w-5" />
               </a>
-              <a href="https://x.com/airnavindonesia" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-              <Twitter className="h-5 w-5" />
+              <a
+                href="https://x.com/airnavindonesia"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <Twitter className="h-5 w-5" />
               </a>
-              <a href="https://www.instagram.com/airnavindonesia/" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-              <Instagram className="h-5 w-5" />
+              <a
+                href="https://www.instagram.com/airnavindonesia/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <Instagram className="h-5 w-5" />
               </a>
-              <a href="https://id.linkedin.com/company/airnav-indonesia" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-              <Linkedin className="h-5 w-5" />
+              <a
+                href="https://id.linkedin.com/company/airnav-indonesia"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <Linkedin className="h-5 w-5" />
               </a>
             </div>
           </div>
@@ -76,32 +96,32 @@ const HomeFooter: React.FC = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
             <div className="space-y-3">
-              <button 
-                onClick={() => navigate('/roster')}
+              <button
+                onClick={() => navigate("/roster")}
                 className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors"
               >
                 Personnel & Rostering
               </button>
-              <button 
-                onClick={() => navigate('/personnel')}
+              <button
+                onClick={() => navigate("/personnel")}
                 className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors"
               >
                 Employee Management
               </button>
-              <button 
-                onClick={() => navigate('/maintenance')}
+              <button
+                onClick={() => navigate("/maintenance")}
                 className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors"
               >
                 Maintenance & Operation
               </button>
-              <button 
-                onClick={() => navigate('/inventory')}
+              <button
+                onClick={() => navigate("/inventory")}
                 className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors"
               >
                 Supply & Administration
               </button>
-              <button 
-                onClick={() => navigate('/support')}
+              <button
+                onClick={() => navigate("/support")}
                 className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors"
               >
                 Support Center
@@ -116,7 +136,8 @@ const HomeFooter: React.FC = () => {
               <div className="flex items-center gap-3">
                 <MapPin className="h-4 w-4 flex-shrink-0 opacity-80" />
                 <span className="text-sm opacity-90">
-                  Jakarta Aviation Hub<br />
+                  Jakarta Aviation Hub
+                  <br />
                   Indonesia Aviation Authority
                 </span>
               </div>
@@ -139,14 +160,18 @@ const HomeFooter: React.FC = () => {
         {/* Collaboration Section */}
         <div className="border-t border-white/10 py-8">
           <div className="text-center mb-6">
-            <h4 className="text-lg font-semibold mb-2">In Collaboration With</h4>
-            <p className="text-sm opacity-80">Supporting partnerships for aviation excellence</p>
+            <h4 className="text-lg font-semibold mb-2">
+              In Collaboration With
+            </h4>
+            <p className="text-sm opacity-80">
+              Supporting partnerships for aviation excellence
+            </p>
           </div>
           <div className="flex items-center justify-center gap-8 md:gap-12">
             <div className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
-              <img 
-                src="/assets/icon/logopens.svg" 
-                alt="PENS Logo" 
+              <img
+                src="/assets/icon/logopens.svg"
+                alt="PENS Logo"
                 className="h-8 w-auto"
                 width={32}
                 height={32}
@@ -156,9 +181,9 @@ const HomeFooter: React.FC = () => {
               <span className="text-sm font-medium opacity-90">PENS</span>
             </div>
             <div className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
-              <img 
-                src="/assets/icon/logougm.svg" 
-                alt="UGM Logo" 
+              <img
+                src="/assets/icon/logougm.svg"
+                alt="UGM Logo"
                 className="h-8 w-auto"
                 width={32}
                 height={32}
@@ -167,18 +192,30 @@ const HomeFooter: React.FC = () => {
               />
               <span className="text-sm font-medium opacity-90">UGM</span>
             </div>
-            {/* <div className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
-              <img 
-                src="/assets/icon/logougm.svg" 
-                alt="UGM Logo" 
+            <div className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
+              <img
+                src="/assets/icon/logopolinema.png"
+                alt="Polinema Logo"
                 className="h-8 w-auto"
-                width={32}
-                height={32}
+                width={8}
+                height={8}
                 loading="lazy"
                 decoding="async"
               />
               <span className="text-sm font-medium opacity-90">POLINEMA</span>
-            </div> */}
+            </div>
+            <div className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
+              <img
+                src="/assets/icon/logotelu.png"
+                alt="Tel-U Logo"
+                className="h-8 w-auto"
+                width={8}
+                height={8}
+                loading="lazy"
+                decoding="async"
+              />
+              <span className="text-sm font-medium opacity-90">Tel-U</span>
+            </div>
           </div>
         </div>
 
@@ -189,20 +226,20 @@ const HomeFooter: React.FC = () => {
               © 2026 AIRNAV Management System. All rights reserved.
             </div>
             <div className="flex items-center gap-6 text-sm">
-              <button 
-                onClick={() => navigate('/privacy')}
+              <button
+                onClick={() => navigate("/privacy")}
                 className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-colors"
               >
                 Privacy Policy
               </button>
-              <button 
-                onClick={() => navigate('/terms')}
+              <button
+                onClick={() => navigate("/terms")}
                 className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-colors"
               >
                 Terms of Service
               </button>
-              <button 
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors flex items-center gap-2"
               >
                 <ArrowUp className="h-4 w-4" />

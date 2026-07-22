@@ -73,7 +73,7 @@ class CnsdReceiverMeterTemplate
                 'name'   => 'ADC',
                 'items'  => [
                     ['item_name' => '118.30 MHz'],
-                    ['item_name' => '118.30 MHz'],
+                    // ['item_name' => '118.30 MHz'],
                     ['item_name' => '118.10 MHz'],
                 ],
             ],

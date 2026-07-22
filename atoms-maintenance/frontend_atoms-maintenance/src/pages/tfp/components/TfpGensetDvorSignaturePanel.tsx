@@ -44,7 +44,7 @@ interface PendingSign {
 }
 
 /**
- * TFP AOB Ground signature panel.
+ * TFP Genset DVOR signature panel.
  *
  * Renders three blocks:
  *   1. Manager Teknik (single signature row)
