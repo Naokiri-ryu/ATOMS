@@ -329,3 +329,37 @@ export interface ApiResponse<T = any> {
   message?: string;
   errors?: Record<string, string[]>;
 }
+
+// Support Ticket Types
+export interface SupportTicket {
+  id: number;
+  user_id: number;
+  category: 'bug_report' | 'feature_request';
+  category_name: string;
+  title: string;
+  description: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  status_name: string;
+  attachment_path: string | null;
+  attachment_original_name: string | null;
+  attachment_url: string | null;
+  admin_response: string | null;
+  responded_by: number | null;
+  responded_at: string | null;
+  created_at: string;
+  updated_at: string;
+  user?: User;
+  responder?: User;
+}
+
+export interface SupportTicketStats {
+  total: number;
+  open: number;
+  in_progress: number;
+  resolved: number;
+  closed: number;
+  by_category: {
+    bug_report: number;
+    feature_request: number;
+  };
+}

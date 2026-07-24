@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\RosterController;
 use App\Http\Controllers\Api\RosterImportController;
 use App\Http\Controllers\Api\RosterTaskController;
 use App\Http\Controllers\Api\ShiftRequestController;
+use App\Http\Controllers\Api\SupportTicketController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -195,5 +196,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('employee')->group(function () {
         Route::get('/my-schedule', [EmployeeScheduleController::class, 'getMySchedule']);
         Route::get('/roster/{rosterId}/my-schedule', [EmployeeScheduleController::class, 'getMyScheduleByRoster']);
+    });
+
+    // =======================================
+    // SUPPORT TICKETS
+    // =======================================
+    Route::prefix('support-tickets')->group(function () {
+        // Any authenticated user
+        Route::post('/', [SupportTicketController::class, 'store']);
+        Route::get('/my-tickets', [SupportTicketController::class, 'myTickets']);
+        Route::get('/{id}', [SupportTicketController::class, 'show']);
+        Route::delete('/{id}', [SupportTicketController::class, 'destroy']);
+
+        // Admin + Manager only
+        Route::middleware('role:' . User::ROLE_ADMIN . ',' . User::ROLE_MANAGER_TEKNIK)->group(function () {
+            Route::get('/', [SupportTicketController::class, 'index']);
+            Route::get('/statistics/all', [SupportTicketController::class, 'statistics']);
+            Route::patch('/{id}/status', [SupportTicketController::class, 'updateStatus']);
+            Route::post('/{id}/respond', [SupportTicketController::class, 'respond']);
+        });
     });
 });

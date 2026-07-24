@@ -11,6 +11,7 @@ import {
   Linkedin,
   ArrowUp,
 } from "lucide-react";
+import { redirectToMaintenance } from "../../../utils/redirectMaintenance";
 
 const HomeFooter: React.FC = () => {
   const navigate = useNavigate();
@@ -109,7 +110,7 @@ const HomeFooter: React.FC = () => {
                 Employee Management
               </button>
               <button
-                onClick={() => navigate("/maintenance")}
+                onClick={() => redirectToMaintenance()}
                 className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors"
               >
                 Maintenance & Operation
@@ -167,8 +168,13 @@ const HomeFooter: React.FC = () => {
               Supporting partnerships for aviation excellence
             </p>
           </div>
-          <div className="flex items-center justify-center gap-8 md:gap-12">
-            <div className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+            <a
+              href="https://pens.ac.id/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors"
+            >
               <img
                 src="/assets/icon/logopens.svg"
                 alt="PENS Logo"
@@ -179,8 +185,13 @@ const HomeFooter: React.FC = () => {
                 decoding="async"
               />
               <span className="text-sm font-medium opacity-90">PENS</span>
-            </div>
-            <div className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
+            </a>
+            <a
+              href="https://www.ugm.ac.id/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors"
+            >
               <img
                 src="/assets/icon/logougm.svg"
                 alt="UGM Logo"
@@ -191,8 +202,13 @@ const HomeFooter: React.FC = () => {
                 decoding="async"
               />
               <span className="text-sm font-medium opacity-90">UGM</span>
-            </div>
-            <div className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
+            </a>
+            <a
+              href="https://polinema.ac.id/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors"
+            >
               <img
                 src="/assets/icon/logopolinema.png"
                 alt="Polinema Logo"
@@ -203,8 +219,13 @@ const HomeFooter: React.FC = () => {
                 decoding="async"
               />
               <span className="text-sm font-medium opacity-90">POLINEMA</span>
-            </div>
-            <div className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
+            </a>
+            <a
+              href="https://telkomuniversity.ac.id/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors"
+            >
               <img
                 src="/assets/icon/logotelu.png"
                 alt="Tel-U Logo"
@@ -215,7 +236,7 @@ const HomeFooter: React.FC = () => {
                 decoding="async"
               />
               <span className="text-sm font-medium opacity-90">Tel-U</span>
-            </div>
+            </a>
           </div>
         </div>
 

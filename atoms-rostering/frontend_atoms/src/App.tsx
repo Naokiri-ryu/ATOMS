@@ -26,6 +26,10 @@ import RosterDetailPage from './modules/roster/pages/RosterDetailPage';
 import LeaveRequestsPage from './modules/roster/pages/LeaveRequestsPage';
 import ShiftRequestsPage from './modules/shift-request/pages/ShiftRequestsPage';
 import NotificationsPage from './modules/notifications/pages/NotificationsPage';
+import SupportCenter from './pages/SupportCenter';
+import SupportTicketDetail from './pages/SupportTicketDetail';
+import SupportTicketsAdminPage from './pages/SupportTicketsAdminPage';
+import DashboardPage from './modules/dashboard/pages/DashboardPage';
 
 function App() {
   return (
@@ -48,6 +52,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <HomePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Dashboard Page - Protected */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
               </ProtectedRoute>
             }
           />
@@ -180,6 +194,32 @@ function App() {
             element={
               <ProtectedRoute>
                 <ActivityPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Support Center Routes */}
+          <Route
+            path="/support"
+            element={
+              <ProtectedRoute>
+                <SupportCenter />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/support/:id"
+            element={
+              <ProtectedRoute>
+                <SupportTicketDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/support-tickets"
+            element={
+              <ProtectedRoute allowedRoles={['Admin', 'Manager Teknik']}>
+                <SupportTicketsAdminPage />
               </ProtectedRoute>
             }
           />

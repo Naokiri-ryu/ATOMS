@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { User, LoginCredentials } from '@/types';
 import { authService } from '@/services/authService';
@@ -23,12 +23,10 @@ import { ROSTERING_URL_PROD } from '@/config';
  *   The login() method is still available for the mock login flow.
  *   Token is stored as mock-token-{id} in sessionStorage.
  *
- * StrictMode safety:
- *   The init flow is wrapped in a module-level singleton promise so React
- *   StrictMode's double-invocation of useEffect cannot trigger a duplicate
- *   verify request or — critically — race-redirect to rostering login while
- *   the first verify is still in flight (the bug that caused users to bounce
- *   back to the rostering login page after clicking Maintenance).
+ * Server-starting handling:
+ *   When the atoms-backend is unreachable (e.g. still building after restart),
+ *   the provider shows a "connecting" screen with a retry button instead of
+ *   bouncing the user back to the rostering login page.
  */
 
 const ROSTERING_LOGIN_URL = 
@@ -56,7 +54,6 @@ const SESSION_PENDING_KEY = 'auth_pending_token';
     sessionStorage.setItem(SESSION_PENDING_KEY, _t);
     // Strip token from URL immediately — don't leave it in browser history.
     _params.delete('token');
-//     _params.delete('tokenfix');
     const _newSearch = _params.toString();
     window.history.replaceState(
       {},
@@ -71,21 +68,23 @@ const SESSION_PENDING_KEY = 'auth_pending_token';
   }
 }
 
-// ── Module-level singleton: runs exactly once per page load ──────────────
-// Both StrictMode-invoked useEffects share the same promise, eliminating
-// the race where the 2nd invocation reads empty storage and redirects to
-// rostering before the 1st invocation's verify() completes.
 type InitResult =
   | { status: 'authed'; token: string; user: User }
   | { status: 'redirect' }
+  | { status: 'server-starting' }
   | { status: 'no-auth' };
+
+// Reset the singleton so the next call to ensureInitialized() re-runs the flow.
+// Used when the user clicks "Retry" on the server-starting screen.
+const resetInit = () => {
+  initAuthPromise = null;
+};
 
 let initAuthPromise: Promise<InitResult> | null = null;
 
 const persistSession = (tok: string, usr: User) => {
   sessionStorage.setItem(SESSION_TOKEN_KEY, tok);
   sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(usr));
-  // Ensure no stale localStorage tokens remain (SSO constraint: sessionStorage only)
   localStorage.removeItem('auth_token');
   localStorage.removeItem('user');
 };
@@ -98,43 +97,62 @@ const clearSession = () => {
   localStorage.removeItem('user');
 };
 
+const tryVerify = async (
+  pendingToken: string,
+  tokenfix: string | null,
+): Promise<{ user: User } | null> => {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 3000;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await authService.verify(pendingToken, tokenfix);
+      if (result?.user) {
+        return result;
+      }
+    } catch (err: any) {
+      const isNetworkError = !err.response || err.code === 'ERR_NETWORK' || err.code === 'ERR_CONNECTION_RESET';
+      if (import.meta.env.DEV) {
+        console.warn(`[SSO] verify attempt ${attempt + 1}/${MAX_RETRIES + 1} failed:`, err.message || err);
+      }
+      if (isNetworkError && attempt < MAX_RETRIES) {
+        if (import.meta.env.DEV) {
+          console.log(`[SSO] backend unreachable, retrying in ${RETRY_DELAY_MS}ms...`);
+        }
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+        continue;
+      }
+      break;
+    }
+  }
+  return null;
+};
+
 const ensureInitialized = (): Promise<InitResult> => {
   if (initAuthPromise) return initAuthPromise;
 
   initAuthPromise = (async (): Promise<InitResult> => {
     // ── Step 1: Check for a pending SSO token (from atoms-rostering redirect) ─
     const pendingToken = sessionStorage.getItem(SESSION_PENDING_KEY);
-	// Ambil query string dari window.location
-	const params = new URLSearchParams(window.location.search);
-	const tokenfix = params.get('tokenfix');
+    const params = new URLSearchParams(window.location.search);
+    const tokenfix = params.get('tokenfix');
     if (pendingToken) {
-      // Clear the pending marker eagerly so a leftover stale token cannot
-      // trigger a duplicate verify on a later page load.
       sessionStorage.removeItem(SESSION_PENDING_KEY);
 
-      try {
-        const result = await authService.verify(pendingToken , tokenfix);
-        if (result?.user) {
-          persistSession(pendingToken, result.user as User);
-          if (import.meta.env.DEV) {
-            // eslint-disable-next-line no-console
-            console.log('[SSO] token verified, user:', (result.user as User).name);
-          }
-          return { status: 'authed', token: pendingToken, user: result.user as User };
-        }
-      } catch (err) {
+      const verifyResult = await tryVerify(pendingToken, tokenfix);
+      if (verifyResult) {
+        persistSession(pendingToken, verifyResult.user as User);
         if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.warn('[SSO] verify failed:', err);
+          console.log('[SSO] token verified, user:', (verifyResult.user as User).name);
         }
-console.log(err);
-return; // fikri
-        // Token invalid or backend unreachable — fall through to redirect
+        return { status: 'authed', token: pendingToken, user: verifyResult.user as User };
       }
 
-      // Token was invalid — clear everything and tell caller to redirect
-      clearSession();
-      return { status: 'redirect' };
+      // All retries failed — server is likely still starting up.
+      // Don't clear the token or redirect: show server-starting screen instead.
+      // Re-park the token so the user can retry.
+      sessionStorage.setItem(SESSION_PENDING_KEY, pendingToken);
+      return { status: 'server-starting' };
     }
 
     // ── Step 2: Check sessionStorage for existing session ───────────────────
@@ -146,7 +164,6 @@ return; // fikri
         const parsed = JSON.parse(storedUser) as User;
         return { status: 'authed', token: storedToken, user: parsed };
       } catch {
-        // Corrupted storage — clear and fall through
         clearSession();
       }
     }
@@ -162,35 +179,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser]       = useState<User | null>(null);
   const [token, setToken]     = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [serverStarting, setServerStarting] = useState(false);
 
-  useEffect(() => {
-    // ── /monitor bypass ──────────────────────────────────────────────────────
-    // The workshop TV kiosk lives at /monitor and intentionally does NOT use
-    // the SSO flow — it has its own password gate. Skip ALL auth init here,
-    // including the redirect-to-rostering on no-auth, so the kiosk page can
-    // render directly. We also pick up SSO tokens that may have been parked
-    // by the module-load `?token` capture by clearing them, since this tab is
-    // committed to kiosk mode.
-    if (window.location.pathname.startsWith('/monitor')) {
-      sessionStorage.removeItem(SESSION_PENDING_KEY);
-      setIsLoading(false);
-      return;
-    }
+  const initAuth = useCallback(async (isRetry = false) => {
+    if (isRetry) resetInit();
 
-    let cancelled = false;
-    ensureInitialized().then((result) => {
-      if (cancelled) return;
+    setServerStarting(false);
+    setIsLoading(true);
+
+    try {
+      const result = await ensureInitialized();
 
       if (result.status === 'authed') {
         setToken(result.token);
         setUser(result.user);
+        setServerStarting(false);
         setIsLoading(false);
         return;
       }
 
-      if (result.status === 'redirect') {
-        // Verify failed — bounce to rostering login
+      if (result.status === 'server-starting') {
+        // Backend unreachable — show retry screen instead of redirecting
         setIsLoading(false);
+        setServerStarting(true);
+        return;
+      }
+
+      if (result.status === 'redirect') {
+        setIsLoading(false);
+        setServerStarting(false);
         window.location.href = ROSTERING_LOGIN_URL;
         return;
       }
@@ -199,20 +216,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const isMockMode = import.meta.env.VITE_DEV_MOCK_AUTH === 'true';
       if (!isMockMode) {
         setIsLoading(false);
+        setServerStarting(false);
         window.location.href = ROSTERING_LOGIN_URL;
         return;
       }
 
       // Mock dev mode: stay on /login so the mock form can render
       setIsLoading(false);
-    });
-
-    return () => {
-      cancelled = true;
-    };
+      setServerStarting(false);
+    } catch {
+      setIsLoading(false);
+      setServerStarting(true);
+    }
   }, []);
 
-  // ── Mock dev login (VITE_DEV_MOCK_AUTH=true only) ─────────────────────────
+  useEffect(() => {
+    if (window.location.pathname.startsWith('/monitor')) {
+      sessionStorage.removeItem(SESSION_PENDING_KEY);
+      setIsLoading(false);
+      return;
+    }
+
+    initAuth(false);
+  }, [initAuth]);
+
   const login = async (credentials: LoginCredentials) => {
     const response = await authService.login(credentials);
     const { access_token, user: userData } = response;
@@ -221,7 +248,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(userData as User);
   };
 
-  // ── Logout ────────────────────────────────────────────────────────────────
   const logout = async () => {
     try {
       await authService.logout();
@@ -231,22 +257,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       clearSession();
       setToken(null);
       setUser(null);
-      // Redirect to atoms-rostering login
       window.location.href = ROSTERING_LOGIN_URL;
     }
   };
 
-  // ── Update user (e.g. after profile change) ───────────────────────────────
   const updateUser = (updatedUser: User) => {
     setUser(updatedUser);
     sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(updatedUser));
-    // Ensure token is still set if it was missing (mock mode edge case)
     if (!token) {
       const mockToken = `mock-token-${updatedUser.id}`;
       setToken(mockToken);
       sessionStorage.setItem(SESSION_TOKEN_KEY, mockToken);
     }
   };
+
+  const retryServerConnection = useCallback(() => {
+    initAuth(true);
+  }, [initAuth]);
 
   return (
     <AuthContext.Provider
@@ -255,6 +282,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         token,
         isAuthenticated: !!token && !!user,
         isLoading,
+        serverStarting,
+        retryServerConnection,
         login,
         logout,
         updateUser,

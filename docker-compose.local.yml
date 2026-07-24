@@ -20,14 +20,13 @@ services:
       - teknik_local
 
   atoms-backend:
-    image: php:8.4-cli-alpine
+    build:
+      context: ./atoms-maintenance/backend_atoms-maintenance
+      dockerfile: Dockerfile
     restart: unless-stopped
     working_dir: /var/www/html
     command: >
-      sh -c "apk add --no-cache git zip unzip postgresql-client libpq-dev oniguruma-dev icu-dev libzip-dev libpng-dev libjpeg-turbo-dev freetype-dev libwebp-dev autoconf g++ make linux-headers &&
-             docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && docker-php-ext-install pdo pdo_pgsql mbstring zip intl bcmath gd exif &&
-             curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer &&
-             composer install --no-interaction --optimize-autoloader &&
+      sh -c "composer install --no-interaction --optimize-autoloader &&
              php artisan migrate --force &&
              php artisan serve --host=0.0.0.0 --port=8000"
     environment:

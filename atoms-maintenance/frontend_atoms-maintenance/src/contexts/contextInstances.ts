@@ -14,6 +14,8 @@ export interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  serverStarting: boolean;
+  retryServerConnection: () => void;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: User) => void;

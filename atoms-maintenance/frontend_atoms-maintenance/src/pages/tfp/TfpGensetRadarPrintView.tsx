@@ -41,7 +41,7 @@ export const TfpGensetRadarPrintView: React.FC = () => {
   }
 
   const getShiftLabel = (shift: string) => {
-    const map: Record<string, string> = { P: 'Pagi', S: 'Siang', M: 'Malam' };
+    const map: Record<string, string> = { pagi: 'Pagi', siang: 'Siang', malam: 'Malam' };
     return map[shift] || shift;
   };
 
@@ -73,62 +73,131 @@ export const TfpGensetRadarPrintView: React.FC = () => {
             <p><strong>KAPASITAS</strong> : {record.kapasitas}</p>
           </div>
           <div className="text-right">
-            <p><strong>Hari / Tanggal</strong> : {record.tanggal}</p>
-            <p><strong>Shift : {getShiftLabel(record.shift)}</strong></p>
-            <p><strong>Jam : {record.jam}</strong></p>
+            <p><strong>Hari / Tanggal</strong> : {record.day_name}, {record.date}</p>
+            <p><strong>Shift</strong> : {getShiftLabel(record.shift_type)}</p>
+            <p><strong>Jam</strong> : {record.time_filled}</p>
           </div>
         </div>
 
+        {/* Facilities Section */}
+        {record.facilities && record.facilities.length > 0 && (
+          <>
+            <h3 className="font-bold text-sm mb-2">URAIAN PEKERJAAN</h3>
+            <table className="w-full border-collapse border border-slate-400 text-sm mb-6">
+              <thead>
+                <tr className="bg-slate-200">
+                  <th className="border border-slate-400 px-2 py-1 w-12">NO</th>
+                  <th className="border border-slate-400 px-2 py-1">URAIAN PEKERJAAN</th>
+                  <th className="border border-slate-400 px-2 py-1 text-center" colSpan={2}>KONDISI</th>
+                  <th className="border border-slate-400 px-2 py-1">KETERANGAN</th>
+                </tr>
+                <tr className="bg-slate-200">
+                  <th className="border border-slate-400 px-2 py-1"></th>
+                  <th className="border border-slate-400 px-2 py-1"></th>
+                  <th className="border border-slate-400 px-2 py-1 text-center text-xs">BAIK</th>
+                  <th className="border border-slate-400 px-2 py-1 text-center text-xs">TIDAK BAIK</th>
+                  <th className="border border-slate-400 px-2 py-1"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {record.facilities.map((f, idx) => (
+                  <tr key={f.id}>
+                    <td className="border border-slate-400 px-2 py-1 text-center">{idx + 1}</td>
+                    <td className="border border-slate-400 px-2 py-1">{f.facility_name}</td>
+                    <td className="border border-slate-400 px-2 py-1 text-center">
+                      {f.kondisi === 'Baik' ? '✓' : ''}
+                    </td>
+                    <td className="border border-slate-400 px-2 py-1 text-center">
+                      {f.kondisi === 'Tidak Baik' ? '✓' : ''}
+                    </td>
+                    <td className="border border-slate-400 px-2 py-1">{f.keterangan || ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {/* Parameters Section */}
+        <h3 className="font-bold text-sm mb-2">PARAMETER PENGUKURAN</h3>
         <table className="w-full border-collapse border border-slate-400 text-sm mb-6">
           <thead>
             <tr className="bg-slate-200">
               <th className="border border-slate-400 px-2 py-1 w-12">NO</th>
-              <th className="border border-slate-400 px-2 py-1">URAIAN PEKERJAAN</th>
-              <th className="border border-slate-400 px-2 py-1 text-center" colSpan={2}>KONDISI</th>
-              <th className="border border-slate-400 px-2 py-1">KETERANGAN</th>
-            </tr>
-            <tr className="bg-slate-200">
-              <th className="border border-slate-400 px-2 py-1"></th>
-              <th className="border border-slate-400 px-2 py-1"></th>
-              <th className="border border-slate-400 px-2 py-1 text-center text-xs">BAIK</th>
-              <th className="border border-slate-400 px-2 py-1 text-center text-xs">TIDAK BAIK</th>
-              <th className="border border-slate-400 px-2 py-1"></th>
+              <th className="border border-slate-400 px-2 py-1">PARAMETER</th>
+              <th className="border border-slate-400 px-2 py-1 text-center">NILAI</th>
             </tr>
           </thead>
           <tbody>
-            {record.items.map((item) => (
-              <tr key={item.nomor}>
-                <td className="border border-slate-400 px-2 py-1 text-center">{item.nomor}</td>
-                <td className="border border-slate-400 px-2 py-1">{item.uraian_pekerjaan}</td>
-                <td className="border border-slate-400 px-2 py-1 text-center">
-                  {item.kondisi_baik ? '✓' : ''}
-                </td>
-                <td className="border border-slate-400 px-2 py-1 text-center">
-                  {item.kondisi_tidak_baik ? '✓' : ''}
-                </td>
-                <td className="border border-slate-400 px-2 py-1">{item.nilai || ''}</td>
-              </tr>
-            ))}
+            {record.items.map((item) => {
+              const isGroupLabel = item.group_label && item.parameter_number &&
+                record.items.filter(i => i.group_label === item.group_label && i.parameter_number === item.parameter_number)[0]?.id === item.id;
+
+              if (isGroupLabel) {
+                return (
+                  <tr key={item.id} className="bg-slate-100">
+                    <td className="border border-slate-400 px-2 py-1 text-center font-bold" colSpan={2}>
+                      {item.group_label}
+                    </td>
+                    <td className="border border-slate-400 px-2 py-1"></td>
+                  </tr>
+                );
+              }
+
+              const value = item.values && typeof item.values === 'object'
+                ? Object.values(item.values)[0] || ''
+                : '';
+
+              return (
+                <tr key={item.id}>
+                  <td className="border border-slate-400 px-2 py-1 text-center">{item.parameter_number}</td>
+                  <td className="border border-slate-400 px-2 py-1">
+                    {item.parameter_name}
+                    {item.unit && <span className="text-xs text-slate-500 ml-1">({item.unit})</span>}
+                  </td>
+                  <td className="border border-slate-400 px-2 py-1 text-center">{value || '—'}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
+        {/* Status Operasi */}
         <div className="mb-6 p-4 border border-slate-300">
-          <p className="font-semibold mb-2">Status Operasi: {record.status_operasi || '-'}</p>
-          <p className="font-semibold">Status: {record.status_master_slave || '-'}</p>
+          <p className="font-semibold mb-2">Status Operasi: {record.status_operasi?.replace('_', ' ') || '-'}</p>
+          <p className="font-semibold mb-2">Status: {record.status_master_slave || '-'}</p>
+          {record.fuel_level && <p className="font-semibold mb-2">Fuel Level: {record.fuel_level}</p>}
+          {record.catatan && <p className="font-semibold">Catatan: {record.catatan}</p>}
         </div>
 
+        {/* Signatures */}
         <div className="grid grid-cols-3 gap-8 mt-8">
           <div className="text-center">
-            <div className="h-16 border-b border-slate-400 mb-2"></div>
+            <div className="h-16 border-b border-slate-400 mb-2">
+              {record.manager?.signature && (
+                <img src={record.manager.signature} alt="TTD Manager" className="h-16 object-contain" />
+              )}
+            </div>
             <p className="font-semibold text-sm">MANAGER TEKNIK</p>
+            <p className="text-xs text-slate-500">{record.manager?.name || '—'}</p>
           </div>
           <div className="text-center">
-            <div className="h-16 border-b border-slate-400 mb-2"></div>
+            <div className="h-16 border-b border-slate-400 mb-2">
+              {record.supervisor?.signature && (
+                <img src={record.supervisor.signature} alt="TTD Supervisor" className="h-16 object-contain" />
+              )}
+            </div>
             <p className="font-semibold text-sm">SUPERVISOR</p>
+            <p className="text-xs text-slate-500">{record.supervisor?.name || '—'}</p>
           </div>
           <div className="text-center">
-            <div className="h-16 border-b border-slate-400 mb-2"></div>
+            <div className="h-16 border-b border-slate-400 mb-2">
+              {record.technicians?.[0]?.signature && (
+                <img src={record.technicians[0].signature} alt="TTD Teknisi" className="h-16 object-contain" />
+              )}
+            </div>
             <p className="font-semibold text-sm">TEKNISI</p>
+            <p className="text-xs text-slate-500">{record.technicians?.[0]?.technician_name || '—'}</p>
           </div>
         </div>
       </div>

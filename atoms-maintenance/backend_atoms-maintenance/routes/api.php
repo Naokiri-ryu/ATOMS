@@ -454,15 +454,6 @@ Route::prefix('v1')->group(function () {
                 ->whereNumber('id')
                 ->middleware('role:Admin,Manager Teknik,Supervisor CNSD,Supervisor TFP');
 
-        // TFP Genset Radar Routes
-        Route::middleware('auth:sanctum')->group(function () {
-            Route::get('/tfp/genset-radar', [TfpGensetRadarController::class, 'index']);
-            Route::get('/tfp/genset-radar/{id}', [TfpGensetRadarController::class, 'show']);
-            Route::post('/tfp/genset-radar', [TfpGensetRadarController::class, 'store']);
-            Route::put('/tfp/genset-radar/{id}', [TfpGensetRadarController::class, 'update']);
-            Route::delete('/tfp/genset-radar/{id}', [TfpGensetRadarController::class, 'destroy']);
-        });
-
             // Structural edit (Edit Mode) — controller enforces role guard
             Route::put('/{id}/structure',              [TfpGensetDvorController::class, 'saveStructure'])->whereNumber('id');
             Route::post('/{id}/parameters',            [TfpGensetDvorController::class, 'addParameter'])->whereNumber('id');
@@ -473,6 +464,33 @@ Route::prefix('v1')->group(function () {
             Route::put('/{id}/facilities/{facilityId}', [TfpGensetDvorController::class, 'updateFacility'])->whereNumber(['id', 'facilityId']);
             Route::delete('/{id}/facilities/{facilityId}', [TfpGensetDvorController::class, 'deleteFacility'])->whereNumber(['id', 'facilityId']);
             Route::put('/{id}/facilities-reorder',     [TfpGensetDvorController::class, 'reorderFacilities'])->whereNumber('id');
+        });
+
+        // ─── TFP Performance Check Genset Radar ────────────────
+        Route::prefix('tfp/genset-radar')->group(function () {
+            Route::get('/template', [TfpGensetRadarController::class, 'template']);
+            Route::get('/years',    [TfpGensetRadarController::class, 'years']);
+            Route::get('/',         [TfpGensetRadarController::class, 'index']);
+            Route::post('/', [TfpGensetRadarController::class, 'store'])
+                ->middleware('role:Admin,Manager Teknik,Supervisor CNSD,Supervisor TFP,Teknisi TFP');
+            Route::get('/{id}',     [TfpGensetRadarController::class, 'show'])->whereNumber('id');
+            Route::put('/{id}',     [TfpGensetRadarController::class, 'update'])->whereNumber('id');
+            Route::put('/{id}/genset-fields', [TfpGensetRadarController::class, 'updateGensetFields'])->whereNumber('id');
+            Route::post('/{id}/sign', [TfpGensetRadarController::class, 'sign'])->whereNumber('id');
+            Route::delete('/{id}', [TfpGensetRadarController::class, 'destroy'])
+                ->whereNumber('id')
+                ->middleware('role:Admin,Manager Teknik,Supervisor CNSD,Supervisor TFP');
+
+            // Structural edit (Edit Mode)
+            Route::put('/{id}/structure',              [TfpGensetRadarController::class, 'saveStructure'])->whereNumber('id');
+            Route::post('/{id}/parameters',            [TfpGensetRadarController::class, 'addParameter'])->whereNumber('id');
+            Route::put('/{id}/parameters/{paramId}',   [TfpGensetRadarController::class, 'updateParameter'])->whereNumber(['id', 'paramId']);
+            Route::delete('/{id}/parameters/{paramId}', [TfpGensetRadarController::class, 'deleteParameter'])->whereNumber(['id', 'paramId']);
+            Route::put('/{id}/parameters-reorder',     [TfpGensetRadarController::class, 'reorderParameters'])->whereNumber('id');
+            Route::post('/{id}/facilities',            [TfpGensetRadarController::class, 'addFacility'])->whereNumber('id');
+            Route::put('/{id}/facilities/{facilityId}', [TfpGensetRadarController::class, 'updateFacility'])->whereNumber(['id', 'facilityId']);
+            Route::delete('/{id}/facilities/{facilityId}', [TfpGensetRadarController::class, 'deleteFacility'])->whereNumber(['id', 'facilityId']);
+            Route::put('/{id}/facilities-reorder',     [TfpGensetRadarController::class, 'reorderFacilities'])->whereNumber('id');
         });
 
         // ─── TFP Performance Check AOB Lantai 1 & 2 ───────────

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getStoredToken , getStoredUser } from '../../../modules/auth/core/authStorage';
+import { redirectToMaintenance } from '../../../utils/redirectMaintenance';
+import { redirectToSakti } from '../../../utils/redirectSakti';
 
 
 interface MenuGridProps {
@@ -11,6 +12,11 @@ const MenuGrid: React.FC<MenuGridProps> = ({ isInitialized = true }) => {
   const navigate = useNavigate();
 
   const menuItems = [
+    {
+      title: 'Dashboard',
+      icon: '/assets/icon/dashboard.svg',
+      route: '/dashboard'
+    },
     {
       title: 'Rostering',
       icon: '/assets/icon/rostering.svg',
@@ -40,6 +46,11 @@ const MenuGrid: React.FC<MenuGridProps> = ({ isInitialized = true }) => {
       title: 'Logs & Report',
       icon: '/assets/icon/log-activity.svg',
       route: '/activity-logs'
+    },
+    {
+      title: 'Support Center',
+      icon: '/assets/icon/support-center.svg',
+      route: '/support'
     }
   ];
 
@@ -55,30 +66,9 @@ const MenuGrid: React.FC<MenuGridProps> = ({ isInitialized = true }) => {
             onClick={() => {
               if (!isInitialized) return;
               if (item.title === 'Maintenance') {
-                // SSO redirect: pass Sanctum token to atoms-maintenance via URL param.
-                // atoms-maintenance frontend reads ?token, validates against rostering
-                // /api/auth/me, then stores in sessionStorage and enters the dashboard.
-                const token = getStoredToken();
-		const user = localStorage.getItem('user')
-		const userObject = JSON.parse(user);
-		const tokenfix = `mock-token-${userObject.id}`;
-//              const baseUrl = import.meta.env.VITE_MAINTENANCE_URL || 'http://localhost:5173';
-		const currentUrl = window.location.href;
-        	let baseUrl;
-        
-	        if (currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1')) {
-        	  // Kalau akses dari localhost → pake VITE_MAINTENANCE_URL
-	          baseUrl = import.meta.env.VITE_MAINTENANCE_URL || 'http://localhost:5656';
-        	  console.log('🔍 Maintenance: Using localhost URL:', baseUrl);
-	        } else {
-        	  // Kalau akses dari IP/network → pake VITE_MAINTENANCE_URL_PROD
-	          baseUrl = import.meta.env.VITE_MAINTENANCE_URL_PROD || 'http://172.19.38.157:5656';
-        	  console.log('🔍 Maintenance: Using network URL:', baseUrl);
-	        }
-                const url = token
-                  ? `${baseUrl}?token=${encodeURIComponent(token)}&tokenfix=${encodeURIComponent(tokenfix)}`
-                  : baseUrl;
-                window.location.href = url;
+                redirectToMaintenance();
+              } else if (item.title === 'Inventory') {
+                redirectToSakti();
               } else {
                 navigate(item.route);
               }

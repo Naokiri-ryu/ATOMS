@@ -8,25 +8,28 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TfpGensetRadarItem extends Model
 {
     protected $table = 'tfp_genset_radar_items';
-    
+
     protected $fillable = [
-        'record_id',
-        'nomor',
-        'uraian_pekerjaan',
-        'kondisi_baik',
-        'kondisi_tidak_baik',
-        'keterangan',
-        'satuan',
-        'nilai',
+        'genset_radar_record_id',
+        'parameter_number',
+        'group_label',
+        'parameter_name',
+        'unit',
+        'values',
+        'is_disabled_map',
+        'merge_map',
+        'sort_order',
     ];
 
     protected $casts = [
-        'kondisi_baik' => 'boolean',
-        'kondisi_tidak_baik' => 'boolean',
+        'values'          => 'array',
+        'is_disabled_map' => 'array',
+        'merge_map'       => 'array',
+        'sort_order'      => 'integer',
     ];
 
     public function record(): BelongsTo
     {
-        return $this->belongsTo(TfpGensetRadarRecord::class);
+        return $this->belongsTo(TfpGensetRadarRecord::class, 'genset_radar_record_id');
     }
 }

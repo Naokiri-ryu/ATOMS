@@ -1,114 +1,1215 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Printer, Users, Calendar, Clock, Zap } from 'lucide-react';
+import axios from 'axios';
+import {
+  ArrowLeft,
+  Save,
+  Printer,
+  Users,
+  Calendar,
+  Clock,
+  Zap,
+  CheckSquare,
+  Pencil,
+  Plus,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  Settings2,
+  X,
+  Check,
+  Ban,
+  MoveHorizontal,
+  Columns,
+  ColumnsIcon,
+  Eraser,
+  AlertCircle,
+} from 'lucide-react';
 import { Button } from '@/components/common/Button';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { ShiftBadge } from '@/components/common/ShiftBadge';
 import { tfpGensetRadarService } from '@/services/tfpGensetRadarService';
-import type { TfpGensetRadarRecordDetail, TfpGensetRadarItem } from '@/types/tfpGensetRadar';
+import { TfpGensetRadarSignaturePanel } from './components/TfpGensetRadarSignaturePanel';
+import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
+import type {
+  TfpGensetRadarRecordDetail,
+  TfpGensetRadarItem,
+  TfpGensetRadarFacility,
+  TfpGensetRadarColumnsConfig,
+  TfpGensetRadarPanel,
+  TfpGensetRadarStatusOperasi,
+  TfpGensetRadarStatusMasterSlave,
+  TfpGensetRadarFuelLevel,
+} from '@/types/tfpGensetRadar';
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+/** Build composite cell key "panelId.subKey" from a panel + sub-column. */
+const cellKeyOf = (panelId: string, subKey: string) => `${panelId}.${subKey}`;
+
+/** Flatten a columns_config into an ordered list of cell descriptors. */
+interface FlatCell {
+  panel: TfpGensetRadarPanel;
+  subKey: string;
+  subLabel: string;
+  key: string;
+  index: number;
+}
+
+const flattenColumns = (config: TfpGensetRadarColumnsConfig): FlatCell[] => {
+  const out: FlatCell[] = [];
+  let i = 0;
+  for (const panel of config) {
+    for (const sub of panel.sub_columns) {
+      out.push({
+        panel,
+        subKey: sub.key,
+        subLabel: sub.label,
+        key: cellKeyOf(panel.id, sub.key),
+        index: i++,
+      });
+    }
+  }
+  return out;
+};
+
+// Kondisi options for facility rows (Genset Radar: only Baik / Tidak Baik)
+const KONDISI_OPTIONS = ['Baik', 'Tidak Baik'] as const;
+
+// Slug a user-typed label into a stable key (matches backend slug function)
+const slugify = (raw: string): string =>
+  raw.toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+// ─── ToggleButtonGroup — 2-state pill toggle (Mode/Suplai cells) ──────────
+
+interface ToggleButtonGroupProps {
+  options: readonly string[];
+  value: string;
+  onChange: (val: string) => void;
+  variant?: 'default' | 'mode' | 'suplai';
+  disabled?: boolean;
+}
+
+const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
+  options, value, onChange, variant = 'default', disabled,
+}) => {
+  const palette = (val: string, active: boolean) => {
+    if (!active) return 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200';
+    if (variant === 'mode') {
+      return val === 'Auto'
+        ? 'bg-emerald-600 text-white border-emerald-600'
+        : 'bg-amber-500 text-white border-amber-500';
+    }
+    if (variant === 'suplai') {
+      return val === 'PLN' || val === 'PLN 1'
+        ? 'bg-emerald-600 text-white border-emerald-600'
+        : 'bg-sky-600 text-white border-sky-600';
+    }
+    return 'bg-slate-700 text-white border-slate-700';
+  };
+
+  return (
+    <div className="inline-flex rounded-md border border-slate-200 overflow-hidden shadow-sm">
+      {options.map((opt, i) => {
+        const active = value === opt;
+        return (
+          <button
+            key={opt}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(active ? '' : opt)}
+            className={cn(
+              'px-2.5 py-1 text-[11px] font-semibold transition-colors border-r border-slate-200 last:border-r-0 disabled:opacity-50 disabled:cursor-not-allowed',
+              palette(opt, active),
+              i === 0 ? 'rounded-l-md' : '',
+              i === options.length - 1 ? 'rounded-r-md' : '',
+            )}
+          >
+            {opt}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+// ─── Cell editor inputs (value entry mode) ─────────────────────────────────
+
+interface CellInputProps {
+  isDisabled: boolean;
+  isCompleted: boolean;
+  value: string;
+  onChange: (val: string) => void;
+  compositeKey: string;
+  isSelected: boolean;
+  isClipboard: boolean;
+  onMouseDown: (key: string, e: React.MouseEvent) => void;
+  onMouseEnter: (key: string) => void;
+  // ── BARU: props untuk navigasi keyboard ──
+  rowIndex?: number;
+  cellKey?: string;
+  onNavigate?: (targetRowIndex: number, targetCellKey: string) => void;
+}
+
+const CellInput: React.FC<CellInputProps> = ({
+  isDisabled, isCompleted, value, onChange,
+  compositeKey, isSelected, isClipboard, onMouseDown, onMouseEnter,
+  rowIndex, cellKey, onNavigate,
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!onNavigate || rowIndex === undefined || !cellKey) return;
+
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      onNavigate(rowIndex + 1, cellKey);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      onNavigate(rowIndex - 1, cellKey);
+    }
+  };
+
+  if (isDisabled) return <div className="w-full h-7 rounded" aria-hidden="true" />;
+  if (isCompleted) return <span className="text-xs text-slate-700">{value || '—'}</span>;
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      inputMode="decimal"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={handleKeyDown}
+      onMouseDown={(e) => onMouseDown(compositeKey, e)}
+      onMouseEnter={() => onMouseEnter(compositeKey)}
+      data-row-index={rowIndex}
+      data-cell-key={cellKey}
+      className={cn(
+        'w-full h-7 px-2 text-center text-xs rounded border bg-white focus:ring-1 focus:outline-none select-none',
+        isSelected && isClipboard
+          ? 'border-emerald-500 ring-1 ring-emerald-400 bg-emerald-50'
+          : isSelected
+          ? 'border-sky-400 ring-1 ring-sky-300 bg-sky-50'
+          : isClipboard
+          ? 'border-amber-400 border-dashed ring-1 ring-amber-300 bg-amber-50'
+          : 'border-slate-300 focus:ring-brand-primary',
+      )}
+    />
+  );
+};
+
+// ─── Edit Mode cell — clickable to select + toggle disable + merge ─────────
+
+interface EditCellProps {
+  isDisabled: boolean;
+  isSelected: boolean;
+  colspan: number;
+  onClick: () => void;
+  label?: React.ReactNode;
+}
+
+const EditCell: React.FC<EditCellProps> = ({ isDisabled, isSelected, colspan, onClick, label }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={cn(
+      'w-full min-h-[28px] text-[10px] font-medium rounded transition-all flex items-center justify-center gap-1',
+      isDisabled
+        ? 'bg-slate-200 text-slate-400 hover:bg-slate-300'
+        : 'bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200',
+      isSelected ? 'ring-2 ring-amber-400 ring-offset-1' : '',
+    )}
+    title={isDisabled ? 'Klik untuk aktifkan cell' : 'Klik untuk disable cell'}
+  >
+    {colspan > 1 && <MoveHorizontal size={10} />}
+    {label ?? (isDisabled ? <Ban size={10} /> : <Check size={10} />)}
+    {colspan > 1 && <span className="font-bold">×{colspan}</span>}
+  </button>
+);
+
+// ─── Inline structure-edit popover for parameter rename ───────────────────
+
+interface ParamEditFormProps {
+  item: TfpGensetRadarItem;
+  onSave: (patch: { parameter_number?: string | null; parameter_name?: string; unit?: string | null }) => Promise<void>;
+  onCancel: () => void;
+}
+
+const ParamEditForm: React.FC<ParamEditFormProps> = ({ item, onSave, onCancel }) => {
+  const [num, setNum] = useState(item.parameter_number ?? '');
+  const [name, setName] = useState(item.parameter_name);
+  const [unit, setUnit] = useState(item.unit ?? '');
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <div className="px-3 py-2 bg-amber-50 border-y border-amber-200 grid grid-cols-1 sm:grid-cols-[60px_1fr_90px_auto] gap-2 items-center">
+      <input
+        type="text" value={num} onChange={(e) => setNum(e.target.value)} placeholder="No"
+        className="h-8 px-2 text-xs rounded border border-slate-300 bg-white focus:ring-1 focus:ring-amber-400 focus:outline-none"
+      />
+      <input
+        type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nama parameter"
+        className="h-8 px-2 text-xs rounded border border-slate-300 bg-white focus:ring-1 focus:ring-amber-400 focus:outline-none"
+      />
+      <input
+        type="text" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="Unit"
+        className="h-8 px-2 text-xs rounded border border-slate-300 bg-white focus:ring-1 focus:ring-amber-400 focus:outline-none"
+      />
+      <div className="flex gap-1.5">
+        <button
+          type="button" disabled={busy || !name.trim()}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await onSave({
+                parameter_number: num.trim() || null,
+                parameter_name: name.trim(),
+                unit: unit.trim() || null,
+              });
+            } finally { setBusy(false); }
+          }}
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          <Check size={13} /> Simpan
+        </button>
+        <button
+          type="button" onClick={onCancel}
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded bg-white border border-slate-300 text-slate-600 hover:bg-slate-50"
+        >
+          <X size={13} /> Batal
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─── Inline "add parameter" form ───────────────────────────────────────────
+
+interface AddParameterFormProps {
+  onSave: (data: { parameter_name: string; parameter_number?: string | null; unit?: string | null }) => Promise<void>;
+}
+
+const AddParameterForm: React.FC<AddParameterFormProps> = ({ onSave }) => {
+  const [num, setNum] = useState('');
+  const [name, setName] = useState('');
+  const [unit, setUnit] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!name.trim()) return;
+    setBusy(true);
+    try {
+      await onSave({
+        parameter_name: name.trim(),
+        parameter_number: num.trim() || null,
+        unit: unit.trim() || null,
+      });
+      setNum(''); setName(''); setUnit('');
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="px-3 py-2 grid grid-cols-1 sm:grid-cols-[60px_1fr_90px_auto] gap-2 items-center bg-slate-50/40">
+      <input
+        type="text" value={num} onChange={(e) => setNum(e.target.value)} placeholder="No"
+        className="h-8 px-2 text-xs rounded border border-slate-300 bg-white focus:ring-1 focus:ring-emerald-400 focus:outline-none"
+      />
+      <input
+        type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nama parameter baru"
+        className="h-8 px-2 text-xs rounded border border-slate-300 bg-white focus:ring-1 focus:ring-emerald-400 focus:outline-none"
+        onKeyDown={(e) => { if (e.key === 'Enter') void submit(); }}
+      />
+      <input
+        type="text" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="Unit"
+        className="h-8 px-2 text-xs rounded border border-slate-300 bg-white focus:ring-1 focus:ring-emerald-400 focus:outline-none"
+      />
+      <button
+        type="button" disabled={busy || !name.trim()} onClick={() => void submit()}
+        className="inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+      >
+        <Plus size={13} /> Tambah
+      </button>
+    </div>
+  );
+};
+
+// ─── Row-action button (pencil, trash, up, down) ───────────────────────────
+
+const RowActionBtn: React.FC<{
+  onClick: () => void;
+  title: string;
+  variant?: 'default' | 'danger';
+  disabled?: boolean;
+  children: React.ReactNode;
+}> = ({ onClick, title, variant = 'default', disabled, children }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    title={title}
+    disabled={disabled}
+    className={cn(
+      'inline-flex items-center justify-center h-6 w-6 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed',
+      variant === 'danger'
+        ? 'text-red-500 hover:bg-red-50'
+        : 'text-slate-500 hover:bg-slate-100',
+    )}
+  >
+    {children}
+  </button>
+);
+
+// ─── Add panel modal ──────────────────────────────────────────────────────
+
+interface AddPanelModalProps {
+  open: boolean;
+  onClose: () => void;
+  onAdd: (panel: TfpGensetRadarPanel) => void;
+  existingIds: string[];
+}
+
+const AddPanelModal: React.FC<AddPanelModalProps> = ({ open, onClose, onAdd, existingIds }) => {
+  const [label, setLabel] = useState('');
+  const [subs, setSubs] = useState<{ label: string }[]>([{ label: 'Input' }, { label: 'Output' }]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setLabel(''); setSubs([{ label: 'Input' }, { label: 'Output' }]); setError(null);
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  const submit = () => {
+    setError(null);
+    const trimmedLabel = label.trim();
+    if (!trimmedLabel) { setError('Nama panel wajib diisi.'); return; }
+
+    const id = slugify(trimmedLabel);
+    if (!id) { setError('Nama panel tidak valid (harus mengandung huruf/angka).'); return; }
+    if (existingIds.includes(id)) { setError(`Panel dengan id "${id}" sudah ada.`); return; }
+
+    const cleanSubs = subs
+      .map((s) => ({ label: s.label.trim() }))
+      .filter((s) => s.label !== '');
+    if (cleanSubs.length === 0) { setError('Minimal 1 sub-kolom.'); return; }
+
+    // Make sub-keys unique within this panel
+    const subKeysSeen = new Set<string>();
+    const finalSubs: { key: string; label: string }[] = [];
+    for (const s of cleanSubs) {
+      let k = slugify(s.label) || 'col';
+      let base = k, n = 1;
+      while (subKeysSeen.has(k)) { k = `${base}_${++n}`; }
+      subKeysSeen.add(k);
+      finalSubs.push({ key: k, label: s.label });
+    }
+
+    onAdd({ id, label: trimmedLabel, sub_columns: finalSubs });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-fade-in" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <Columns size={16} className="text-sky-600" />
+            Tambah Panel Baru
+          </h3>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-600 mb-1 uppercase tracking-wider">Nama Panel</label>
+            <input
+              type="text" value={label} onChange={(e) => setLabel(e.target.value)} autoFocus
+              placeholder="misal: UPS TESCOM C"
+              className="w-full h-9 px-3 text-sm rounded border border-slate-300 focus:ring-1 focus:ring-sky-400 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Sub-Kolom</label>
+              <button
+                type="button"
+                onClick={() => setSubs([...subs, { label: '' }])}
+                className="text-[11px] text-sky-600 hover:text-sky-700 inline-flex items-center gap-1"
+              >
+                <Plus size={11} /> Tambah sub-kolom
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {subs.map((s, i) => (
+                <div key={i} className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={s.label}
+                    onChange={(e) => {
+                      const next = [...subs]; next[i].label = e.target.value; setSubs(next);
+                    }}
+                    placeholder={`Sub-kolom ${i + 1}`}
+                    className="flex-1 h-8 px-2.5 text-xs rounded border border-slate-300 focus:ring-1 focus:ring-sky-400 focus:outline-none"
+                  />
+                  {subs.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setSubs(subs.filter((_, j) => j !== i))}
+                      className="h-8 w-8 rounded text-red-500 hover:bg-red-50 inline-flex items-center justify-center"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {error && (
+            <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2.5 py-1.5 flex items-center gap-1.5">
+              <AlertCircle size={12} /> {error}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button" onClick={onClose}
+            className="px-3 py-1.5 text-xs font-semibold rounded bg-white border border-slate-300 text-slate-600 hover:bg-slate-50"
+          >Batal</button>
+          <button
+            type="button" onClick={submit}
+            className="px-3 py-1.5 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-700"
+          >
+            <Plus size={13} className="inline mr-1" /> Tambah Panel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Panel/Sub-column header in Edit Mode ──────────────────────────────────
+
+interface PanelHeaderEditProps {
+  panel: TfpGensetRadarPanel;
+  onRename: (newLabel: string) => void;
+  onDelete: () => void;
+  onAddSub: () => void;
+  onRenameSub: (subKey: string, newLabel: string) => void;
+  canDeletePanel: boolean;
+}
+
+const PanelHeaderEdit: React.FC<PanelHeaderEditProps> = ({
+  panel, onRename, onDelete, onAddSub, onRenameSub, canDeletePanel,
+}) => {
+  const [editingPanel, setEditingPanel] = useState(false);
+  const [panelDraft, setPanelDraft] = useState(panel.label);
+  const [editingSub, setEditingSub] = useState<string | null>(null);
+  const [subDraft, setSubDraft] = useState('');
+
+  return (
+    <th colSpan={panel.sub_columns.length} className="px-2 py-2 text-center font-semibold border-b border-l border-amber-300 text-[10px] uppercase tracking-wider bg-amber-100 text-amber-900">
+      {editingPanel ? (
+        <div className="flex gap-1 items-center justify-center">
+          <input
+            autoFocus value={panelDraft} onChange={(e) => setPanelDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { onRename(panelDraft.trim()); setEditingPanel(false); }
+              if (e.key === 'Escape') { setEditingPanel(false); setPanelDraft(panel.label); }
+            }}
+            className="h-7 px-2 text-[11px] rounded border border-amber-400 bg-white text-slate-700 focus:outline-none w-32"
+          />
+          <button type="button" onClick={() => { onRename(panelDraft.trim()); setEditingPanel(false); }} className="text-emerald-600 hover:bg-emerald-100 rounded p-0.5"><Check size={12} /></button>
+          <button type="button" onClick={() => { setEditingPanel(false); setPanelDraft(panel.label); }} className="text-slate-500 hover:bg-slate-100 rounded p-0.5"><X size={12} /></button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center gap-1">
+          <span>{panel.label}</span>
+          <button
+            type="button" title="Rename panel"
+            onClick={() => { setPanelDraft(panel.label); setEditingPanel(true); }}
+            className="text-amber-700 hover:bg-amber-200 rounded p-0.5"
+          ><Pencil size={10} /></button>
+          <button
+            type="button" title="Tambah sub-kolom"
+            onClick={onAddSub}
+            className="text-sky-700 hover:bg-sky-100 rounded p-0.5"
+          ><Plus size={11} /></button>
+          {canDeletePanel && (
+            <button
+              type="button" title="Hapus panel"
+              onClick={onDelete}
+              className="text-red-500 hover:bg-red-100 rounded p-0.5"
+            ><Trash2 size={10} /></button>
+          )}
+        </div>
+      )}
+
+      {/* Sub-column editor row appears inline below — only the inline editing of one sub at a time */}
+      {editingSub !== null && (() => {
+        const sub = panel.sub_columns.find((s) => s.key === editingSub);
+        if (!sub) return null;
+        return (
+          <div className="mt-1.5 flex gap-1 items-center justify-center">
+            <input
+              autoFocus value={subDraft} onChange={(e) => setSubDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { onRenameSub(sub.key, subDraft.trim()); setEditingSub(null); }
+                if (e.key === 'Escape') { setEditingSub(null); }
+              }}
+              placeholder={`Rename "${sub.label}"`}
+              className="h-7 px-2 text-[11px] rounded border border-amber-400 bg-white text-slate-700 focus:outline-none w-28"
+            />
+            <button type="button" onClick={() => { onRenameSub(sub.key, subDraft.trim()); setEditingSub(null); }} className="text-emerald-600 hover:bg-emerald-100 rounded p-0.5"><Check size={11} /></button>
+            <button type="button" onClick={() => setEditingSub(null)} className="text-slate-500 hover:bg-slate-100 rounded p-0.5"><X size={11} /></button>
+          </div>
+        );
+      })()}
+    </th>
+  );
+};
+
+// ─── Main component ────────────────────────────────────────────────────────
 
 export const TfpGensetRadarDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Edit Mode permission
+  const canEditStructure =
+    user?.role === 'Admin' ||
+    user?.role === 'Manager Teknik' ||
+    user?.role === 'Supervisor TFP';
+
   const [record, setRecord] = useState<TfpGensetRadarRecordDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingStructure, setIsSavingStructure] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const defaultItems: Partial<TfpGensetRadarItem>[] = [
-    { nomor: 1, uraian_pekerjaan: 'Pemeriksaan Battery Stater', satuan: '' },
-    { nomor: 2, uraian_pekerjaan: 'Pemeriksaan Level Oli Mesin', satuan: '' },
-    { nomor: 3, uraian_pekerjaan: 'Pemeriksaan Air Radiator', satuan: '' },
-    { nomor: 4, uraian_pekerjaan: 'Pemeriksaan Kontaktor-Kontaktor pada Panel ACOS', satuan: '' },
-    { nomor: 5, uraian_pekerjaan: 'Pemeriksaan Lampu-Lampu Indikator', satuan: '' },
-    { nomor: 6, uraian_pekerjaan: 'Pemeriksaan Indikator Volt meter, Ampere meter, Frequency', satuan: '' },
-    { nomor: 7, uraian_pekerjaan: 'Pemeriksaan Relay-relay Kontrol (Safety Devices)', satuan: '' },
-    { nomor: 8, uraian_pekerjaan: 'Pemeriksaan Vent Belt', satuan: '' },
-    { nomor: 9, uraian_pekerjaan: 'Pemeriksaan dan Membersihkan Pompa BBM', satuan: '' },
-    { nomor: 10, uraian_pekerjaan: 'Membersihkan Saringan Udara', satuan: '' },
-    { nomor: 11, uraian_pekerjaan: 'Membersihkan Genset, Panel ACOS dan Ruang Sekitarnya', satuan: '' },
-    { nomor: 12, uraian_pekerjaan: 'Pengetesan Genset Secara Auto No Load (tanpa beban)', satuan: 'Selama : ±' },
-    { nomor: 13, uraian_pekerjaan: 'Pengetesan Genset Secara Auto On Load (dengan beban)', satuan: 'Selama : ±' },
-    { nomor: 14, uraian_pekerjaan: 'Pengetesan Genset Secara Manual No Load', satuan: 'Selama : ±' },
-    { nomor: 15, uraian_pekerjaan: 'Pengetesan Genset Secara Manual On Load', satuan: 'Selama : ±' },
-    { nomor: 16, uraian_pekerjaan: 'Kondisi Genset', satuan: '' },
-    { nomor: 17, uraian_pekerjaan: 'Pegukuran Tegangan Output Genset', satuan: '' },
-    { nomor: 18, uraian_pekerjaan: 'Pengukuran Arus Beban', satuan: '' },
-    { nomor: 19, uraian_pekerjaan: 'Pemeriksaan Frequency', satuan: 'Hz' },
-    { nomor: 20, uraian_pekerjaan: 'Pemeriksaan RPM', satuan: 'Rpm' },
-    { nomor: 21, uraian_pekerjaan: 'Pengukuran Tegangan Battery Starter', satuan: 'Vdc' },
-    { nomor: 22, uraian_pekerjaan: 'Pemeriksaan Jam Kerja Mesin (Hour Counter)', satuan: 'Hr' },
-    { nomor: 23, uraian_pekerjaan: 'Pemeriksaan Oil Pressure', satuan: 'Bar' },
-    { nomor: 24, uraian_pekerjaan: 'Pemeriksaan Temperatur Cooling Water', satuan: '°C' },
-    { nomor: 25, uraian_pekerjaan: 'Temperatur Ruangan Genset', satuan: '°C' },
-    { nomor: 26, uraian_pekerjaan: 'Daya yang terpakai', satuan: 'KW' },
-    { nomor: 27, uraian_pekerjaan: 'Pengukuran Tegangan PLN / Output Stabilizer', satuan: '' },
-    { nomor: 28, uraian_pekerjaan: 'KWH meter', satuan: '' },
-    { nomor: 29, uraian_pekerjaan: 'BBM yang terpakai', satuan: 'Liter' },
-    { nomor: 30, uraian_pekerjaan: 'Pemeriksaan Tangki Induk', satuan: 'Liter' },
-    { nomor: 31, uraian_pekerjaan: 'Pemeriksaan Tangki Harian', satuan: 'Liter' },
-    { nomor: 32, uraian_pekerjaan: 'Pemeriksaan Cadangan Battery', satuan: 'Liter' },
-    { nomor: 33, uraian_pekerjaan: 'Pemeriksaan Cadangan Oli Pelumas', satuan: 'Liter' },
-  ];
+  // Editable cell values: { itemId: { cellKey: stringValue } }
+  const [itemValues, setItemValues] = useState<Record<number, Record<string, string>>>({});
+  const [facilityValues, setFacilityValues] = useState<
+    Record<number, { kondisi: string; keterangan: string }>
+  >({});
+  const [timeFilled, setTimeFilled] = useState<string>('');
 
-  useEffect(() => {
-    if (id && id !== 'new') {
-      fetchRecord();
-    } else {
-      setRecord({
-        id: 0,
-        form_number: 'TFP-GENSET-RADAR-' + new Date().getTime(),
-        tanggal: new Date().toISOString().split('T')[0],
-        shift: 'P',
-        jam: '',
-        engine: 'DEUTZ',
-        alternator: 'LEROY SUMMER',
-        kapasitas: '150 KVA',
-        status_operasi: null,
-        status_master_slave: null,
-        status: 'draft',
-        technicians: [],
-        items: defaultItems as TfpGensetRadarItem[],
-        created_at: '',
-        updated_at: '',
-      });
-      setLoading(false);
+  // Genset-specific fields
+  const [catatan, setCatatan] = useState<string>('');
+  const [statusOperasi, setStatusOperasi] = useState<TfpGensetRadarStatusOperasi | null>(null);
+  const [statusMasterSlave, setStatusMasterSlave] = useState<TfpGensetRadarStatusMasterSlave | null>(null);
+  const [fuelLevel, setFuelLevel] = useState<TfpGensetRadarFuelLevel | null>(null);
+  const [engine, setEngine] = useState<string>('');
+  const [alternator, setAlternator] = useState<string>('');
+  const [kapasitas, setKapasitas] = useState<string>('');
+  const [isSavingGensetFields, setIsSavingGensetFields] = useState(false);
+
+  // Edit Mode state
+  const [editMode, setEditMode] = useState(false);
+  const [editingParamId, setEditingParamId] = useState<number | null>(null);
+  const [editingFacilityId, setEditingFacilityId] = useState<number | null>(null);
+  const [editingFacilityName, setEditingFacilityName] = useState('');
+
+  // ─── Multi-cell drag-select & copy-paste state ─────────────────────────
+  // Selection: Set of compositeKey "itemId__panelId.subKey"
+  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  // Clipboard: Map compositeKey → value (copied snapshot)
+  const [clipboardCells, setClipboardCells] = useState<Map<string, string>>(new Map());
+  // Drag state
+  const [dragStart, setDragStart] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // isCompleted computed early so drag hooks can reference it
+  const isCompleted = record?.status === 'completed' ?? false;
+
+  // Structural draft state (only used while in Edit Mode, persisted via Simpan Struktur)
+  const [draftConfig, setDraftConfig] = useState<TfpGensetRadarColumnsConfig | null>(null);
+  const [draftItemMeta, setDraftItemMeta] = useState<Record<number, {
+    is_disabled_map: Record<string, boolean>;
+    merge_map: Record<string, number>;
+  }>>({});
+  const [showAddPanel, setShowAddPanel] = useState(false);
+
+  // ─── Data loading ───────────────────────────────────────────────────────
+
+  const hydrate = (data: TfpGensetRadarRecordDetail) => {
+    setRecord(data);
+    setTimeFilled(data.time_filled ?? new Date().toTimeString().slice(0, 5));
+
+    // Genset-specific fields
+    setCatatan(data.catatan ?? '');
+    setStatusOperasi(data.status_operasi ?? null);
+    setStatusMasterSlave(data.status_master_slave ?? null);
+    setFuelLevel(data.fuel_level ?? null);
+    setEngine(data.engine ?? '');
+    setAlternator(data.alternator ?? '');
+    setKapasitas(data.kapasitas ?? '');
+
+    const iv: Record<number, Record<string, string>> = {};
+    data.items.forEach((item) => {
+      iv[item.id] = { ...(item.values ?? {}) };
+    });
+    setItemValues(iv);
+
+    const fv: Record<number, { kondisi: string; keterangan: string }> = {};
+    data.facilities.forEach((f) => {
+      fv[f.id] = { kondisi: f.kondisi ?? '', keterangan: f.keterangan ?? '' };
+    });
+    setFacilityValues(fv);
+
+    // Reset structural draft to server state whenever we re-hydrate
+    setDraftConfig(null);
+    setDraftItemMeta({});
+  };
+
+  const fetchRecord = useCallback(async () => {
+    if (!id) return;
+    setIsLoading(true);
+    try {
+      const data = await tfpGensetRadarService.getRecord(Number(id));
+      hydrate(data);
+    } catch {
+      setErrorMessage('Gagal memuat data form. Coba refresh halaman.');
+    } finally {
+      setIsLoading(false);
     }
   }, [id]);
 
-  const fetchRecord = async () => {
-    try {
-      const data = await tfpGensetRadarService.getRecord(Number(id));
-      setRecord(data);
-    } catch (error) {
-      console.error('Failed to fetch record:', error);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => { void fetchRecord(); }, [fetchRecord]);
+
+  // ── PERBAIKAN: Dikommentari agar tidak mengganggu navigasi keyboard ──
+  // useEffect onFocus ini menyebabkan fetchRecord dipanggil ulang setiap kali
+  // window mendapat focus, yang akan me-reset state dan menggagalkan navigasi.
+  // useEffect(() => {
+  //   const onFocus = () => void fetchRecord();
+  //   window.addEventListener('focus', onFocus);
+  //   return () => window.removeEventListener('focus', onFocus);
+  // }, [fetchRecord]);
+
+  // ─── Computed: effective columns_config & per-item meta ────────────────
+
+  const effectiveConfig: TfpGensetRadarColumnsConfig = useMemo(
+    () => draftConfig ?? record?.columns_config ?? [],
+    [draftConfig, record],
+  );
+
+  const flatCells = useMemo(() => flattenColumns(effectiveConfig), [effectiveConfig]);
+  const flatKeys = useMemo(() => flatCells.map((c) => c.key), [flatCells]);
+
+  const getItemDisabled = (itemId: number, cellKey: string): boolean => {
+    const draft = draftItemMeta[itemId];
+    if (draft) return draft.is_disabled_map[cellKey] === true;
+    const item = record?.items.find((it) => it.id === itemId);
+    return item?.is_disabled_map?.[cellKey] === true;
   };
+
+  const getItemMerge = (itemId: number, cellKey: string): number => {
+    const draft = draftItemMeta[itemId];
+    if (draft) return draft.merge_map[cellKey] ?? 1;
+    const item = record?.items.find((it) => it.id === itemId);
+    return item?.merge_map?.[cellKey] ?? 1;
+  };
+
+  // Mutate draft for an item — copies-from-server lazily on first touch
+  const mutateItemMeta = (itemId: number, fn: (m: { is_disabled_map: Record<string, boolean>; merge_map: Record<string, number> }) => void) => {
+    setDraftItemMeta((prev) => {
+      const existing = prev[itemId] ?? (() => {
+        const it = record?.items.find((x) => x.id === itemId);
+        return {
+          is_disabled_map: { ...(it?.is_disabled_map ?? {}) },
+          merge_map: { ...(it?.merge_map ?? {}) },
+        };
+      })();
+      const next = {
+        is_disabled_map: { ...existing.is_disabled_map },
+        merge_map: { ...existing.merge_map },
+      };
+      fn(next);
+      return { ...prev, [itemId]: next };
+    });
+  };
+
+  // ─── Value save (regular update) ───────────────────────────────────────
 
   const handleSave = async () => {
     if (!record) return;
-    setSaving(true);
+    setIsSaving(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
     try {
-      if (record.id === 0) {
-        await tfpGensetRadarService.createRecord(record);
+      const itemsPayload = record.items.map((item) => ({
+        id: item.id,
+        values: itemValues[item.id] ?? {},
+      }));
+      const facilitiesPayload = record.facilities.map((f) => ({
+        id: f.id,
+        kondisi: facilityValues[f.id]?.kondisi || null,
+        keterangan: facilityValues[f.id]?.keterangan || null,
+      }));
+
+      const isValidTime = /^([01]\d|2[0-3]):[0-5]\d$/.test(timeFilled.trim());
+
+      const updated = await tfpGensetRadarService.updateRecord(record.id, {
+        items: itemsPayload,
+        facilities: facilitiesPayload,
+        time_filled: isValidTime ? timeFilled.trim() : null,
+      });
+      hydrate(updated);
+      setSuccessMessage('Perubahan berhasil disimpan.');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        const data = err.response.data as { message?: string };
+        setErrorMessage(data.message ?? 'Gagal menyimpan perubahan.');
       } else {
-        await tfpGensetRadarService.updateRecord(record.id, record);
+        setErrorMessage('Gagal menyimpan perubahan. Coba lagi.');
       }
-      navigate('/tfp/genset-radar');
-    } catch (error) {
-      console.error('Failed to save record:', error);
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   };
 
-  const updateItem = (index: number, field: keyof TfpGensetRadarItem, value: any) => {
+  // ─── Genset-specific fields save ───────────────────────────────────────
+
+  const handleSaveGensetFields = async () => {
     if (!record) return;
-    const newItems = [...record.items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setRecord({ ...record, items: newItems });
+    setIsSavingGensetFields(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const updated = await tfpGensetRadarService.updateGensetFields(record.id, {
+        catatan: catatan.trim() || null,
+        status_operasi: statusOperasi,
+        status_master_slave: statusMasterSlave,
+        fuel_level: fuelLevel,
+        engine: engine.trim() || null,
+        alternator: alternator.trim() || null,
+        kapasitas: kapasitas.trim() || null,
+      });
+      hydrate(updated);
+      setSuccessMessage('Field Genset berhasil disimpan.');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        const data = err.response.data as { message?: string };
+        setErrorMessage(data.message ?? 'Gagal menyimpan field Genset.');
+      } else {
+        setErrorMessage('Gagal menyimpan field Genset. Coba lagi.');
+      }
+    } finally {
+      setIsSavingGensetFields(false);
+    }
   };
 
-  if (loading) {
+  // ─── Structure save (batch "Simpan Struktur") ─────────────────────────
+
+  const isStructureDirty = draftConfig !== null || Object.keys(draftItemMeta).length > 0;
+
+  const handleSaveStructure = async () => {
+    if (!record || !isStructureDirty) return;
+    setIsSavingStructure(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const config = draftConfig ?? record.columns_config;
+      const itemPatches = record.items.map((it) => {
+        const draft = draftItemMeta[it.id];
+        return {
+          id: it.id,
+          is_disabled_map: draft?.is_disabled_map ?? it.is_disabled_map ?? {},
+          merge_map: draft?.merge_map ?? it.merge_map ?? {},
+        };
+      });
+      const updated = await tfpGensetRadarService.saveStructure(record.id, {
+        columns_config: config,
+        items: itemPatches,
+      });
+      hydrate(updated);
+      setSuccessMessage('Struktur tabel berhasil disimpan.');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        const data = err.response.data as { message?: string };
+        setErrorMessage(data.message ?? 'Gagal menyimpan struktur.');
+      } else {
+        setErrorMessage('Gagal menyimpan struktur. Coba lagi.');
+      }
+    } finally {
+      setIsSavingStructure(false);
+    }
+  };
+
+  const handleResetStructure = () => {
+    setDraftConfig(null);
+    setDraftItemMeta({});
+  };
+
+  // ─── Cell + panel edit actions (Edit Mode) ─────────────────────────────
+
+  // Toggle disabled on a single cell across all rows is too aggressive.
+  // We let user click each cell per-row, which is the Excel-correct model.
+  const toggleCellDisabled = (itemId: number, cellKey: string) => {
+    mutateItemMeta(itemId, (m) => {
+      if (m.is_disabled_map[cellKey]) {
+        delete m.is_disabled_map[cellKey];
+      } else {
+        m.is_disabled_map[cellKey] = true;
+        // Disabling a cell also drops it from any merge group starting at it
+        delete m.merge_map[cellKey];
+      }
+    });
+  };
+
+  // Merge right: extend colspan of cell at `cellKey` by 1.
+  // Skip if next neighbor is disabled, in another merge, or doesn't exist.
+  const mergeCellRight = (itemId: number, cellKey: string) => {
+    const idx = flatKeys.indexOf(cellKey);
+    if (idx < 0) return;
+
+    const draft = draftItemMeta[itemId] ?? {
+      is_disabled_map: { ...(record?.items.find((x) => x.id === itemId)?.is_disabled_map ?? {}) },
+      merge_map: { ...(record?.items.find((x) => x.id === itemId)?.merge_map ?? {}) },
+    };
+    const currentSpan = draft.merge_map[cellKey] ?? 1;
+    const nextIdx = idx + currentSpan;
+    if (nextIdx >= flatKeys.length) return;
+
+    const nextKey = flatKeys[nextIdx];
+    if (draft.is_disabled_map[nextKey]) return;
+    if (draft.merge_map[nextKey]) return; // can't absorb a starting cell
+
+    mutateItemMeta(itemId, (m) => {
+      m.merge_map[cellKey] = currentSpan + 1;
+    });
+  };
+
+  const unmergeCell = (itemId: number, cellKey: string) => {
+    mutateItemMeta(itemId, (m) => {
+      delete m.merge_map[cellKey];
+    });
+  };
+
+  // Columns_config mutations operate on draftConfig (initialized from server config)
+  const mutateConfig = (fn: (cfg: TfpGensetRadarColumnsConfig) => TfpGensetRadarColumnsConfig) => {
+    setDraftConfig((prev) => {
+      const base = prev ?? (record?.columns_config ?? []);
+      return fn(JSON.parse(JSON.stringify(base)));
+    });
+  };
+
+  const handleRenamePanel = (panelId: string, newLabel: string) => {
+    if (!newLabel.trim()) return;
+    mutateConfig((cfg) => cfg.map((p) => p.id === panelId ? { ...p, label: newLabel.trim() } : p));
+  };
+
+  const handleDeletePanel = (panelId: string) => {
+    if (!window.confirm('Hapus panel ini dan semua sub-kolomnya? Nilai yang sudah diisi pada panel ini akan ikut hilang setelah Simpan Struktur.')) return;
+    mutateConfig((cfg) => cfg.filter((p) => p.id !== panelId));
+  };
+
+  const handleAddSubColumn = (panelId: string) => {
+    const label = window.prompt('Nama sub-kolom baru:');
+    if (!label || !label.trim()) return;
+    mutateConfig((cfg) => cfg.map((p) => {
+      if (p.id !== panelId) return p;
+      const seen = new Set(p.sub_columns.map((s) => s.key));
+      let k = slugify(label) || 'col';
+      const base = k; let n = 1;
+      while (seen.has(k)) { k = `${base}_${++n}`; }
+      return { ...p, sub_columns: [...p.sub_columns, { key: k, label: label.trim() }] };
+    }));
+  };
+
+  const handleRenameSubColumn = (panelId: string, subKey: string, newLabel: string) => {
+    if (!newLabel.trim()) return;
+    mutateConfig((cfg) => cfg.map((p) => {
+      if (p.id !== panelId) return p;
+      return { ...p, sub_columns: p.sub_columns.map((s) => s.key === subKey ? { ...s, label: newLabel.trim() } : s) };
+    }));
+  };
+
+  const handleAddPanel = (panel: TfpGensetRadarPanel) => {
+    mutateConfig((cfg) => [...cfg, panel]);
+  };
+
+  // ─── Existing structure ops (parameters / facilities CRUD via dedicated endpoints) ──
+
+  const withStructureError = async (fn: () => Promise<TfpGensetRadarRecordDetail>) => {
+    setErrorMessage(null);
+    try {
+      const updated = await fn();
+      hydrate(updated);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        const data = err.response.data as { message?: string };
+        setErrorMessage(data.message ?? 'Operasi gagal.');
+      } else {
+        setErrorMessage('Operasi gagal. Coba lagi.');
+      }
+    }
+  };
+
+  const handleAddParameter = (data: { parameter_name: string; parameter_number?: string | null; unit?: string | null }) =>
+    withStructureError(() => tfpGensetRadarService.addParameter(record!.id, data));
+
+  const handleUpdateParameter = (paramId: number, patch: { parameter_number?: string | null; parameter_name?: string; unit?: string | null }) =>
+    withStructureError(() => tfpGensetRadarService.updateParameter(record!.id, paramId, patch));
+
+  const handleDeleteParameter = (paramId: number, name: string) => {
+    if (!window.confirm(`Hapus parameter "${name}"? Data nilai yang sudah diisi akan ikut hilang.`)) return;
+    void withStructureError(() => tfpGensetRadarService.deleteParameter(record!.id, paramId));
+  };
+
+  const handleMoveParameter = (idx: number, dir: -1 | 1) => {
+    if (!record) return;
+    const ids = record.items.map((it) => it.id);
+    const target = idx + dir;
+    if (target < 0 || target >= ids.length) return;
+    [ids[idx], ids[target]] = [ids[target], ids[idx]];
+    void withStructureError(() => tfpGensetRadarService.reorderParameters(record.id, ids));
+  };
+
+  const handleAddFacility = (name: string) =>
+    withStructureError(() => tfpGensetRadarService.addFacility(record!.id, { facility_name: name }));
+
+  const handleUpdateFacility = (facilityId: number, name: string) =>
+    withStructureError(() => tfpGensetRadarService.updateFacility(record!.id, facilityId, { facility_name: name }));
+
+  const handleDeleteFacility = (facilityId: number, name: string) => {
+    if (!window.confirm(`Hapus fasilitas "${name}"?`)) return;
+    void withStructureError(() => tfpGensetRadarService.deleteFacility(record!.id, facilityId));
+  };
+
+  const handleMoveFacility = (idx: number, dir: -1 | 1) => {
+    if (!record) return;
+    const ids = record.facilities.map((f) => f.id);
+    const target = idx + dir;
+    if (target < 0 || target >= ids.length) return;
+    [ids[idx], ids[target]] = [ids[target], ids[idx]];
+    void withStructureError(() => tfpGensetRadarService.reorderFacilities(record.id, ids));
+  };
+
+  const setItemCell = (itemId: number, cellKey: string, val: string) => {
+    setItemValues((prev) => ({ ...prev, [itemId]: { ...prev[itemId], [cellKey]: val } }));
+  };
+
+  /** Return all compositeKeys in the rectangular range between two keys */
+  const getRangeKeys = useCallback((a: string, b: string): Set<string> => {
+    if (!record) return new Set();
+    const parseKey = (k: string) => {
+      const sep = k.indexOf('__');
+      return { itemId: Number(k.slice(0, sep)), cellKey: k.slice(sep + 2) };
+    };
+    const { itemId: aItemId, cellKey: aCellKey } = parseKey(a);
+    const { itemId: bItemId, cellKey: bCellKey } = parseKey(b);
+
+    const itemIds = record.items.map((i) => i.id);
+    const cellKeys = flatCells.map((c) => c.key);
+
+    const r1 = itemIds.indexOf(aItemId), r2 = itemIds.indexOf(bItemId);
+    const c1 = cellKeys.indexOf(aCellKey), c2 = cellKeys.indexOf(bCellKey);
+    if (r1 < 0 || r2 < 0 || c1 < 0 || c2 < 0) return new Set([a]);
+
+    const rMin = Math.min(r1, r2), rMax = Math.max(r1, r2);
+    const cMin = Math.min(c1, c2), cMax = Math.max(c1, c2);
+
+    const result = new Set<string>();
+    for (let r = rMin; r <= rMax; r++) {
+      const item = record.items[r];
+      for (let c = cMin; c <= cMax; c++) {
+        const cell = flatCells[c];
+        if (cell && !getItemDisabled(item.id, cell.key)) {
+          result.add(`${item.id}__${cell.key}`);
+        }
+      }
+    }
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [record, flatCells, draftItemMeta]);  
+  const handleCellMouseDown = useCallback((compositeKey: string, e: React.MouseEvent) => {
+    if (isCompleted) return;
+    // Allow default input focus on single click without shift
+    if (!e.shiftKey) {
+      setDragStart(compositeKey);
+      setIsDragging(true);
+      setSelectedCells(new Set([compositeKey]));
+    } else {
+    const anchor = dragStart ?? (selectedCells.size > 0 ? [...selectedCells][0] : null);
+    if (anchor) {
+      setSelectedCells(getRangeKeys(anchor, compositeKey));
+    } else {
+      setSelectedCells(new Set([compositeKey]));
+      setDragStart(compositeKey);
+    }
+  }
+  }, [isCompleted, dragStart, selectedCells, getRangeKeys]);
+
+  const handleCellMouseEnter = useCallback((compositeKey: string) => {
+    if (!isDragging || !dragStart) return;
+    setSelectedCells(getRangeKeys(dragStart, compositeKey));
+  }, [isDragging, dragStart, getRangeKeys]);
+
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+      setDragStart(null);
+  };
+
+  // Global mouseup to stop drag even if released outside table
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, []);
+
+  // Global keydown for Ctrl+C / Ctrl+V on selected cells
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!record || isCompleted) return;
+      const isCopy = (e.ctrlKey || e.metaKey) && e.key === 'c';
+      const isPaste = (e.ctrlKey || e.metaKey) && e.key === 'v';
+      const isEscape = e.key === 'Escape';
+
+      if (isEscape) {
+        setSelectedCells(new Set());
+        setDragStart(null);
+        return;
+      }
+
+      if (isCopy && selectedCells.size > 0) {
+        e.preventDefault();
+        const map = new Map<string, string>();
+        selectedCells.forEach((ck) => {
+          const sep = ck.indexOf('__');
+          const itemId = Number(ck.slice(0, sep));
+          const cellKey = ck.slice(sep + 2);
+          map.set(ck, itemValues[itemId]?.[cellKey] ?? '');
+        });
+        setClipboardCells(map);
+        return;
+      }
+
+      if (isPaste && clipboardCells.size > 0 && selectedCells.size > 0) {
+        e.preventDefault();
+        // Determine the top-left anchor of clipboard and selection
+        const parseKey = (k: string) => {
+          const sep = k.indexOf('__');
+          return { itemId: Number(k.slice(0, sep)), cellKey: k.slice(sep + 2) };
+        };
+        const itemIds = record.items.map((i) => i.id);
+        const cellKeys = flatCells.map((c) => c.key);
+
+        const toCoord = (k: string) => {
+          const { itemId, cellKey } = parseKey(k);
+          return { r: itemIds.indexOf(itemId), c: cellKeys.indexOf(cellKey) };
+        };
+
+        // Clipboard bounding box
+        const cbKeys = [...clipboardCells.keys()];
+        const cbCoords = cbKeys.map(toCoord);
+        const cbRMin = Math.min(...cbCoords.map((x) => x.r));
+        const cbCMin = Math.min(...cbCoords.map((x) => x.c));
+
+        // Selection anchor (top-left)
+        const selCoords = [...selectedCells].map(toCoord);
+        const selRMin = Math.min(...selCoords.map((x) => x.r));
+        const selCMin = Math.min(...selCoords.map((x) => x.c));
+
+        const deltaR = selRMin - cbRMin;
+        const deltaC = selCMin - cbCMin;
+
+        // Apply paste with offset
+        setItemValues((prev) => {
+          const next = { ...prev };
+          cbKeys.forEach((srcKey, i) => {
+            const { r, c } = cbCoords[i];
+            const targetR = r + deltaR;
+            const targetC = c + deltaC;
+            if (targetR < 0 || targetR >= itemIds.length) return;
+            if (targetC < 0 || targetC >= cellKeys.length) return;
+            const targetItemId = itemIds[targetR];
+            const targetCellKey = cellKeys[targetC];
+            const targetItem = record.items[targetR];
+            if (!targetItem) return;
+            if (getItemDisabled(targetItemId, targetCellKey)) return;
+
+            const flatCellIndex = flatCells.findIndex(fc => fc.key === targetCellKey);
+            if (flatCellIndex > 0) {
+              // Cek cell sebelumnya apakah merge ke cell ini
+              for (let checkIdx = flatCellIndex - 1; checkIdx >= 0; checkIdx--) {
+                const prevCell = flatCells[checkIdx];
+                const prevMergeSpan = getItemMerge(targetItemId, prevCell.key);
+                if (prevMergeSpan > 1) {
+                  // Cell sebelumnya merge, cek apakah mencakup cell ini
+                  const mergeEndIndex = checkIdx + prevMergeSpan - 1;
+                  if (mergeEndIndex >= flatCellIndex) {
+                    // Target cell adalah bagian dari merged cell, skip
+                    console.warn(`Cannot paste to merged cell: ${targetCellKey}`);
+                    return;
+                  }
+                }
+              }
+            }
+
+            next[targetItemId] = { ...(next[targetItemId] ?? {}), [targetCellKey]: clipboardCells.get(srcKey) ?? '' };
+          });
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [record, isCompleted, selectedCells, clipboardCells, itemValues, flatCells, draftItemMeta]);
+
+  const setFacilityField = (facilityId: number, field: 'kondisi' | 'keterangan', val: string) => {
+    setFacilityValues((prev) => ({ ...prev, [facilityId]: { ...prev[facilityId], [field]: val } }));
+  };
+
+  // ─── BARU: Navigasi keyboard (Enter / Arrow Up/Down) ────────────────────
+  const navigateToCell = useCallback((targetRowIndex: number, targetCellKey: string) => {
+    if (!record) return;
+
+    let finalRowIndex = targetRowIndex;
+    if (finalRowIndex < 0) finalRowIndex = 0;
+    if (finalRowIndex >= record.items.length) finalRowIndex = record.items.length - 1;
+
+    // Gunakan requestAnimationFrame untuk memastikan DOM sudah ter-update
+    requestAnimationFrame(() => {
+      // Escape cellKey untuk selector yang aman
+      const escapedKey = targetCellKey.replace(/([.#:[\]+>~,])/g, '\\$1');
+      const selector = `input[data-row-index="${finalRowIndex}"][data-cell-key="${escapedKey}"]`;
+      
+      const el = document.querySelector(selector) as HTMLInputElement | null;
+      if (el) {
+        el.focus();
+        el.select();
+      } else {
+        // Fallback: cari input di row tersebut berdasarkan row-index saja
+        const fallbackEl = document.querySelector(
+          `input[data-row-index="${finalRowIndex}"]`
+        ) as HTMLInputElement | null;
+        if (fallbackEl) {
+          fallbackEl.focus();
+          fallbackEl.select();
+        }
+      }
+    });
+  }, [record]);
+
+  // ─── Render ─────────────────────────────────────────────────────────────
+
+  if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto space-y-4 animate-fade-in">
         <div className="animate-pulse space-y-4">
@@ -119,228 +1220,907 @@ export const TfpGensetRadarDetailPage: React.FC = () => {
     );
   }
 
+  if (!record) {
+    return (
+      <div className="max-w-7xl mx-auto py-20 text-center">
+        <p className="text-slate-500">Form tidak ditemukan.</p>
+        <Button onClick={() => navigate('/tfp/genset-radar')} className="mt-4">
+          Kembali ke Daftar
+        </Button>
+      </div>
+    );
+  }
+
+  // isCompleted is declared above (near drag-select state) so hooks can reference it
+  const showStructureControls = editMode && canEditStructure && !isCompleted;
+
+  const totalCellCount = flatCells.length;
+  const aksiColWidth = showStructureControls ? 132 : 0;
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-20">
-      <div className="flex items-center gap-2 text-sm text-slate-500">
-        <button onClick={() => navigate('/tfp')} className="hover:text-slate-700">TFP</button>
+    <div className="max-w-full space-y-6 animate-fade-in pb-20">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-xs text-slate-500">
+        <button type="button" onClick={() => navigate('/tfp')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">TFP</button>
         <span>/</span>
-        <button onClick={() => navigate('/tfp/genset-radar')} className="hover:text-slate-700">Genset Radar</button>
+        <button type="button" onClick={() => navigate('/tfp/genset-radar')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">Genset Radar</button>
         <span>/</span>
-        <span className="text-slate-900 font-medium">{record?.form_number}</span>
+        <span className="text-slate-700 font-mono font-medium">{record.form_number}</span>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-start gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/tfp/genset-radar')}>
+      {/* Header */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/tfp/genset-radar')} className="hover:bg-slate-100 mt-0.5">
               <ArrowLeft size={20} />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Performance Check Genset Radar</h1>
-              <p className="text-slate-500 mt-1">Teknik Fasilitas Penunjang Airnav Cabang Surabaya</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg font-bold text-slate-900">Performance Check Genset Radar</h1>
+                <StatusBadge status={record.status} variant="pill" />
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Performance Check Genset Radar Teknik Fasilitas Penunjang &nbsp;·&nbsp;<span className="font-mono">{record.form_number}</span>
+              </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="gap-2" onClick={() => navigate(`/tfp/genset-radar/${record?.id}/print`)}>
-              <Printer size={16} />
+
+          {/* Meta info */}
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
+              <Calendar size={13} className="text-slate-400" />
+              <span className="font-medium">{record.day_name ?? ''}</span>
+              <span>{record.date}</span>
+            </div>
+
+            {isCompleted ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
+                <Clock size={13} className="text-slate-400" />
+                <span>{record.time_filled ?? '—'}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg" title="Klik untuk ubah jam pengisian (HH:MM)">
+                <Clock size={13} className="text-slate-400" />
+                <input
+                  type="time" value={timeFilled} onChange={(e) => setTimeFilled(e.target.value)}
+                  className="bg-transparent text-xs text-slate-700 font-medium focus:outline-none w-[68px]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setTimeFilled(new Date().toTimeString().slice(0, 5))}
+                  title="Reset ke waktu sekarang"
+                  className="text-[10px] text-slate-400 hover:text-sky-600 transition-colors"
+                >
+                  Now
+                </button>
+              </div>
+            )}
+
+            <ShiftBadge shift={record.shift_type} />
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
+              <Users size={13} className="text-slate-400" />
+              <span>{record.technicians.length} Teknisi TFP</span>
+            </div>
+
+            {canEditStructure && !isCompleted && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditMode((v) => !v);
+                  setEditingParamId(null);
+                  setEditingFacilityId(null);
+                  if (editMode) handleResetStructure();
+                }}
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors',
+                  editMode
+                    ? 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600'
+                    : 'bg-white text-amber-700 border-amber-200 hover:bg-amber-50',
+                )}
+                title="Edit Mode: ubah struktur tabel seperti Excel"
+              >
+                <Settings2 size={14} />
+                {editMode ? 'Selesai Edit' : 'Edit Mode'}
+              </button>
+            )}
+
+            <Button
+              variant="ghost" size="sm"
+              onClick={() => navigate(`/tfp/genset-radar/${record.id}/print`)}
+              className="gap-1.5 text-indigo-600 hover:bg-indigo-50"
+            >
+              <Printer size={15} />
               Print
             </Button>
-            <Button onClick={handleSave} isLoading={saving} className="gap-2">
-              <Save size={16} />
-              Simpan
-            </Button>
           </div>
         </div>
 
-        {/* Header Info */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 p-4 bg-slate-50 rounded-lg">
+        {/* Personnel summary */}
+        <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase">Engine</label>
-            <input
-              type="text"
-              value={record?.engine || ''}
-              onChange={(e) => setRecord({ ...record!, engine: e.target.value })}
-              className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:outline-none"
-            />
+            <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Manager Teknik</span>
+            <p className="mt-0.5 font-medium text-slate-700">
+              {record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
+            </p>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase">Alternator</label>
-            <input
-              type="text"
-              value={record?.alternator || ''}
-              onChange={(e) => setRecord({ ...record!, alternator: e.target.value })}
-              className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:outline-none"
-            />
+            <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Supervisor TFP</span>
+            <p className="mt-0.5 font-medium text-slate-700">
+              {record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
+            </p>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase">Kapasitas</label>
-            <input
-              type="text"
-              value={record?.kapasitas || ''}
-              onChange={(e) => setRecord({ ...record!, kapasitas: e.target.value })}
-              className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase">Hari / Tanggal</label>
-            <input
-              type="date"
-              value={record?.tanggal || ''}
-              onChange={(e) => setRecord({ ...record!, tanggal: e.target.value })}
-              className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase">Shift</label>
-            <select
-              value={record?.shift || 'P'}
-              onChange={(e) => setRecord({ ...record!, shift: e.target.value as any })}
-              className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:outline-none"
-            >
-              <option value="P">Pagi</option>
-              <option value="S">Siang</option>
-              <option value="M">Malam</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase">Jam</label>
-            <input
-              type="time"
-              value={record?.jam || ''}
-              onChange={(e) => setRecord({ ...record!, jam: e.target.value })}
-              className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:outline-none"
-            />
+            <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Pelaksana Teknisi TFP</span>
+            <p className="mt-0.5 font-medium text-slate-700">
+              {record.technicians.map((t) => t.technician_name).join(', ') || <span className="text-slate-400 italic">—</span>}
+            </p>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-slate-100">
-                <th className="border border-slate-300 px-3 py-2 text-left font-semibold w-12">NO</th>
-                <th className="border border-slate-300 px-3 py-2 text-left font-semibold">URAIAN PEKERJAAN</th>
-                <th className="border border-slate-300 px-3 py-2 text-center font-semibold" colSpan={2}>KONDISI</th>
-                <th className="border border-slate-300 px-3 py-2 text-left font-semibold">KETERANGAN</th>
-              </tr>
-              <tr className="bg-slate-100">
-                <th className="border border-slate-300 px-3 py-1"></th>
-                <th className="border border-slate-300 px-3 py-1"></th>
-                <th className="border border-slate-300 px-3 py-1 text-center text-xs">BAIK</th>
-                <th className="border border-slate-300 px-3 py-1 text-center text-xs">TIDAK BAIK</th>
-                <th className="border border-slate-300 px-3 py-1"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {record?.items.map((item, index) => (
-                <tr key={item.nomor} className="hover:bg-slate-50">
-                  <td className="border border-slate-300 px-3 py-2 text-center">{item.nomor}</td>
-                  <td className="border border-slate-300 px-3 py-2">
-                    <div className="font-medium">{item.uraian_pekerjaan}</div>
-                    {item.satuan && <div className="text-xs text-slate-500 mt-1">{item.satuan}</div>}
-                  </td>
-                  <td className="border border-slate-300 px-3 py-2 text-center">
-                    <input
-                      type="checkbox"
-                      checked={item.kondisi_baik || false}
-                      onChange={(e) => updateItem(index, 'kondisi_baik', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                  </td>
-                  <td className="border border-slate-300 px-3 py-2 text-center">
-                    <input
-                      type="checkbox"
-                      checked={item.kondisi_tidak_baik || false}
-                      onChange={(e) => updateItem(index, 'kondisi_tidak_baik', e.target.checked)}
-                      className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
-                    />
-                  </td>
-                  <td className="border border-slate-300 px-3 py-2">
-                    <input
-                      type="text"
-                      value={item.nilai || ''}
-                      onChange={(e) => updateItem(index, 'nilai', e.target.value)}
-                      className="w-full px-2 py-1 border border-slate-200 rounded text-xs focus:ring-2 focus:ring-brand-primary focus:outline-none"
-                      placeholder={item.satuan || 'Keterangan'}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Edit Mode hint banner + Simpan Struktur bar */}
+        {showStructureControls && (
+          <div className="mt-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-center gap-2 flex-wrap">
+            <Settings2 size={13} className="text-amber-600 shrink-0" />
+            <span className="flex-1 min-w-[200px]">
+              <strong>Edit Mode aktif (mirip Excel).</strong> Klik cell untuk disable/enable, tombol <MoveHorizontal size={11} className="inline" /> untuk merge ke kanan, atau klik header panel untuk rename / tambah sub-kolom.
+            </span>
+            {isStructureDirty && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button" onClick={handleResetStructure} disabled={isSavingStructure}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  <Eraser size={11} /> Batal
+                </button>
+                <button
+                  type="button" onClick={handleSaveStructure} disabled={isSavingStructure}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  <Save size={11} /> {isSavingStructure ? 'Menyimpan…' : 'Simpan Struktur'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {errorMessage && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {errorMessage}
         </div>
-
-        {/* Status Operasi */}
-        <div className="mt-6 p-4 bg-slate-50 rounded-lg">
-          <h3 className="font-semibold text-slate-900 mb-3">Status Operasi:</h3>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2">
-              <input 
-                type="radio" 
-                name="status_operasi" 
-                value="PLN OFF" 
-                checked={record?.status_operasi === 'PLN OFF'}
-                onChange={(e) => setRecord({ ...record!, status_operasi: e.target.value as any })}
-                className="w-4 h-4" 
-              />
-              <span>PLN OFF</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input 
-                type="radio" 
-                name="status_operasi" 
-                value="RUN UP" 
-                checked={record?.status_operasi === 'RUN UP'}
-                onChange={(e) => setRecord({ ...record!, status_operasi: e.target.value as any })}
-                className="w-4 h-4" 
-              />
-              <span>RUN UP</span>
-            </label>
-          </div>
-
-          <h3 className="font-semibold text-slate-900 mb-3 mt-4">Status:</h3>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2">
-              <input 
-                type="radio" 
-                name="status_genset" 
-                value="Master" 
-                checked={record?.status_master_slave === 'Master'}
-                onChange={(e) => setRecord({ ...record!, status_master_slave: e.target.value as any })}
-                className="w-4 h-4" 
-              />
-              <span>Master</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input 
-                type="radio" 
-                name="status_genset" 
-                value="Slave" 
-                checked={record?.status_master_slave === 'Slave'}
-                onChange={(e) => setRecord({ ...record!, status_master_slave: e.target.value as any })}
-                className="w-4 h-4" 
-              />
-              <span>Slave</span>
-            </label>
-          </div>
+      )}
+      {successMessage && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {successMessage}
         </div>
+      )}
 
-        {/* Signature Section */}
-        <div className="mt-8 grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="h-20 border-b border-slate-400 mb-2"></div>
-            <p className="font-semibold text-sm">MANAGER TEKNIK</p>
+      {/* ─── Genset-specific fields ─── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/60">
+          <Zap size={16} className="text-orange-600" />
+          <h2 className="text-sm font-bold text-slate-800">Data Genset</h2>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Status Operasi */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Status Operasi
+              </label>
+              <div className="inline-flex rounded-md border border-slate-200 overflow-hidden shadow-sm">
+                {(['PLN_OFF', 'RUN_UP'] as const).map((opt) => {
+                  const active = statusOperasi === opt;
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      disabled={isCompleted}
+                      onClick={() => setStatusOperasi(active ? null : opt)}
+                      className={cn(
+                        'px-3 py-1.5 text-xs font-semibold transition-colors border-r border-slate-200 last:border-r-0 disabled:opacity-50 disabled:cursor-not-allowed',
+                        active
+                          ? opt === 'PLN_OFF'
+                            ? 'bg-slate-600 text-white border-slate-600'
+                            : 'bg-emerald-600 text-white border-emerald-600'
+                          : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200',
+                      )}
+                    >
+                      {opt === 'PLN_OFF' ? 'PLN OFF' : 'RUN UP'}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Status Master/Slave */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Status Master/Slave
+              </label>
+              <div className="inline-flex rounded-md border border-slate-200 overflow-hidden shadow-sm">
+                {(['Master', 'Slave'] as const).map((opt) => {
+                  const active = statusMasterSlave === opt;
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      disabled={isCompleted}
+                      onClick={() => setStatusMasterSlave(active ? null : opt)}
+                      className={cn(
+                        'px-3 py-1.5 text-xs font-semibold transition-colors border-r border-slate-200 last:border-r-0 disabled:opacity-50 disabled:cursor-not-allowed',
+                        active
+                          ? 'bg-sky-600 text-white border-sky-600'
+                          : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200',
+                      )}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Fuel Level */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Fuel Level
+              </label>
+              <div className="inline-flex rounded-md border border-slate-200 overflow-hidden shadow-sm">
+                {(['E', '1/4', '1/2', '3/4', 'F'] as const).map((opt) => {
+                  const active = fuelLevel === opt;
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      disabled={isCompleted}
+                      onClick={() => setFuelLevel(active ? null : opt)}
+                      className={cn(
+                        'px-2.5 py-1.5 text-[11px] font-semibold transition-colors border-r border-slate-200 last:border-r-0 disabled:opacity-50 disabled:cursor-not-allowed',
+                        active
+                          ? opt === 'E'
+                            ? 'bg-red-500 text-white border-red-500'
+                            : opt === 'F'
+                            ? 'bg-emerald-600 text-white border-emerald-600'
+                            : 'bg-amber-500 text-white border-amber-500'
+                          : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200',
+                      )}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="h-20 border-b border-slate-400 mb-2"></div>
-            <p className="font-semibold text-sm">SUPERVISOR</p>
+
+          {/* Engine, Alternator, Kapasitas */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Engine
+              </label>
+              {isCompleted ? (
+                <p className="text-xs text-slate-700 bg-slate-50 rounded-lg border border-slate-200 px-3 py-2 min-h-[36px]">
+                  {engine || <span className="text-slate-400 italic">—</span>}
+                </p>
+              ) : (
+                <input
+                  type="text"
+                  value={engine}
+                  onChange={(e) => setEngine(e.target.value)}
+                  placeholder="Engine..."
+                  className="w-full h-9 px-3 text-xs rounded-lg border border-slate-300 bg-white focus:ring-1 focus:ring-brand-primary focus:outline-none"
+                />
+              )}
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Alternator
+              </label>
+              {isCompleted ? (
+                <p className="text-xs text-slate-700 bg-slate-50 rounded-lg border border-slate-200 px-3 py-2 min-h-[36px]">
+                  {alternator || <span className="text-slate-400 italic">—</span>}
+                </p>
+              ) : (
+                <input
+                  type="text"
+                  value={alternator}
+                  onChange={(e) => setAlternator(e.target.value)}
+                  placeholder="Alternator..."
+                  className="w-full h-9 px-3 text-xs rounded-lg border border-slate-300 bg-white focus:ring-1 focus:ring-brand-primary focus:outline-none"
+                />
+              )}
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Kapasitas
+              </label>
+              {isCompleted ? (
+                <p className="text-xs text-slate-700 bg-slate-50 rounded-lg border border-slate-200 px-3 py-2 min-h-[36px]">
+                  {kapasitas || <span className="text-slate-400 italic">—</span>}
+                </p>
+              ) : (
+                <input
+                  type="text"
+                  value={kapasitas}
+                  onChange={(e) => setKapasitas(e.target.value)}
+                  placeholder="Kapasitas..."
+                  className="w-full h-9 px-3 text-xs rounded-lg border border-slate-300 bg-white focus:ring-1 focus:ring-brand-primary focus:outline-none"
+                />
+              )}
+            </div>
           </div>
-          <div className="text-center">
-            <div className="h-20 border-b border-slate-400 mb-2"></div>
-            <p className="font-semibold text-sm">TEKNISI</p>
+
+          {/* Catatan */}
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Catatan
+            </label>
+            {isCompleted ? (
+              <p className="text-xs text-slate-700 bg-slate-50 rounded-lg border border-slate-200 px-3 py-2 min-h-[36px]">
+                {catatan || <span className="text-slate-400 italic">—</span>}
+              </p>
+            ) : (
+              <textarea
+                value={catatan}
+                onChange={(e) => setCatatan(e.target.value)}
+                placeholder="Catatan Genset (opsional)..."
+                rows={2}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white focus:ring-1 focus:ring-brand-primary focus:outline-none resize-none"
+              />
+            )}
           </div>
+
+          {/* Save genset fields button */}
+          {!isCompleted && (
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSaveGensetFields}
+                isLoading={isSavingGensetFields}
+                className="gap-2 text-xs"
+                variant="outline"
+              >
+                <Save size={14} />
+                Simpan Data Genset
+              </Button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* ─── Two-panel layout ─── */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 items-start">
+
+        {/* ── Parameter Pengukuran ── */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/60">
+            <Zap size={16} className="text-amber-600" />
+            <h2 className="text-sm font-bold text-slate-800">Parameter Pengukuran</h2>
+            <span className="ml-auto text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+              {record.items.length} parameter · {effectiveConfig.length} panel
+            </span>
+          </div>
+          <div className="overflow-x-auto" style={{ userSelect: isDragging ? 'none' : undefined }}>
+            {/* Selection toolbar */}
+            {!isCompleted && !showStructureControls && (selectedCells.size > 0 || clipboardCells.size > 0) && (
+              <div className="px-3 py-1.5 bg-sky-50 border-b border-sky-100 flex items-center gap-3 flex-wrap text-[11px]">
+                {selectedCells.size > 0 && (
+                  <span className="text-sky-700 font-semibold flex items-center gap-1">
+                    <CheckSquare size={12} />
+                    {selectedCells.size} sel terpilih
+                  </span>
+                )}
+                {clipboardCells.size > 0 && (
+                  <span className="text-amber-700 font-semibold flex items-center gap-1">
+                    <span className="inline-block w-2.5 h-2.5 rounded border-2 border-dashed border-amber-500" />
+                    {clipboardCells.size} sel disalin
+                  </span>
+                )}
+                <span className="text-slate-400 hidden sm:inline">·</span>
+                <span className="text-slate-500 hidden sm:inline">
+                  Drag untuk pilih • Ctrl+C salin • Ctrl+V tempel • Esc batal
+                </span>
+                {selectedCells.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedCells(new Set()); setDragStart(null); }}
+                    className="ml-auto text-slate-400 hover:text-slate-600 inline-flex items-center gap-0.5"
+                  >
+                    <X size={11} /> Batal pilih
+                  </button>
+                )}
+              </div>
+            )}
+            <table className="w-full text-xs border-collapse" style={{ minWidth: Math.max(800, 220 + totalCellCount * 70 + aksiColWidth) }}>
+              <thead>
+                {/* Panel header row */}
+                <tr className="bg-slate-100 text-slate-700">
+                  <th rowSpan={2} className="px-2 py-2 text-center font-semibold border-b border-slate-200 align-middle text-[10px] uppercase tracking-wider w-[40px]">No</th>
+                  <th rowSpan={2} className="px-3 py-2 text-left font-semibold border-b border-slate-200 align-middle text-[10px] uppercase tracking-wider w-[180px]">Parameter</th>
+                  {effectiveConfig.map((panel) => (
+                    showStructureControls ? (
+                      <PanelHeaderEdit
+                        key={panel.id}
+                        panel={panel}
+                        onRename={(lbl) => handleRenamePanel(panel.id, lbl)}
+                        onDelete={() => handleDeletePanel(panel.id)}
+                        onAddSub={() => handleAddSubColumn(panel.id)}
+                        onRenameSub={(k, lbl) => handleRenameSubColumn(panel.id, k, lbl)}
+                        canDeletePanel={effectiveConfig.length > 1}
+                      />
+                    ) : (
+                      <th key={panel.id} colSpan={panel.sub_columns.length}
+                        className="px-2 py-2 text-center font-semibold border-b border-l border-slate-200 text-[10px] uppercase tracking-wider">
+                        {panel.label}
+                      </th>
+                    )
+                  ))}
+                  {showStructureControls && (
+                    <th rowSpan={2} className="px-2 py-2 text-center font-semibold border-b border-l border-slate-200 align-middle text-[10px] uppercase tracking-wider" style={{ width: aksiColWidth }}>Aksi</th>
+                  )}
+                </tr>
+                {/* Sub-column header row */}
+                <tr className="bg-slate-50 text-slate-500">
+                  {effectiveConfig.flatMap((panel, pi) =>
+                    panel.sub_columns.map((sub, si) => (
+                      <th key={cellKeyOf(panel.id, sub.key)}
+                        className={cn(
+                          'px-1 py-1.5 text-center font-medium border-b border-slate-200 text-[10px] uppercase tracking-wider',
+                          si === 0 ? 'border-l' : '',
+                          pi === 0 && si === 0 ? '' : '',
+                        )}
+                      >
+                        {showStructureControls && panel.sub_columns.length > 1 ? (
+                          <SubColumnHeader
+                            label={sub.label}
+                            onRename={(lbl) => handleRenameSubColumn(panel.id, sub.key, lbl)}
+                            onDelete={() => {
+                              if (!window.confirm(`Hapus sub-kolom "${sub.label}"?`)) return;
+                              mutateConfig((cfg) => cfg.map((p) => p.id === panel.id
+                                ? { ...p, sub_columns: p.sub_columns.filter((s) => s.key !== sub.key) }
+                                : p));
+                            }}
+                          />
+                        ) : sub.label}
+                      </th>
+                    ))
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {record.items.map((item, idx) => {
+                  const rowBase = 'bg-white hover:bg-slate-50/60 transition-colors';
+                  const isFirstRow = idx === 0;
+                  const isLastRow = idx === record.items.length - 1;
+
+                  // Group label heading row
+                  const prevItem = idx > 0 ? record.items[idx - 1] : null;
+                  const showGroupLabel = item.group_label && item.group_label !== prevItem?.group_label;
+
+                  const tdNo = 'px-2 py-2 text-slate-500 font-mono text-center text-[11px] border-b border-slate-100 align-middle';
+                  const tdName = 'px-3 py-2 font-medium text-slate-700 text-xs border-b border-slate-100 align-middle';
+                  const tdCell = 'px-1.5 py-1.5 border-b border-l border-slate-100 align-middle';
+
+                  const editRow = editingParamId === item.id ? (
+                    <tr key={`${item.id}-edit`}>
+                      <td colSpan={2 + totalCellCount + (showStructureControls ? 1 : 0)} className="p-0">
+                        <ParamEditForm
+                          item={item}
+                          onSave={async (patch) => { await handleUpdateParameter(item.id, patch); setEditingParamId(null); }}
+                          onCancel={() => setEditingParamId(null)}
+                        />
+                      </td>
+                    </tr>
+                  ) : null;
+
+                  const actionCell = showStructureControls ? (
+                    <td className="px-1.5 py-1.5 border-b border-l border-slate-100">
+                      <div className="flex items-center justify-center gap-0.5">
+                        <RowActionBtn title="Pindah atas" disabled={isFirstRow} onClick={() => handleMoveParameter(idx, -1)}><ChevronUp size={14} /></RowActionBtn>
+                        <RowActionBtn title="Pindah bawah" disabled={isLastRow} onClick={() => handleMoveParameter(idx, 1)}><ChevronDown size={14} /></RowActionBtn>
+                        <RowActionBtn title="Rename" onClick={() => setEditingParamId(editingParamId === item.id ? null : item.id)}><Pencil size={12} /></RowActionBtn>
+                        <RowActionBtn title="Hapus" variant="danger" onClick={() => handleDeleteParameter(item.id, item.parameter_name)}><Trash2 size={12} /></RowActionBtn>
+                      </div>
+                    </td>
+                  ) : null;
+
+                  // Render dynamic cells (skip those consumed by merge)
+                  const skipKeys = new Set<string>();
+                  const renderedCells: React.ReactNode[] = [];
+
+                  flatCells.forEach((cell) => {
+                    if (skipKeys.has(cell.key)) return;
+
+                    const colspan = getItemMerge(item.id, cell.key);
+                    const disabled = getItemDisabled(item.id, cell.key);
+
+                    for (let k = 1; k < colspan; k++) {
+                      const nxt = flatCells[cell.index + k];
+                      if (nxt) skipKeys.add(nxt.key);
+                    }
+
+                    if (showStructureControls) {
+                      // Edit Mode cell — click to toggle disable. Side controls for merge.
+                      renderedCells.push(
+                        <td key={cell.key} colSpan={colspan} className={tdCell}>
+                          <div className="flex items-center gap-0.5 justify-center">
+                            <EditCell
+                              isDisabled={disabled}
+                              isSelected={false}
+                              colspan={colspan}
+                              onClick={() => toggleCellDisabled(item.id, cell.key)}
+                            />
+                            {!disabled && (
+                              <div className="flex gap-0.5">
+                                <button
+                                  type="button"
+                                  title="Merge dengan cell di kanan"
+                                  onClick={() => mergeCellRight(item.id, cell.key)}
+                                  className="h-5 w-5 rounded text-slate-500 hover:bg-amber-100 hover:text-amber-700 inline-flex items-center justify-center"
+                                >
+                                  <MoveHorizontal size={10} />
+                                </button>
+                                {colspan > 1 && (
+                                  <button
+                                    type="button"
+                                    title="Pisah cell (unmerge)"
+                                    onClick={() => unmergeCell(item.id, cell.key)}
+                                    className="h-5 w-5 rounded text-slate-500 hover:bg-sky-100 hover:text-sky-700 inline-flex items-center justify-center"
+                                  >
+                                    <ColumnsIcon size={10} />
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      );
+                      return;
+                    }
+
+                    // Normal value entry mode
+                    const val = itemValues[item.id]?.[cell.key] ?? '';
+
+                    // Normal value entry mode — drag-select + copy-paste enabled
+                    const compositeKey = `${item.id}__${cell.key}`;
+                    renderedCells.push(
+                      <td
+                        key={cell.key}
+                        colSpan={colspan}
+                        className={cn(tdCell, disabled && 'bg-slate-100')}
+                      >
+                        <CellInput
+                          isDisabled={disabled}
+                          isCompleted={isCompleted}
+                          value={val}
+                          onChange={(v) => setItemCell(item.id, cell.key, v)}
+                          compositeKey={compositeKey}
+                          isSelected={selectedCells.has(compositeKey)}
+                          isClipboard={clipboardCells.has(compositeKey)}
+                          onMouseDown={handleCellMouseDown}
+                          onMouseEnter={handleCellMouseEnter}
+                          // ── BARU: Navigasi keyboard ──
+                          rowIndex={idx}
+                          cellKey={cell.key}
+                          onNavigate={navigateToCell}
+                        />
+                      </td>
+                    );
+                  });
+
+                  return (
+                    <React.Fragment key={item.id}>
+                      {showGroupLabel && (
+                        <tr className="bg-slate-100">
+                          <td colSpan={2 + totalCellCount + (showStructureControls ? 1 : 0)}
+                            className="px-3 py-2 text-xs font-bold text-slate-700 border-b border-slate-200 uppercase tracking-wider">
+                            {item.group_label}
+                          </td>
+                        </tr>
+                      )}
+                      <tr className={rowBase}>
+                        <td className={tdNo}>{idx + 1}</td>
+                        <td className={tdName}>
+                          {item.parameter_name}
+                          {item.unit && <span className="text-slate-400 ml-1 text-[10px]">({item.unit})</span>}
+                        </td>
+                        {renderedCells}
+                        {actionCell}
+                      </tr>
+                      {editRow}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Inline forms (Edit Mode only) */}
+          {showStructureControls && (
+            <>
+              <div className="border-t border-slate-200">
+                <AddParameterForm onSave={handleAddParameter} />
+              </div>
+              <div className="border-t border-slate-200 px-3 py-2 flex items-center justify-between bg-sky-50/40">
+                <span className="text-[11px] text-sky-700 font-medium flex items-center gap-1.5">
+                  <Columns size={12} /> Butuh panel baru? Tambahkan unit panel/UPS di sini.
+                </span>
+                <button
+                  type="button" onClick={() => setShowAddPanel(true)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded bg-sky-600 text-white hover:bg-sky-700"
+                >
+                  <Plus size={13} /> Tambah Panel
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ── Kondisi Fasilitas ── */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/60">
+            <CheckSquare size={16} className="text-sky-600" />
+            <h2 className="text-sm font-bold text-slate-800">Kondisi Fasilitas</h2>
+            <span className="ml-auto text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+              {record.facilities.length} fasilitas
+            </span>
+          </div>
+          <div className="divide-y divide-slate-100">
+            <div className={cn(
+              'grid gap-2 px-4 py-2 bg-slate-100 text-[10px] font-semibold text-slate-700 uppercase tracking-wider items-center border-b border-slate-200',
+              showStructureControls ? 'grid-cols-[1fr_90px_1fr_88px]' : 'grid-cols-[1fr_90px_1fr]',
+            )}>
+              <span>Nama Fasilitas</span>
+              <span className="text-center">Kondisi</span>
+              <span>Keterangan</span>
+              {showStructureControls && <span className="text-center">Aksi</span>}
+            </div>
+
+            {record.facilities.map((facility, idx) => (
+              <FacilityRow
+                key={facility.id}
+                facility={facility}
+                idx={idx}
+                total={record.facilities.length}
+                isCompleted={isCompleted}
+                showStructureControls={showStructureControls}
+                kondisi={facilityValues[facility.id]?.kondisi ?? ''}
+                keterangan={facilityValues[facility.id]?.keterangan ?? ''}
+                onKondisiChange={(v) => setFacilityField(facility.id, 'kondisi', v)}
+                onKeteranganChange={(v) => setFacilityField(facility.id, 'keterangan', v)}
+                isEditingStructure={editingFacilityId === facility.id}
+                editingName={editingFacilityName}
+                onStartEdit={() => {
+                  setEditingFacilityId(facility.id);
+                  setEditingFacilityName(facility.facility_name);
+                }}
+                onCancelEdit={() => { setEditingFacilityId(null); setEditingFacilityName(''); }}
+                onChangeEditingName={setEditingFacilityName}
+                onSaveEdit={async () => {
+                  if (!editingFacilityName.trim()) return;
+                  await handleUpdateFacility(facility.id, editingFacilityName.trim());
+                  setEditingFacilityId(null);
+                  setEditingFacilityName('');
+                }}
+                onMove={(dir) => handleMoveFacility(idx, dir)}
+                onDelete={() => handleDeleteFacility(facility.id, facility.facility_name)}
+              />
+            ))}
+          </div>
+
+          {showStructureControls && (
+            <div className="border-t border-slate-200">
+              <AddFacilityForm onSave={handleAddFacility} />
+            </div>
+          )}
+        </div>
+
+      </div>{/* end grid */}
+
+      {/* Save button */}
+      {!isCompleted && (
+        <div className="flex justify-end pt-2 border-t border-slate-100">
+          <Button
+            onClick={handleSave}
+            isLoading={isSaving}
+            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 shadow-lg shadow-emerald-100"
+          >
+            <Save size={16} />
+            Simpan Perubahan
+          </Button>
+        </div>
+      )}
+
+      <TfpGensetRadarSignaturePanel record={record} onUpdated={hydrate} />
+
+      <AddPanelModal
+        open={showAddPanel}
+        onClose={() => setShowAddPanel(false)}
+        onAdd={handleAddPanel}
+        existingIds={effectiveConfig.map((p) => p.id)}
+      />
+    </div>
+  );
+};
+
+// ─── SubColumnHeader — inline rename/delete for one sub-column ────────────
+
+const SubColumnHeader: React.FC<{
+  label: string;
+  onRename: (lbl: string) => void;
+  onDelete: () => void;
+}> = ({ label, onRename, onDelete }) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(label);
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1">
+        <input
+          autoFocus value={draft} onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') { onRename(draft.trim()); setEditing(false); }
+            if (e.key === 'Escape') { setDraft(label); setEditing(false); }
+          }}
+          className="h-6 px-1 text-[10px] rounded border border-amber-400 bg-white text-slate-700 focus:outline-none w-16"
+        />
+        <button type="button" onClick={() => { onRename(draft.trim()); setEditing(false); }} className="text-emerald-600 hover:bg-emerald-100 rounded p-0.5"><Check size={10} /></button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-0.5 justify-center group">
+      <span>{label}</span>
+      <button type="button" title="Rename" onClick={() => { setDraft(label); setEditing(true); }}
+        className="text-amber-600 hover:bg-amber-100 rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Pencil size={9} />
+      </button>
+      <button type="button" title="Hapus sub-kolom" onClick={onDelete}
+        className="text-red-500 hover:bg-red-100 rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Trash2 size={9} />
+      </button>
+    </div>
+  );
+};
+
+// ─── FacilityRow — extracted to keep the main component readable ───────────
+
+interface FacilityRowProps {
+  facility: TfpGensetRadarFacility;
+  idx: number;
+  total: number;
+  isCompleted: boolean;
+  showStructureControls: boolean;
+  kondisi: string;
+  keterangan: string;
+  onKondisiChange: (v: string) => void;
+  onKeteranganChange: (v: string) => void;
+  isEditingStructure: boolean;
+  editingName: string;
+  onStartEdit: () => void;
+  onCancelEdit: () => void;
+  onChangeEditingName: (v: string) => void;
+  onSaveEdit: () => Promise<void>;
+  onMove: (dir: -1 | 1) => void;
+  onDelete: () => void;
+}
+
+const FacilityRow: React.FC<FacilityRowProps> = ({
+  facility, idx, total, isCompleted, showStructureControls,
+  kondisi, keterangan, onKondisiChange, onKeteranganChange,
+  isEditingStructure, editingName, onStartEdit, onCancelEdit,
+  onChangeEditingName, onSaveEdit, onMove, onDelete,
+}) => {
+  const palette = (() => {
+    if (kondisi === 'Baik') return 'bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-emerald-300';
+    if (kondisi === 'Tidak Baik') return 'bg-red-50 text-red-700 border-red-200 focus:ring-red-300';
+    return 'bg-white text-slate-500 border-slate-300 focus:ring-brand-primary';
+  })();
+
+  return (
+    <div
+      className={cn(
+        'gap-2 px-4 py-2 items-center grid bg-white hover:bg-slate-50/60 transition-colors',
+        showStructureControls ? 'grid-cols-[1fr_90px_1fr_88px]' : 'grid-cols-[1fr_90px_1fr]',
+      )}
+    >
+      {isEditingStructure ? (
+        <input
+          autoFocus type="text" value={editingName}
+          onChange={(e) => onChangeEditingName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void onSaveEdit();
+            if (e.key === 'Escape') onCancelEdit();
+          }}
+          className="h-8 px-2 text-xs rounded border border-amber-400 bg-amber-50 focus:ring-1 focus:ring-amber-400 focus:outline-none"
+        />
+      ) : (
+        <span className="text-xs font-medium text-slate-700">{facility.facility_name}</span>
+      )}
+
+      {isCompleted ? (
+        <span className={cn('text-xs font-semibold text-center', kondisi === 'Baik' ? 'text-emerald-700' : kondisi === 'Rusak' ? 'text-red-700' : 'text-slate-500')}>
+          {kondisi || '—'}
+        </span>
+      ) : (
+        <select
+          value={kondisi} onChange={(e) => onKondisiChange(e.target.value)}
+          className={cn(
+            'w-full h-8 px-1.5 text-xs rounded border focus:ring-1 focus:outline-none font-semibold',
+            palette,
+          )}
+        >
+          <option value="">—</option>
+          {KONDISI_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+      )}
+
+      {isCompleted ? (
+        <span className="text-xs text-slate-600">{keterangan || '—'}</span>
+      ) : (
+        <input
+          type="text" value={keterangan}
+          onChange={(e) => onKeteranganChange(e.target.value)}
+          placeholder="Keterangan..."
+          className="h-8 px-2 text-xs rounded border border-slate-300 bg-white focus:ring-1 focus:ring-brand-primary focus:outline-none w-full"
+        />
+      )}
+
+      {showStructureControls && (
+        <div className="flex items-center justify-center gap-0.5">
+          {isEditingStructure ? (
+            <>
+              <RowActionBtn title="Simpan" onClick={() => void onSaveEdit()}><Check size={12} /></RowActionBtn>
+              <RowActionBtn title="Batal" onClick={onCancelEdit}><X size={12} /></RowActionBtn>
+            </>
+          ) : (
+            <>
+              <RowActionBtn title="Pindah atas" disabled={idx === 0} onClick={() => onMove(-1)}><ChevronUp size={14} /></RowActionBtn>
+              <RowActionBtn title="Pindah bawah" disabled={idx === total - 1} onClick={() => onMove(1)}><ChevronDown size={14} /></RowActionBtn>
+              <RowActionBtn title="Rename" onClick={onStartEdit}><Pencil size={12} /></RowActionBtn>
+              <RowActionBtn title="Hapus" variant="danger" onClick={onDelete}><Trash2 size={12} /></RowActionBtn>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Inline "add facility" form ────────────────────────────────────────────
+
+const AddFacilityForm: React.FC<{ onSave: (name: string) => Promise<void> }> = ({ onSave }) => {
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!name.trim()) return;
+    setBusy(true);
+    try {
+      await onSave(name.trim());
+      setName('');
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="px-4 py-2 flex items-center gap-2 bg-slate-50/40">
+      <input
+        type="text" value={name} onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') void submit(); }}
+        placeholder="Nama fasilitas baru"
+        className="flex-1 h-8 px-2 text-xs rounded border border-slate-300 bg-white focus:ring-1 focus:ring-emerald-400 focus:outline-none"
+      />
+      <button
+        type="button" disabled={busy || !name.trim()} onClick={() => void submit()}
+        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+      >
+        <Plus size={13} /> Tambah
+      </button>
     </div>
   );
 };
