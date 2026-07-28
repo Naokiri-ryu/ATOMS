@@ -34,10 +34,17 @@ class CnsdAmscMeterService
     public function listRecords(array $filters, int $perPage = 15): LengthAwarePaginator
     {
         $query = CnsdAmscMeterRecord::query()
+            ->with([
+                'technicians:id,amsc_meter_record_id,technician_id,technician_name,technician_signature,sort_order',
+                'manager:id,name',
+                'supervisor:id,name',
+            ])
             ->withCount('technicians');
 
         if (!empty($filters['form_type'])) {
             $query->where('form_type', $filters['form_type']);
+        } else {
+            $query->where('form_type', 'AMSC-METER');
         }
         if (!empty($filters['date'])) {
             $query->whereDate('date', $filters['date']);
@@ -56,7 +63,10 @@ class CnsdAmscMeterService
             $query->where(function ($q) use ($search) {
                 $q->where('form_number', 'ILIKE', $search)
                   ->orWhere('manager_name', 'ILIKE', $search)
-                  ->orWhere('supervisor_name', 'ILIKE', $search);
+                  ->orWhere('supervisor_name', 'ILIKE', $search)
+                  ->orWhereHas('technicians', function ($tq) use ($search) {
+                        $tq->where('technician_name', 'ILIKE', $search);
+                 });
             });
         }
 

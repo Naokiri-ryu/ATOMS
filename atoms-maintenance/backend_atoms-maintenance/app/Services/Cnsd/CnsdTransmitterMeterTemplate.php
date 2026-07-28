@@ -10,7 +10,7 @@ namespace App\Services\Cnsd;
  * Form structure (per the reference image):
  *
  *   Section 1 — TRANSMITTER / TX RADIO
- *     Groups: Ground, ADC, CDU, APP, TMA West, TMA East, ER Makassar, ATIS, Back Up Radio
+ *     Groups: Ground, ADC, CDU, APP, TMA West, TMA East, ER Makassar, ER BALI, ER P.BUN, ATIS, Back Up Radio
  *     Layout: NO | FREQUENCY | MERK | STATUS | POWER O/P | MODULASI | KETERANGAN
  *
  *   Section 2 — LINGKUNGAN KERJA
@@ -151,9 +151,31 @@ class CnsdTransmitterMeterTemplate
                 ],
             ],
 
-            // ─── 8. ATIS ───────────────────────────────────────────
+            // ─── 8. ER BALI ─────────────────────────────────────────
             [
                 'number' => 8,
+                'name'   => 'ER BALI',
+                'items'  => [
+                    ['frequency_label' => 'Primary 120.7 MHz', 'merk' => 'OTE', 'tx_label' => 'TX 1', 'status_type' => 'on_air_stby'],
+                    ['frequency_label' => 'Primary 120.7 MHz', 'merk' => 'OTE', 'tx_label' => 'TX 2', 'status_type' => 'on_air_stby'],
+                ],
+            ],
+
+            // ─── 9. ER P.BUN ──────────────────────────────────────
+            [
+                'number' => 9,
+                'name'   => 'ER P.BUN',
+                'items'  => [
+                    ['frequency_label' => 'Primary 134.1 MHz', 'merk' => 'OTE', 'tx_label' => 'TX 1', 'status_type' => 'on_air_stby'],
+                    ['frequency_label' => 'Primary 134.1 MHz', 'merk' => 'OTE', 'tx_label' => 'TX 2', 'status_type' => 'on_air_stby'],
+                    ['frequency_label' => 'Secondary 133.6 MHz', 'merk' => 'PAE', 'tx_label' => 'TX 1', 'status_type' => 'online_offline'],
+                    ['frequency_label' => 'Secondary 133.6 MHz', 'merk' => 'PAE', 'tx_label' => 'TX 2', 'status_type' => 'online_offline'],
+                ],
+            ],
+
+            // ─── 10. ATIS ─────────────────────────────────────────
+            [
+                'number' => 10,
                 'name'   => 'ATIS',
                 'items'  => [
                     ['frequency_label' => 'Primary 128.2 MHz', 'merk' => null, 'tx_label' => 'TX 1', 'status_type' => 'on_air_stby'],
@@ -161,10 +183,10 @@ class CnsdTransmitterMeterTemplate
                 ],
             ],
 
-            // ─── 9. Back Up Radio ──────────────────────────────────
+            // ─── 11. Back Up Radio ────────────────────────────────
             // Status column is BLOCKED (grey/disabled) per the reference image.
             [
-                'number' => 9,
+                'number' => 11,
                 'name'   => 'Back Up Radio',
                 'items'  => [
                     ['frequency_label' => '118.1 MHz', 'merk' => 'Becker', 'tx_label' => null, 'status_type' => 'blocked'],

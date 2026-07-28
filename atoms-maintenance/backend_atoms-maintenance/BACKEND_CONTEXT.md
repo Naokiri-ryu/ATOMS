@@ -620,7 +620,7 @@ Sumber: `app/Services/Cnsd/CnsdTransmitterMeterTemplate.php`.
 
 | Section | Layout | Groups | Items |
 |---|---|---|---|
-| 1. TRANSMITTER / TX RADIO | Frequency/Merk/Status/Power/Modulasi/Keterangan | 9 groups (Ground, ADC, CDU, APP, TMA West, TMA East, ER Makassar, ATIS, Back Up Radio) | ~40 TX items + 9 headers |
+| 1. TRANSMITTER / TX RADIO | Frequency/Merk/Status/Power/Modulasi/Keterangan | 11 groups (Ground, ADC, CDU, APP, TMA West, TMA East, ER Makassar, ER BALI, ER P.BUN, ATIS, Back Up Radio) | ~48 TX items + 11 headers |
 | 2. LINGKUNGAN KERJA | NO/Kegiatan/Nominal/Hasil/Keterangan | 1 group | 4 items |
 
 ### Status Dropdown Rules
@@ -628,10 +628,10 @@ Sumber: `app/Services/Cnsd/CnsdTransmitterMeterTemplate.php`.
 - OTE merk (Secondary frequencies): Online / Offline
 - CDU (group 3, all PAE): Online / Offline
 - TMA West (group 5, all PAE): On Air / STBY
-- Back Up Radio (group 9): BLOCKED — status cell disabled, backend rejects update
+- Back Up Radio (group 11): BLOCKED — status cell disabled, backend rejects update
 
 ### Blocked Items (Back Up Radio)
-- Group 9 items have `is_blocked = true`.
+- Group 11 items have `is_blocked = true`.
 - Backend `updateItems()` allows `power_output`, `modulasi`, `keterangan` but NOT `status_value` for blocked items.
 - Frontend renders status cell as grey/disabled.
 

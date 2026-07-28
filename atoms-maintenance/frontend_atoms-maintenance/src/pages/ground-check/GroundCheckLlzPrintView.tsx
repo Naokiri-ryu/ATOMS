@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Printer } from 'lucide-react';
 import { Button } from '@/components/common/Button';
@@ -46,6 +46,8 @@ export const GroundCheckLlzPrintView: React.FC = () => {
   const navigate = useNavigate();
   const [record, setRecord] = useState<GroundCheckLlzRecordDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [chartImages, setChartImages] = useState<{ tx1: string | null; tx2: string | null }>({ tx1: null, tx2: null });
+  const hiddenRender = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -63,6 +65,35 @@ export const GroundCheckLlzPrintView: React.FC = () => {
     void fetchRecord();
     return () => { cancelled = true; };
   }, [id]);
+
+  const captureCharts = useCallback(() => {
+    if (!hiddenRender.current) return;
+    const container = hiddenRender.current;
+    requestAnimationFrame(() => {
+      const svgs = container.querySelectorAll('svg');
+      const toDataUrl = (svg: SVGElement): string => {
+        const clone = svg.cloneNode(true) as SVGElement;
+        clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        const width = svg.clientWidth || 680;
+        const height = svg.clientHeight || 240;
+        clone.setAttribute('width', String(width));
+        clone.setAttribute('height', String(height));
+        clone.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(clone.outerHTML)));
+      };
+      if (svgs.length >= 2) {
+        setChartImages({ tx1: toDataUrl(svgs[0]), tx2: toDataUrl(svgs[1]) });
+      } else if (svgs.length === 1) {
+        setChartImages({ tx1: toDataUrl(svgs[0]), tx2: null });
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (record && !chartImages.tx1 && !chartImages.tx2) {
+      captureCharts();
+    }
+  }, [record, chartImages.tx1, chartImages.tx2, captureCharts]);
 
   if (isLoading) {
     return (
@@ -100,6 +131,7 @@ export const GroundCheckLlzPrintView: React.FC = () => {
             .print-page:last-child { page-break-after: auto; }
             tr, td, th { page-break-inside: avoid; }
             img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .gc-chart-img img { max-width: 100%; height: auto; }
           }
           .gc-table { border-collapse: collapse; width: 100%; table-layout: fixed; }
           .gc-table th, .gc-table td { border: 1px solid #000; padding: 2px 3px; vertical-align: middle; }
@@ -107,6 +139,16 @@ export const GroundCheckLlzPrintView: React.FC = () => {
           .gc-tick { font-family: 'Times New Roman', serif; font-size: 11px; }
         `}
       </style>
+
+      {/* Hidden container for pre-rendering chart SVGs before capture */}
+      <div ref={hiddenRender} style={{ position: 'absolute', left: '-9999px', top: 0, width: '680px', visibility: 'hidden', pointerEvents: 'none' }} aria-hidden="true">
+        {record && (
+          <>
+            <GroundCheckLlzPerformanceChart curvePoints={record.curve_points} tx="tx1" title="" distance={record.curve_jarak_ant ?? '300 Meter'} printMode width={680} height={240} />
+            <GroundCheckLlzPerformanceChart curvePoints={record.curve_points} tx="tx2" title="" distance={record.curve_jarak_ant ?? '300 Meter'} printMode width={680} height={240} />
+          </>
+        )}
+      </div>
 
       {/* Toolbar (screen only) */}
       <div className="print-hide mx-auto mb-4 flex max-w-[210mm] items-center justify-between">
@@ -502,33 +544,33 @@ export const GroundCheckLlzPrintView: React.FC = () => {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          PAGE 3 — Auto-generated TX1 + TX2 Charts
+          PAGE 3 — Auto-generated TX1 + TX2 Charts (static images)
          ═══════════════════════════════════════════════════════════ */}
       <div className="print-page mt-4 mx-auto bg-white font-sans text-[10px] leading-tight print:mx-0 print:mt-0 print:w-full print:max-w-none" style={{ width: '210mm', minHeight: '297mm' }}>
         <div className="px-4 py-4 space-y-6">
           <div>
             <p className="text-[11px] font-bold uppercase mb-2 text-center">TX 1 Ground Performance Curve</p>
-            <GroundCheckLlzPerformanceChart
-              curvePoints={record.curve_points}
-              tx="tx1"
-              title=""
-              distance={record.curve_jarak_ant ?? '300 Meter'}
-              printMode
-              width={680}
-              height={240}
-            />
+            <div className="gc-chart-img text-center">
+              {chartImages.tx1 ? (
+                <img src={chartImages.tx1} alt="TX 1 Ground Performance Curve" style={{ maxWidth: '680px', width: '100%' }} />
+              ) : (
+                <div style={{ width: 680, height: 240 }} className="flex items-center justify-center bg-slate-50 border border-slate-200 rounded text-xs text-slate-400">
+                  Memuat chart...
+                </div>
+              )}
+            </div>
           </div>
           <div className="mt-6">
             <p className="text-[11px] font-bold uppercase mb-2 text-center">TX 2 Ground Performance Curve</p>
-            <GroundCheckLlzPerformanceChart
-              curvePoints={record.curve_points}
-              tx="tx2"
-              title=""
-              distance={record.curve_jarak_ant ?? '300 Meter'}
-              printMode
-              width={680}
-              height={240}
-            />
+            <div className="gc-chart-img text-center">
+              {chartImages.tx2 ? (
+                <img src={chartImages.tx2} alt="TX 2 Ground Performance Curve" style={{ maxWidth: '680px', width: '100%' }} />
+              ) : (
+                <div style={{ width: 680, height: 240 }} className="flex items-center justify-center bg-slate-50 border border-slate-200 rounded text-xs text-slate-400">
+                  Memuat chart...
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

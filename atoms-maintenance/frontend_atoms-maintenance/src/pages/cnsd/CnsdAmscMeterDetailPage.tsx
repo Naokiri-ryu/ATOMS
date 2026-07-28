@@ -36,6 +36,8 @@ const SHIFT_TIME_LABELS: Record<string, string> = {
   malam: '19:00 — 07:00',
 };
 
+const CCT_OPTIONS = ['TnRn', 'TnRf', 'TfRn', 'TfRf'] as const;
+
 // ─── Main component ───────────────────────────────────────────
 
 /**
@@ -507,6 +509,7 @@ const AmscItemRow: React.FC<AmscItemRowProps> = ({
   item, layout, isReadOnly, getValue, onChange,
 }) => {
   const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
+  const selectClass = inputClass + ' appearance-none cursor-pointer';
   const disabled = isReadOnly || item.is_blocked;
 
   return (
@@ -533,14 +536,17 @@ const AmscItemRow: React.FC<AmscItemRowProps> = ({
             />
           </td>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
+            <select
+              className={selectClass}
               value={getValue(item, 'cct')}
-              onChange={(e) => onChange(item.id, 'cct', e.target.value)}
+              onChange={(e) => onChange(item.id, 'cct', e.target.value || null)}
               disabled={disabled}
-            />
+            >
+              <option value="">—</option>
+              {CCT_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
           </td>
         </>
       ) : layout === 'dual_ab' ? (

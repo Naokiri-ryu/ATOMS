@@ -8,8 +8,11 @@ use App\Http\Controllers\InstallationController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\StockAuditController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\SsoController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+
+Route::get('/sso', [SsoController::class, 'handle'])->name('sso');
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),

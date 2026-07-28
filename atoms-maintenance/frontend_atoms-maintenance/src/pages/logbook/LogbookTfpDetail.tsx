@@ -532,6 +532,17 @@ export const LogbookTfpDetail: React.FC = () => {
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!record || !noteActivity.trim()) return;
+
+    if (noteTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(noteTime)) {
+      setErrorMessage('Format waktu tidak valid. Gunakan format HH:MM (00:00 - 23:59).');
+      return;
+    }
+
+    if (shiftLocked[noteShift]) {
+      setErrorMessage(`Shift ${SHIFT_LABEL[noteShift]} sudah ditandatangani. Catatan tidak dapat ditambahkan.`);
+      return;
+    }
+
     setIsAddingNote(true);
     setErrorMessage(null);
     try {
@@ -1044,6 +1055,14 @@ export const LogbookTfpDetail: React.FC = () => {
                 {(['pagi', 'siang', 'malam'] as const).map((shift) => {
                   const notes = notesByShift[shift];
                   if (notes.length === 0) return null;
+
+                  const sortedNotes = [...notes].sort((a, b) => {
+                    if (!a.time && !b.time) return 0;
+                    if (!a.time) return 1;
+                    if (!b.time) return -1;
+                    return a.time.localeCompare(b.time);
+                  });
+
                   return (
                     <div key={shift}>
                       <div className={`sticky top-0 z-10 px-4 py-1.5 border-b border-gray-100 ${shiftColors[shift]} backdrop-blur-sm bg-opacity-95`}>
@@ -1054,7 +1073,7 @@ export const LogbookTfpDetail: React.FC = () => {
                       <div className="relative pl-6 pr-3 py-2">
                         {/* Timeline vertical line */}
                         <div className="absolute left-[14px] top-3 bottom-3 w-px bg-gray-200" aria-hidden="true" />
-                        {notes.map((note) => (
+                        {sortedNotes.map((note) => (
                           <div key={note.id} className="relative flex items-start gap-3 py-2 hover:bg-slate-50/50 rounded-lg -ml-3 pl-3 pr-2 group">
                             {/* Timeline dot */}
                             <div className="relative flex items-center justify-center shrink-0 mt-2">

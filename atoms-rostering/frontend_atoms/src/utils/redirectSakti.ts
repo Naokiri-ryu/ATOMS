@@ -16,7 +16,7 @@ export function redirectToSakti(): void {
   }
 
   const url = token
-    ? `${baseUrl}?token=${encodeURIComponent(token)}&tokenfix=${encodeURIComponent(tokenfix)}`
+    ? `${baseUrl}/sso?token=${encodeURIComponent(token)}&tokenfix=${encodeURIComponent(tokenfix)}`
     : baseUrl;
 
   window.location.href = url;

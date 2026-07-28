@@ -472,15 +472,6 @@ export const LogbookCnsdDetail: React.FC = () => {
   const [noteShift, setNoteShift] = useState<'pagi' | 'siang' | 'malam'>('pagi');
   const [noteTime, setNoteTime] = useState(getCurrentTime());
 
-  useEffect(() => {
-  const shiftRanges = {
-    pagi: '07:00',
-    siang: '13:00',
-    malam: '19:00',
-  };
-  setNoteTime(shiftRanges[noteShift]);
-  }, [noteShift]);
-
   const [noteActivity, setNoteActivity] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
 
@@ -619,14 +610,6 @@ export const LogbookCnsdDetail: React.FC = () => {
       setErrorMessage('Format waktu tidak valid. Gunakan format HH:MM (00:00 - 23:59).');
       return;
     }
-
-    console.log('🔍 handleAddNote called:', {
-      noteShift,
-      shiftLocked,
-      is_signed_pagi: record.is_signed_pagi,
-      is_signed_siang: record.is_signed_siang,
-      is_signed_malam: record.is_signed_malam,
-    });
 
     if (shiftLocked[noteShift]) {
       setErrorMessage(`Shift ${SHIFT_LABEL[noteShift]} sudah ditandatangani. Catatan tidak dapat ditambahkan.`);
@@ -1163,7 +1146,7 @@ export const LogbookCnsdDetail: React.FC = () => {
                       </div>
                       <div className="relative pl-6 pr-3 py-2">
                         <div className="absolute left-[14px] top-3 bottom-3 w-px bg-gray-200" aria-hidden="true" />
-                        {notes.map((note) => (
+                        {sortedNotes.map((note) => (
                           <div key={note.id} className="relative flex items-start gap-3 py-2 hover:bg-slate-50/50 rounded-lg -ml-3 pl-3 pr-2 group">
                             <div className="relative flex items-center justify-center shrink-0 mt-2">
                               <div className="h-2.5 w-2.5 rounded-full bg-white border-2 border-sky-400 group-hover:border-sky-500 group-hover:scale-110 transition-all" />

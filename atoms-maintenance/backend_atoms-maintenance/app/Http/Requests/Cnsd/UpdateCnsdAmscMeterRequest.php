@@ -23,7 +23,7 @@ class UpdateCnsdAmscMeterRequest extends FormRequest
             'items.*.hasil_b'      => ['sometimes', 'nullable', 'string', 'max:100'],
             'items.*.hasil'        => ['sometimes', 'nullable', 'string', 'max:100'],
             'items.*.status_value' => ['sometimes', 'nullable', 'string', 'max:50'],
-            'items.*.cct'          => ['sometimes', 'nullable', 'string', 'max:100'],
+            'items.*.cct'          => ['sometimes', 'nullable', 'string', 'max:100', 'in:TnRn,TnRf,TfRn,TfRf'],
             'items.*.keterangan'   => ['sometimes', 'nullable', 'string', 'max:500'],
         ];
     }

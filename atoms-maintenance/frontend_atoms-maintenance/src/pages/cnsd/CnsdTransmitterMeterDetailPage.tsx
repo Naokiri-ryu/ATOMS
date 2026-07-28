@@ -42,8 +42,8 @@ const STATUS_OPTIONS_ONLINE  = ['Online', 'Offline'];
  *
  * Layout per paper form 005_Transmitter:
  *   - Section 1 (TRANSMITTER / TX RADIO): NO | FREQUENCY | MERK | STATUS |
- *     POWER O/P | MODULASI | KETERANGAN. Groups 1-8 use TX 1 / TX 2 rows under
- *     each frequency sub-banner. Group 9 (Back Up Radio) has no TX label and
+ *     POWER O/P | MODULASI | KETERANGAN. Groups 1-10 use TX 1 / TX 2 rows under
+ *     each frequency sub-banner. Group 11 (Back Up Radio) has no TX label and
  *     the STATUS column is BLOCKED (dark grey) per paper.
  *   - Section 2 (LINGKUNGAN KERJA): NO | KEGIATAN | NOMINAL | HASIL | KETERANGAN.
  *
