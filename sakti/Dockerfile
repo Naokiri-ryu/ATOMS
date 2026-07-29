@@ -13,8 +13,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --ignore-platform-reqs
+COPY composer.json ./
+RUN composer update --no-dev --optimize-autoloader --no-interaction --no-scripts --ignore-platform-reqs
 
 COPY package*.json ./
 RUN npm ci --ignore-scripts
@@ -80,8 +80,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 # Install PHP dependencies (production only)
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+COPY composer.json ./
+RUN composer update --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Copy application source
 COPY . .
