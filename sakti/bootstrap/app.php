@@ -16,8 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
-        $middleware->redirectGuestsTo(fn () => env('ROSTERING_FRONTEND_URL', 'http://172.19.38.157:5658') . '/login');
-
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,

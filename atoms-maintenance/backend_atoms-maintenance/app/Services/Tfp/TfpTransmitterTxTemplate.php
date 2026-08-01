@@ -27,6 +27,8 @@ class TfpTransmitterTxTemplate
 
         return [
             ['id' => 'panel_tx01',            'label' => 'Panel TX 01',            'sub_columns' => $single],
+            ['id' => 'panel_tx02',            'label' => 'Panel TX 02',            'sub_columns' => $single],
+            ['id' => 'panel_cos_tx03',        'label' => 'Panel COS (TX 03)',      'sub_columns' => $io],
             ['id' => 'panel_output_ups_tx04', 'label' => 'Panel Output UPS TX 04', 'sub_columns' => $single],
             ['id' => 'panel_ups_tx07',        'label' => 'Panel UPS (TX 07)',      'sub_columns' => $io],
             ['id' => 'panel_ac_tx06',         'label' => 'Panel AC (TX 06)',       'sub_columns' => $single],
@@ -53,6 +55,7 @@ class TfpTransmitterTxTemplate
         // Row 13 (Power Factor): single-value panels + ac + milat disabled
         $disabledPowerFactor = [
             'panel_tx01.value'            => true,
+            'panel_tx02.value'            => true,
             'panel_output_ups_tx04.value' => true,
             'panel_ac_tx06.value'         => true,
             'panel_milat_ru11.value'      => true,
@@ -61,6 +64,9 @@ class TfpTransmitterTxTemplate
         // Rows 14-17 (Battery): also disables panel_cos
         $disabledBattery = [
             'panel_tx01.value'            => true,
+            'panel_tx02.value'            => true,
+            'panel_cos_tx03.input'        => true,
+            'panel_cos_tx03.output'       => true,
             'panel_output_ups_tx04.value' => true,
             'panel_ac_tx06.value'         => true,
             'panel_milat_ru11.value'      => true,

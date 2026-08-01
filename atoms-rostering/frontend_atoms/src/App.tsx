@@ -16,7 +16,6 @@ import InventoryPage from './pages/InventoryPage';
 import SettingsPage from './pages/SettingsPage';
 import ActivityPage from './modules/activity-log/pages/ActivityPage';
 
-
 // Auth Pages
 import AuthPage from './modules/auth/pages/AuthPage';
 
@@ -31,8 +30,6 @@ import SupportCenter from './pages/SupportCenter';
 import SupportTicketDetail from './pages/SupportTicketDetail';
 import SupportTicketsAdminPage from './pages/SupportTicketsAdminPage';
 import DashboardPage from './modules/dashboard/pages/DashboardPage';
-
-import ComingSoonPage from './pages/ComingSoonPage';
 
 function App() {
   return (
@@ -68,17 +65,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          {/* ── TAMBAHAN BARU: Statistik Route (Coming Soon) ── */}
-              <Route
-                path="/statistics"
-                element={
-                  <ProtectedRoute>
-                    <ComingSoonPage />
-                  </ProtectedRoute>
-                }
-              />
-          {/* ────────────────────────────────────────────────────── */}
 
           {/* Personnel/Employee Management Routes */}
           <Route

@@ -10,12 +10,15 @@ use App\Http\Controllers\StockAuditController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SsoController;
 use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Features;
 
 Route::get('/sso', [SsoController::class, 'handle'])->name('sso');
 
-Route::redirect('/', '/dashboard');
+Route::inertia('/', 'welcome', [
+    'canRegister' => Features::enabled(Features::registration()),
+])->name('home');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     // Notifications
     Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
     Route::post('/notifications/{id}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');

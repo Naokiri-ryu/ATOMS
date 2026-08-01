@@ -21,7 +21,6 @@ import {
   AlertTriangle,
   Check,
   Settings,
-  BarChart3,
 } from 'lucide-react';
 import type { ShiftType } from '@/types';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -72,7 +71,6 @@ const quickNavItems: Array<{
   { label: 'Ground Check', icon: Plane, path: '/ground-check', color: 'text-indigo-700', bgColor: 'bg-indigo-50', hoverColor: 'hover:bg-indigo-100', hideForRoles: ['General Manager'] },
   { label: 'Grounding', icon: Zap, path: '/grounding', color: 'text-yellow-700', bgColor: 'bg-yellow-50', hoverColor: 'hover:bg-yellow-100', hideForRoles: ['General Manager'] },
   { label: 'Reporting', icon: ClipboardList, path: '/reporting', color: 'text-purple-700', bgColor: 'bg-purple-50', hoverColor: 'hover:bg-purple-100' },
-  { label: 'Statistik', icon: BarChart3, path: '/statistics', color: 'text-orange-700', bgColor: 'bg-orange-50', hoverColor: 'hover:bg-orange-100' },
   { label: 'Logbook', icon: BookOpen, path: '/logbooks', color: 'text-rose-700', bgColor: 'bg-rose-50', hoverColor: 'hover:bg-rose-100' },
 ];
 

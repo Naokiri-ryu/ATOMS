@@ -292,7 +292,6 @@ export const router = createBrowserRouter([
           { path: '/reporting/damage-reports', element: <Navigate to="/reporting" replace /> },
           { path: '/reporting/damage-reports/new', element: <ReportingDamageFormPage /> },
           { path: '/reporting/damage-reports/:id', element: <ReportingDamageFormPage /> },
-          { path: '/statistics', element: <ComingSoonPage /> },
           // Backward-compat: legacy /reports placeholder still works
           { path: '/reports', element: <Navigate to="/reporting" replace /> },
           { path: '/reports/create', element: <Navigate to="/reporting/damage-reports/new" replace /> },
