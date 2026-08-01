@@ -15,6 +15,12 @@
 .env.backup
 .env.production
 .env.docker
+.env.local
+.env.save
+.env.save.*
+/ssl/
+/data_type
+/query
 .phpactor.json
 .phpunit.result.cache
 Homestead.json

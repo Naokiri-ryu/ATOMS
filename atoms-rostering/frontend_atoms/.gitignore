@@ -12,6 +12,20 @@ dist
 dist-ssr
 *.local
 
+# Env variants
+.env
+.env.local
+.env.save
+.env.save.*
+.env.production
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Junk artifacts
+.emv
+test.xlsx
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

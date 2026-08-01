@@ -3,6 +3,10 @@
 .env
 .env.backup
 .env.production
+.env.local
+.env.save
+.env.save.*
+composer.phar
 .phpactor.json
 .phpunit.result.cache
 /.fleet

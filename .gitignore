@@ -1,4 +1,27 @@
+# Secret env variants (contoh tetap di-track)
 .env
+.env.local
+.env.local.bak
+.env.save
+.env.save.*
+.env.backup
+.env.production
+
+# Keys & certs
+*.pem
+*.key
+
+# Binaries & artifacts
+*.phar
+*.xlsx
+
+# Archives
 sakti.zip
 atoms-maintenance.zip
 atoms-rostering.zip
+
+# OS / editor
+*.log
+Thumbs.db
+.idea/
+.vscode/
