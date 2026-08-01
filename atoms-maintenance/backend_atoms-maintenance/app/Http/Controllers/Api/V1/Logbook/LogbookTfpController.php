@@ -243,10 +243,6 @@ class LogbookTfpController extends Controller
         $user = Auth::user();
         if (!$user) return $this->error('Unauthenticated.', null, 401);
 
-        if ($logbook->isShiftSigned($request->input('shift'))) {
-            return $this->error("Catatan untuk shift {$request->input('shift')} tidak dapat ditambah karena sudah ditandatangani.", null, 409);
-        }
-
         $logbook = $this->service->addNote(
             $logbook,
             $request->input('shift'),
@@ -267,9 +263,7 @@ class LogbookTfpController extends Controller
         if (!$logbook) return $this->error('Logbook tidak ditemukan.', null, 404);
 
         $note = $logbook->notes()->where('id', $noteId)->first();
-        if ($note && $logbook->isShiftSigned($note->shift)) {
-            return $this->error("Catatan untuk shift {$note->shift} tidak dapat dihapus karena sudah ditandatangani.", null, 409);
-        }
+        if (!$note) return $this->error('Catatan tidak ditemukan.', null, 404);
 
         $this->service->deleteNote($logbook, $noteId);
 

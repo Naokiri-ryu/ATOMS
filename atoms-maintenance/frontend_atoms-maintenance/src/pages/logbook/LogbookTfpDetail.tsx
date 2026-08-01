@@ -464,18 +464,7 @@ export const LogbookTfpDetail: React.FC = () => {
     malam: !!record?.is_signed_malam || isReadOnlyViewer,
   };
   const canSign = user?.role === 'Manager Teknik';
-  // True only once pagi + siang + malam are ALL locked (signed or read-only viewer).
-  const allShiftsLocked = shiftLocked.pagi && shiftLocked.siang && shiftLocked.malam;
 
-  // Auto-advance the note form to the next unsigned shift once the currently
-  // selected shift gets signed (e.g. pagi signed → jump to siang), so the
-  // technician doesn't have to manually switch the dropdown mid-shift.
-  useEffect(() => {
-    if (!shiftLocked[noteShift]) return;
-    const order: ShiftKey[] = ['pagi', 'siang', 'malam'];
-    const nextUnlocked = order.find((shift) => !shiftLocked[shift]);
-    if (nextUnlocked && nextUnlocked !== noteShift) setNoteShift(nextUnlocked);
-  }, [shiftLocked.pagi, shiftLocked.siang, shiftLocked.malam, noteShift]);
   // Delete logbook: Admin / MT / Supervisor (lintas divisi, MT-equivalent).
   const canDelete =
     user?.role === 'Admin' ||
@@ -535,11 +524,6 @@ export const LogbookTfpDetail: React.FC = () => {
 
     if (noteTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(noteTime)) {
       setErrorMessage('Format waktu tidak valid. Gunakan format HH:MM (00:00 - 23:59).');
-      return;
-    }
-
-    if (shiftLocked[noteShift]) {
-      setErrorMessage(`Shift ${SHIFT_LABEL[noteShift]} sudah ditandatangani. Catatan tidak dapat ditambahkan.`);
       return;
     }
 
@@ -797,6 +781,18 @@ export const LogbookTfpDetail: React.FC = () => {
   const SHIFT_LABEL: Record<ShiftKey, string> = { pagi: 'Pagi', siang: 'Siang', malam: 'Malam' };
   const SHIFT_RANGE: Record<ShiftKey, string> = { pagi: '07:00–13:00', siang: '13:00–19:00', malam: '19:00–07:00' };
 
+  const SHIFT_WINDOW: Record<ShiftKey, { start: string; end: string }> = {
+    pagi:  { start: '07:00', end: '13:00' },
+    siang: { start: '13:00', end: '19:00' },
+    malam: { start: '19:00', end: '07:00' },
+  };
+  const isNoteTimeLate = (shift: ShiftKey, time: string | null): boolean => {
+    if (!time) return false;
+    const { start, end } = SHIFT_WINDOW[shift];
+    if (start <= end) return time < start || time >= end;
+    return time >= end && time < start;
+  };
+
   return (
     <div className="space-y-5 animate-fade-in max-w-7xl mx-auto">
       {/* Breadcrumb */}
@@ -970,12 +966,12 @@ export const LogbookTfpDetail: React.FC = () => {
             )}
           </div>
 
-          {allShiftsLocked ? (
+          {isReadOnlyViewer ? (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
           <Lock size={20} className="mx-auto text-amber-500 mb-2" />
-          <p className="text-sm font-semibold text-amber-700">Semua shift sudah ditandatangani</p>
+          <p className="text-sm font-semibold text-amber-700">Mode hanya baca</p>
           <p className="text-xs text-amber-600 mt-1">
-            Catatan tidak dapat ditambahkan lagi untuk logbook ini.
+            Anda tidak memiliki akses menambah atau mengubah catatan untuk logbook ini.
           </p>
         </div>
         ) : (
@@ -999,24 +995,11 @@ export const LogbookTfpDetail: React.FC = () => {
                 type="time"
                 value={noteTime}
                 onChange={(e) => setNoteTime(e.target.value)}
-                disabled={shiftLocked[noteShift]}
-                className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-400"
+                className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
               />
             </div>
           </div>
 
-          {shiftLocked[noteShift] ? (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
-              <Lock size={20} className="mx-auto text-amber-500 mb-2" />
-              <p className="text-sm font-semibold text-amber-700">
-                Shift {SHIFT_LABEL[noteShift]} sudah ditandatangani
-              </p>
-              <p className="text-xs text-amber-600 mt-1">
-                Catatan tidak dapat ditambahkan atau diubah untuk shift ini. Pilih shift lain di atas untuk menambah catatan.
-              </p>
-            </div>
-          ) : (
-            <>
               <div>
                 <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Kegiatan / Catatan</label>
                 <textarea
@@ -1036,8 +1019,6 @@ export const LogbookTfpDetail: React.FC = () => {
                   <Plus size={14} /> Tambah Catatan
                 </Button>
               </div>
-            </>
-          )}
         </form>
       )}
 
@@ -1048,7 +1029,7 @@ export const LogbookTfpDetail: React.FC = () => {
                   <Clock size={20} className="text-slate-300" />
                 </div>
                 <p className="text-sm font-medium text-slate-500">Belum ada catatan kegiatan.</p>
-                {!isFullySigned && <p className="text-xs text-slate-400 mt-1">Tambahkan catatan menggunakan form di atas.</p>}
+                {!isReadOnlyViewer && <p className="text-xs text-slate-400 mt-1">Tambahkan catatan menggunakan form di atas.</p>}
               </div>
             ) : (
               <div className="max-h-[520px] overflow-y-auto">
@@ -1073,7 +1054,9 @@ export const LogbookTfpDetail: React.FC = () => {
                       <div className="relative pl-6 pr-3 py-2">
                         {/* Timeline vertical line */}
                         <div className="absolute left-[14px] top-3 bottom-3 w-px bg-gray-200" aria-hidden="true" />
-                        {sortedNotes.map((note) => (
+                        {sortedNotes.map((note) => {
+                          const isLate = isNoteTimeLate(shift, note.time);
+                          return (
                           <div key={note.id} className="relative flex items-start gap-3 py-2 hover:bg-slate-50/50 rounded-lg -ml-3 pl-3 pr-2 group">
                             {/* Timeline dot */}
                             <div className="relative flex items-center justify-center shrink-0 mt-2">
@@ -1081,14 +1064,14 @@ export const LogbookTfpDetail: React.FC = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                               {note.time && (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded mb-1">
-                                  <Clock size={10} className="text-slate-400" />
+                                <span className={`inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded mb-1 ${isLate ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
+                                  <Clock size={10} className={isLate ? 'text-red-400' : 'text-slate-400'} />
                                   {note.time}
                                 </span>
                               )}
-                              <p className="text-sm text-slate-700 leading-snug">{note.activity}</p>
+                              <p className={`text-sm leading-snug ${isLate ? 'text-red-600 font-medium' : 'text-slate-700'}`}>{note.activity}</p>
                             </div>
-                            {!shiftLocked[note.shift] && (
+                            {!isReadOnlyViewer && (
                               <button
                                 type="button"
                                 onClick={() => handleDeleteNote(note.id)}
@@ -1099,7 +1082,8 @@ export const LogbookTfpDetail: React.FC = () => {
                               </button>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   );
