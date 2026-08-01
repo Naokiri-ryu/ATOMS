@@ -60,7 +60,7 @@ export const TfpRadarPrintView: React.FC = () => {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4">
         <p className="text-sm text-slate-600">Form tidak ditemukan atau gagal memuat data.</p>
-        <Button variant="outline" onClick={() => navigate('/tfp/radar')}>Kembali</Button>
+        <Button variant="outline" onClick={() => navigate('/tfp/radar-tfp')}>Kembali</Button>
       </div>
     );
   }
@@ -98,7 +98,7 @@ export const TfpRadarPrintView: React.FC = () => {
       `}</style>
 
       <div className="print-hide mx-auto mb-4 flex max-w-[290mm] items-center justify-between">
-        <Button variant="outline" className="gap-2" onClick={() => navigate(`/tfp/radar/${record.id}`)}>
+        <Button variant="outline" className="gap-2" onClick={() => navigate(`/tfp/radar-tfp/${record.id}`)}>
           <ArrowLeft size={16} />
           Kembali
         </Button>
