@@ -77,7 +77,8 @@ class TfpAobGroundService
             $query->where(function ($q) use ($needle) {
                 $q->where('form_number', 'ILIKE', $needle)
                     ->orWhere('manager_name', 'ILIKE', $needle)
-                    ->orWhere('supervisor_name', 'ILIKE', $needle);
+                    ->orWhere('supervisor_name', 'ILIKE', $needle)
+                    ->orWhereHas('technicians', fn ($tq) => $tq->where('technician_name', 'ILIKE', $needle));
             });
         }
 
