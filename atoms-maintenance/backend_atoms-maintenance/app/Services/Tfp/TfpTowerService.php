@@ -45,7 +45,9 @@ class TfpTowerService
             $needle = '%' . $filters['search'] . '%';
             $query->where(fn ($q) => $q->where('form_number', 'ILIKE', $needle)
                 ->orWhere('manager_name', 'ILIKE', $needle)
-                ->orWhere('supervisor_name', 'ILIKE', $needle));
+                ->orWhere('supervisor_name', 'ILIKE', $needle)
+                ->orWhereHas('technicians', fn ($tq) => $tq->where('technician_name', 'ILIKE', $needle)));
+
         }
 
         $sortBy  = in_array($filters['sort_by'] ?? 'date', ['date', 'created_at', 'shift_type', 'status'], true) ? ($filters['sort_by'] ?? 'date') : 'date';

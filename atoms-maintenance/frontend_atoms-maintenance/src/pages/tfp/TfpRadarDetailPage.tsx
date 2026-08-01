@@ -1123,7 +1123,7 @@ export const TfpRadarDetailPage: React.FC = () => {
     return (
       <div className="max-w-7xl mx-auto py-20 text-center">
         <p className="text-slate-500">Form tidak ditemukan.</p>
-        <Button onClick={() => navigate('/tfp/radar')} className="mt-4">
+        <Button onClick={() => navigate('/tfp/radar-tfp')} className="mt-4">
           Kembali ke Daftar
         </Button>
       </div>
@@ -1141,7 +1141,7 @@ export const TfpRadarDetailPage: React.FC = () => {
       <div className="flex items-center gap-2 text-xs text-slate-500">
         <button type="button" onClick={() => navigate('/tfp')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">TFP</button>
         <span>/</span>
-        <button type="button" onClick={() => navigate('/tfp/radar')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">Performance Check Gedung Radar</button>
+        <button type="button" onClick={() => navigate('/tfp/radar-tfp')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">Performance Check Gedung Radar</button>
         <span>/</span>
         <span className="text-slate-700 font-mono font-medium">{record.form_number}</span>
       </div>
@@ -1150,7 +1150,7 @@ export const TfpRadarDetailPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/tfp/radar')} className="hover:bg-slate-100 mt-0.5">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/tfp/radar-tfp')} className="hover:bg-slate-100 mt-0.5">
               <ArrowLeft size={20} />
             </Button>
             <div>
@@ -1215,12 +1215,12 @@ export const TfpRadarDetailPage: React.FC = () => {
               </button>
             )}
 
-            <Button variant="ghost" size="sm"
-              onClick={() => navigate(`/tfp/radar/${record.id}/print`)}
+            <button variant="ghost" size="sm"
+              onClick={() => navigate(`/tfp/radar-tfp/${record.id}/print`)}
               className="gap-1.5 text-indigo-600 hover:bg-indigo-50">
               <Printer size={15} />
               Print
-            </Button>
+            </button>
           </div>
         </div>
 

@@ -37,6 +37,10 @@ const MenuGrid: React.FC<MenuGridProps> = ({ isInitialized = true }) => {
       icon: '/assets/icon/maintenance.svg',
       route: '/maintenance'
     },
+    { title: 'Statistik', 
+      icon: '/assets/icon/statistics.svg', 
+      route: '/statistics' 
+    },
     {
       title: 'Notifications',
       icon: '/assets/icon/notifications.svg',
