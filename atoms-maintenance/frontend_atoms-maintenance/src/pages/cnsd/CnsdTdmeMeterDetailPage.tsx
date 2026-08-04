@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/common/Skeleton';
 import { Tabs } from '@/components/common/Tabs';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditCnsd } from '@/lib/roles';
 import { cnsdTdmeMeterService } from '@/services/cnsdTdmeMeterService';
 import { CnsdTdmeMeterSignaturePanel } from './components/CnsdTdmeMeterSignaturePanel';
 import type { ShiftType } from '@/types';
@@ -69,8 +70,7 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
   const [tx1Mode, setTx1Mode] = useState('');
   const [tx2Mode, setTx2Mode] = useState('');
 
-  const canEditMetadata =
-    user?.role === 'Admin' || user?.role === 'Manager Teknik' || user?.role === 'Supervisor CNSD';
+  const canEditMetadata = canEditCnsd(user);
 
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
@@ -116,7 +116,7 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
     return map;
   }, [record]);
 
-  const isReadOnly = record?.status === 'completed';
+  const isReadOnly = record?.status === 'completed' || !canEditCnsd(user);
   const metadataDirty = !!record && (
     merk !== (record.merk ?? '') ||
     type !== (record.type ?? '') ||

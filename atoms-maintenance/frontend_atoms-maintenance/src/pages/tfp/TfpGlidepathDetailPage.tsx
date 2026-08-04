@@ -12,6 +12,7 @@ import { ShiftBadge } from '@/components/common/ShiftBadge';
 import { tfpGlidepathService } from '@/services/tfpGlidepathService';
 import { TfpGlidepathSignaturePanel } from './components/TfpGlidepathSignaturePanel';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditTfp } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import type {
   TfpGlidepathRecordDetail,
@@ -464,10 +465,7 @@ export const TfpGlidepathDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const canEditStructure =
-    user?.role === 'Admin' ||
-    user?.role === 'Manager Teknik' ||
-    user?.role === 'Supervisor TFP';
+  const canEditStructure = canEditTfp(user);
 
   const [record, setRecord] = useState<TfpGlidepathRecordDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -527,11 +525,14 @@ export const TfpGlidepathDetailPage: React.FC = () => {
 
   useEffect(() => { void fetchRecord(); }, [fetchRecord]);
 
-  useEffect(() => {
-    const onFocus = () => void fetchRecord();
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [fetchRecord]);
+  // ── Dikomentari agar tidak mengganggu edit yang belum disimpan ──
+  // useEffect onFocus menyebabkan fetchRecord dipanggil ulang setiap kali
+  // window mendapat focus, yang me-reset state input dan menggagalkan edit.
+  // useEffect(() => {
+  //   const onFocus = () => void fetchRecord();
+  //   window.addEventListener('focus', onFocus);
+  //   return () => window.removeEventListener('focus', onFocus);
+  // }, [fetchRecord]);
 
   // ─── Computed ────────────────────────────────────────────────────────────
 
@@ -829,7 +830,7 @@ export const TfpGlidepathDetailPage: React.FC = () => {
     );
   }
 
-  const isCompleted = record.status === 'completed';
+  const isCompleted = (record.status === 'completed') || !canEditTfp(user);
   const showStructureControls = editMode && canEditStructure && !isCompleted;
 
   const totalCellCount = flatCells.length;

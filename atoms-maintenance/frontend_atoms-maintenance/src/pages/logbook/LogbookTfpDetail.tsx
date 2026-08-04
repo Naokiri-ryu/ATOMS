@@ -23,6 +23,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { SignatureCanvas } from '@/components/shared/SignatureCanvas';
 import { SignatureDisplay } from '@/components/shared/SignatureDisplay';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditTfp } from '@/lib/roles';
 import { logbookTfpService } from '@/services/logbookTfpService';
 import type {
   LogbookTfpDetail as LogbookTfpDetailType,
@@ -453,8 +454,7 @@ export const LogbookTfpDetail: React.FC = () => {
   // Teknisi CNSD can READ a TFP logbook but must not be able to write to it
   //   (their write scope is CNSD logbook only).
   const isGmReadOnly = user?.role === 'General Manager';
-  const isCrossDivisionTeknisi = user?.role === 'Teknisi CNSD';
-  const isReadOnlyViewer = isGmReadOnly || isCrossDivisionTeknisi;
+  const isReadOnlyViewer = isGmReadOnly || !canEditTfp(user);
 
   const isFullySigned = !!record?.is_fully_signed;
   const isLocked = isFullySigned || isReadOnlyViewer;
@@ -465,18 +465,16 @@ export const LogbookTfpDetail: React.FC = () => {
   };
   const canSign = user?.role === 'Manager Teknik';
 
-  // Delete logbook: Admin / MT / Supervisor (lintas divisi, MT-equivalent).
+  // Delete logbook: Admin / MT / Supervisor TFP.
   const canDelete =
     user?.role === 'Admin' ||
     user?.role === 'Manager Teknik' ||
-    user?.role === 'Supervisor CNSD' ||
     user?.role === 'Supervisor TFP';
   // Equipment management (add/edit/delete equipment rows) — same as canDelete:
-  // never includes teknisi, supervisor included lintas divisi.
+  // never includes teknisi.
   const canManageEquipment =
     user?.role === 'Admin' ||
     user?.role === 'Manager Teknik' ||
-    user?.role === 'Supervisor CNSD' ||
     user?.role === 'Supervisor TFP';
 
   const handleStatusChange = (

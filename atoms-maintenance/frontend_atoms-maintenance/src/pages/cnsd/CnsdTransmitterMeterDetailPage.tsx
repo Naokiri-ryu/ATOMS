@@ -19,6 +19,8 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { Skeleton } from '@/components/common/Skeleton';
 import { Tabs } from '@/components/common/Tabs';
 import { cn } from '@/lib/utils';
+import { canEditCnsd } from '@/lib/roles';
+import { useAuth } from '@/hooks/useAuth';
 import { cnsdTransmitterMeterService } from '@/services/cnsdTransmitterMeterService';
 import { CnsdTransmitterMeterSignaturePanel } from './components/CnsdTransmitterMeterSignaturePanel';
 import type { ShiftType } from '@/types';
@@ -52,6 +54,7 @@ const STATUS_OPTIONS_ONLINE  = ['Online', 'Offline'];
 export const CnsdTransmitterMeterDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const recordId = Number(id);
 
   const [record, setRecord] = useState<CnsdTransmitterMeterRecordDetail | null>(null);
@@ -106,7 +109,7 @@ export const CnsdTransmitterMeterDetailPage: React.FC = () => {
     return map;
   }, [record]);
 
-  const isReadOnly = record?.status === 'completed';
+  const isReadOnly = record?.status === 'completed' || !canEditCnsd(user);
   const hasChanges = Object.keys(editedItems).length > 0;
 
   const updateField = (itemId: number, field: keyof CnsdTransmitterMeterItem, value: string | null) => {

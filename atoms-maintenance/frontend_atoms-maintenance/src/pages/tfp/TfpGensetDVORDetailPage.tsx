@@ -31,6 +31,7 @@ import { ShiftBadge } from '@/components/common/ShiftBadge';
 import { tfpGensetDvorService } from '@/services/tfpGensetDvorService';
 import { TfpGensetDvorSignaturePanel } from './components/TfpGensetDvorSignaturePanel';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditTfp } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import type {
   TfpGensetDvorRecordDetail,
@@ -586,10 +587,7 @@ export const TfpGensetDvorDetailPage: React.FC = () => {
   const { user } = useAuth();
 
   // Edit Mode permission
-  const canEditStructure =
-    user?.role === 'Admin' ||
-    user?.role === 'Manager Teknik' ||
-    user?.role === 'Supervisor TFP';
+  const canEditStructure = canEditTfp(user);
 
   const [record, setRecord] = useState<TfpGensetDvorRecordDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -628,7 +626,7 @@ export const TfpGensetDvorDetailPage: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
 
   // isCompleted computed early so drag hooks can reference it
-  const isCompleted = record?.status === 'completed' ?? false;
+  const isCompleted = (record?.status === 'completed') || !canEditTfp(user);
 
   // Structural draft state (only used while in Edit Mode, persisted via Simpan Struktur)
   const [draftConfig, setDraftConfig] = useState<TfpGensetDvorColumnsConfig | null>(null);

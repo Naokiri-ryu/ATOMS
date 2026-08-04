@@ -31,6 +31,7 @@ import { ShiftBadge } from '@/components/common/ShiftBadge';
 import { tfpAobLt12Service } from '@/services/tfpAobLt12Service';
 import { TfpAobLt12SignaturePanel } from './components/TfpAobLt12SignaturePanel';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditTfp } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import type {
   TfpAobLt12RecordDetail,
@@ -534,10 +535,7 @@ export const TfpAobLt12DetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const canEditStructure =
-    user?.role === 'Admin' ||
-    user?.role === 'Manager Teknik' ||
-    user?.role === 'Supervisor TFP';
+  const canEditStructure = canEditTfp(user);
 
   const [record, setRecord] = useState<TfpAobLt12RecordDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -561,7 +559,7 @@ export const TfpAobLt12DetailPage: React.FC = () => {
   const [dragStart, setDragStart] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const isCompleted = record?.status === 'completed' ?? false;
+  const isCompleted = (record?.status === 'completed') || !canEditTfp(user);
 
   const [draftConfig, setDraftConfig] = useState<TfpAobLt12ColumnsConfig | null>(null);
   const [draftItemMeta, setDraftItemMeta] = useState<Record<number, {

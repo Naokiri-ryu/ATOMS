@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '@/hooks/useAuth';
+import { canEditCnsd } from '@/lib/roles';
 import {
   ArrowLeft,
   Calendar,
@@ -158,6 +160,7 @@ const ToggleCell: React.FC<ToggleCellProps> = ({ value, onChange, disabled, vari
 export const GroundCheckAdcDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [record, setRecord] = useState<GroundCheckAdcRecordDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -218,11 +221,14 @@ export const GroundCheckAdcDetailPage: React.FC = () => {
 
   useEffect(() => { void fetchRecord(); }, [fetchRecord]);
 
-  useEffect(() => {
-    const onFocus = () => void fetchRecord();
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [fetchRecord]);
+  // ── Dikomentari agar tidak mengganggu edit yang belum disimpan ──
+  // useEffect onFocus menyebabkan fetchRecord dipanggil ulang setiap kali
+  // window mendapat focus, yang me-reset state input dan menggagalkan edit.
+  // useEffect(() => {
+  //   const onFocus = () => void fetchRecord();
+  //   window.addEventListener('focus', onFocus);
+  //   return () => window.removeEventListener('focus', onFocus);
+  // }, [fetchRecord]);
 
   const handleSave = async () => {
     if (!record) return;
@@ -355,7 +361,7 @@ export const GroundCheckAdcDetailPage: React.FC = () => {
     );
   }
 
-  const isCompleted = record.status === 'completed';
+  const isCompleted = record.status === 'completed' || !canEditCnsd(user);
   let itemNumber = 0;
 
   return (

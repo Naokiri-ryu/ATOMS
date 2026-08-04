@@ -22,6 +22,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { Skeleton } from '@/components/common/Skeleton';
 import { Tabs } from '@/components/common/Tabs';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditCnsd } from '@/lib/roles';
 import { cnsdReadinessService } from '@/services/cnsdReadinessService';
 import { CnsdReadinessSignaturePanel } from '@/pages/cnsd/components/CnsdReadinessSignaturePanel';
 import { cn } from '@/lib/utils';
@@ -403,7 +404,7 @@ export const CnsdReadinessDetailPage: React.FC = () => {
   }, [record]);
 
   const isCompleted = record?.status === 'completed';
-  const isReadOnly = isCompleted;
+  const isReadOnly = isCompleted || !canEditCnsd(user);
   const hasChanges = Object.keys(editedItems).length > 0;
 
   const getValue = (item: CnsdReadinessItem, field: keyof CnsdReadinessItem): string => {

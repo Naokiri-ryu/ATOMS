@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '@/hooks/useAuth';
+import { canEditCnsd } from '@/lib/roles';
 import {
   ArrowLeft,
   Calendar,
@@ -149,6 +151,7 @@ const ToggleCell: React.FC<ToggleCellProps> = ({ value, onChange, disabled, vari
 export const GroundCheckDvorDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [record, setRecord] = useState<GroundCheckDvorRecordDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -254,11 +257,14 @@ export const GroundCheckDvorDetailPage: React.FC = () => {
 
   useEffect(() => { void fetchRecord(); }, [fetchRecord]);
 
-  useEffect(() => {
-    const onFocus = () => void fetchRecord();
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [fetchRecord]);
+  // ── Dikomentari agar tidak mengganggu edit yang belum disimpan ──
+  // useEffect onFocus menyebabkan fetchRecord dipanggil ulang setiap kali
+  // window mendapat focus, yang me-reset state input dan menggagalkan edit.
+  // useEffect(() => {
+  //   const onFocus = () => void fetchRecord();
+  //   window.addEventListener('focus', onFocus);
+  //   return () => window.removeEventListener('focus', onFocus);
+  // }, [fetchRecord]);
 
   // Merge in-progress bearing edits into curve preview points (live chart update)
   const livePoints: GroundCheckDvorBearingPoint[] = useMemo(() => {
@@ -479,7 +485,7 @@ export const GroundCheckDvorDetailPage: React.FC = () => {
     );
   }
 
-  const isCompleted = record.status === 'completed';
+  const isCompleted = record.status === 'completed' || !canEditCnsd(user);
 
   return (
     <div className="max-w-full space-y-5 animate-fade-in pb-20">

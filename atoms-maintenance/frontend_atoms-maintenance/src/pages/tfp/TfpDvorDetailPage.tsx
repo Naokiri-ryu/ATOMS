@@ -12,6 +12,7 @@ import { ShiftBadge } from '@/components/common/ShiftBadge';
 import { tfpDvorService } from '@/services/tfpDvorService';
 import { TfpDvorSignaturePanel } from './components/TfpDvorSignaturePanel';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditTfp } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import type {
   TfpDvorRecordDetail,
@@ -504,10 +505,7 @@ export const TfpDvorDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const canEditStructure =
-    user?.role === 'Admin' ||
-    user?.role === 'Manager Teknik' ||
-    user?.role === 'Supervisor TFP';
+  const canEditStructure = canEditTfp(user);
 
   const [record, setRecord] = useState<TfpDvorRecordDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -531,7 +529,7 @@ export const TfpDvorDetailPage: React.FC = () => {
   const [dragStart, setDragStart] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const isCompleted = record?.status === 'completed' ?? false;
+  const isCompleted = (record?.status === 'completed') || !canEditTfp(user);
 
   const [draftConfig, setDraftConfig] = useState<TfpDvorColumnsConfig | null>(null);
   const [draftItemMeta, setDraftItemMeta] = useState<Record<number, {

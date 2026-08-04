@@ -47,18 +47,20 @@ export const WorkOrderDetailPage: React.FC = () => {
     void fetchWorkOrder();
   }, [fetchWorkOrder]);
 
-  // Refetch when the tab/window regains focus so a WO updated in another tab
-  // (or after returning from edit/print) shows fresh data without manual reload.
-  useEffect(() => {
-    const onFocus = () => {
-      void fetchWorkOrder();
-    };
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [fetchWorkOrder]);
+  // ── Dikomentari agar tidak mengganggu edit form feedback yang belum disimpan ──
+  // useEffect onFocus menyebabkan fetchWorkOrder dipanggil ulang setiap kali
+  // window mendapat focus, yang me-reset state form dan menggagalkan edit.
+  // useEffect(() => {
+  //   const onFocus = () => {
+  //     void fetchWorkOrder();
+  //   };
+  //   window.addEventListener('focus', onFocus);
+  //   return () => window.removeEventListener('focus', onFocus);
+  // }, [fetchWorkOrder]);
 
-  // Check if user can submit feedback (Teknisi or Supervisor)
-  const canSubmitFeedback = user?.role === 'Teknisi CNSD' || user?.role === 'Teknisi TFP' 
+  // Check if user can submit feedback (Admin, Manager, Teknisi, or Supervisor)
+  const canSubmitFeedback = user?.role === 'Admin' || user?.role === 'Manager Teknik' ||
+    user?.role === 'Teknisi CNSD' || user?.role === 'Teknisi TFP' 
     || user?.role === 'Supervisor CNSD' || user?.role === 'Supervisor TFP';
   
   // Feedback form state

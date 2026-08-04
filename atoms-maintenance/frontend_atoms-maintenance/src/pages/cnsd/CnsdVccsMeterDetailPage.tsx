@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/common/Skeleton';
 import { Tabs } from '@/components/common/Tabs';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditCnsd } from '@/lib/roles';
 import { cnsdVccsMeterService } from '@/services/cnsdVccsMeterService';
 import { CnsdVccsMeterSignaturePanel } from './components/CnsdVccsMeterSignaturePanel';
 import type {
@@ -95,10 +96,7 @@ export const CnsdVccsMeterDetailPage: React.FC = () => {
   const [type, setType] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
 
-  const canEditMetadata =
-    user?.role === 'Admin' ||
-    user?.role === 'Manager Teknik' ||
-    user?.role === 'Supervisor CNSD';
+  const canEditMetadata = canEditCnsd(user);
 
   // ─── Fetch ──────────────────────────────────────────────────
   const fetchRecord = useCallback(async () => {
@@ -153,7 +151,7 @@ export const CnsdVccsMeterDetailPage: React.FC = () => {
   }, [record]);
 
   const isCompleted = record?.status === 'completed';
-  const isReadOnly = isCompleted;
+  const isReadOnly = isCompleted || !canEditCnsd(user);
   const metadataDirty =
     !!record &&
     (merk !== (record.merk ?? '') ||

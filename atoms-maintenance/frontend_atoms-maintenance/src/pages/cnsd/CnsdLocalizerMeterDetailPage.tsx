@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/common/Skeleton';
 import { Tabs } from '@/components/common/Tabs';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditCnsd } from '@/lib/roles';
 import { cnsdLocalizerMeterService } from '@/services/cnsdLocalizerMeterService';
 import { CnsdLocalizerMeterSignaturePanel } from './components/CnsdLocalizerMeterSignaturePanel';
 import type { ShiftType } from '@/types';
@@ -67,8 +68,7 @@ export const CnsdLocalizerMeterDetailPage: React.FC = () => {
   const [type, setType] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
 
-  const canEditMetadata =
-    user?.role === 'Admin' || user?.role === 'Manager Teknik' || user?.role === 'Supervisor CNSD';
+  const canEditMetadata = canEditCnsd(user);
 
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
@@ -112,7 +112,7 @@ export const CnsdLocalizerMeterDetailPage: React.FC = () => {
     return map;
   }, [record]);
 
-  const isReadOnly = record?.status === 'completed';
+  const isReadOnly = record?.status === 'completed' || !canEditCnsd(user);
   const metadataDirty = !!record && (
     merk !== (record.merk ?? '') ||
     type !== (record.type ?? '') ||

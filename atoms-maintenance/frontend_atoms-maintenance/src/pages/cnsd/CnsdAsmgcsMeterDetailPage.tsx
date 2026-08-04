@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/common/Skeleton';
 import { Tabs } from '@/components/common/Tabs';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditCnsd } from '@/lib/roles';
 import { cnsdAsmgcsMeterService } from '@/services/cnsdAsmgcsMeterService';
 import { CnsdAsmgcsMeterSignaturePanel } from './components/CnsdAsmgcsMeterSignaturePanel';
 import type {
@@ -77,10 +78,7 @@ export const CnsdAsmgcsMeterDetailPage: React.FC = () => {
   const [type, setType] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
 
-  const canEditMetadata =
-    user?.role === 'Admin' ||
-    user?.role === 'Manager Teknik' ||
-    user?.role === 'Supervisor CNSD';
+  const canEditMetadata = canEditCnsd(user);
 
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
@@ -133,7 +131,7 @@ export const CnsdAsmgcsMeterDetailPage: React.FC = () => {
   }, [record]);
 
   const isCompleted = record?.status === 'completed';
-  const isReadOnly = isCompleted;
+  const isReadOnly = isCompleted || !canEditCnsd(user);
   const metadataDirty =
     !!record &&
     (merk !== (record.merk ?? '') ||

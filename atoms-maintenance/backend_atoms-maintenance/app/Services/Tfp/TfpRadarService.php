@@ -204,8 +204,7 @@ class TfpRadarService
                     if (!is_string($cellKey)) continue;
                     if (in_array($cellKey, $disabledKeys, true)) continue;
                     if (!empty($allowedKeys) && !in_array($cellKey, $allowedKeys, true)) continue;
-                    $stringVal = $cellVal === null ? null : trim((string) $cellVal);
-                    if ($stringVal === null || $stringVal === '') continue;
+                    $stringVal = $cellVal === null ? '' : trim((string) $cellVal);
                     $clean[$cellKey] = mb_substr($stringVal, 0, 100);
                 }
 

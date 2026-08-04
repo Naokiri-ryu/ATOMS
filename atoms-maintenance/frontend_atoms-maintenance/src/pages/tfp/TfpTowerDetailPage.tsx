@@ -12,6 +12,7 @@ import { ShiftBadge } from '@/components/common/ShiftBadge';
 import { tfpTowerService } from '@/services/tfpTowerService';
 import { TfpTowerSignaturePanel } from './components/TfpTowerSignaturePanel';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditTfp } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import type {
   TfpTowerRecordDetail,
@@ -502,10 +503,7 @@ export const TfpTowerDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const canEditStructure =
-    user?.role === 'Admin' ||
-    user?.role === 'Manager Teknik' ||
-    user?.role === 'Supervisor TFP';
+  const canEditStructure = canEditTfp(user);
 
   const [record, setRecord] = useState<TfpTowerRecordDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -529,7 +527,7 @@ export const TfpTowerDetailPage: React.FC = () => {
   const [dragStart, setDragStart] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const isCompleted = record?.status === 'completed' ?? false;
+  const isCompleted = (record?.status === 'completed') || !canEditTfp(user);
 
   const [draftConfig, setDraftConfig] = useState<TfpTowerColumnsConfig | null>(null);
   const [draftItemMeta, setDraftItemMeta] = useState<Record<number, {

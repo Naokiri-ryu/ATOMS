@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/common/Skeleton';
 import { Tabs } from '@/components/common/Tabs';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { canEditCnsd } from '@/lib/roles';
 import { cnsdAtcSystemMeterService } from '@/services/cnsdAtcSystemMeterService';
 import { CnsdAtcSystemMeterSignaturePanel } from './components/CnsdAtcSystemMeterSignaturePanel';
 import type { ShiftType } from '@/types';
@@ -80,8 +81,7 @@ export const CnsdAtcSystemMeterDetailPage: React.FC = () => {
   const [type, setType] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
 
-  const canEditMetadata =
-    user?.role === 'Admin' || user?.role === 'Manager Teknik' || user?.role === 'Supervisor CNSD';
+  const canEditMetadata = canEditCnsd(user);
 
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
@@ -125,7 +125,7 @@ export const CnsdAtcSystemMeterDetailPage: React.FC = () => {
     return map;
   }, [record]);
 
-  const isReadOnly = record?.status === 'completed';
+  const isReadOnly = record?.status === 'completed' || !canEditCnsd(user);
   const metadataDirty = !!record && (
     merk !== (record.merk ?? '') ||
     type !== (record.type ?? '') ||

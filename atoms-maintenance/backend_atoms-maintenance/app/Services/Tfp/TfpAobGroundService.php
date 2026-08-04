@@ -352,10 +352,7 @@ class TfpAobGroundService
                     if (in_array($cellKey, $disabledKeys, true)) continue;
                     if (!empty($allowedKeys) && !in_array($cellKey, $allowedKeys, true)) continue;
 
-                    $stringVal = $cellVal === null ? null : trim((string) $cellVal);
-                    if ($stringVal === null || $stringVal === '') {
-                        continue; // skip — we don't persist blank cells
-                    }
+                    $stringVal = $cellVal === null ? '' : trim((string) $cellVal);
                     $clean[$cellKey] = mb_substr($stringVal, 0, 100);
                 }
 
