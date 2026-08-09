@@ -53,6 +53,11 @@ class LogbookTfp extends Model
     {
         return $this->hasMany(LogbookTfpNote::class, 'logbook_tfp_id')
             ->orderBy('shift')
+            // Malam shift (19:00-07:00) wraps past midnight: times before the
+            // shift start (19:00) belong to the tail of the shift, so they sort
+            // AFTER 19:00-23:59 notes (bottom), not at the top. Null-time notes
+            // sort last within the shift.
+            ->orderByRaw("CASE WHEN shift = 'malam' AND time IS NULL THEN 2 WHEN shift = 'malam' AND time < '19:00' THEN 1 ELSE 0 END")
             ->orderBy('time');
     }
 

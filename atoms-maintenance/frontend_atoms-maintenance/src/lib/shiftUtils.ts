@@ -56,3 +56,24 @@ export function getShiftLabel(shift: ShiftType): {
   if (shift === 'siang') return { label: 'Shift Siang', start: '13:00', end: '19:00', emoji: '🌤️' };
   return { label: 'Shift Malam', start: '19:00', end: '07:00', emoji: '🌙' };
 }
+
+/**
+ * Effective sort minutes for a logbook note time inside its shift.
+ *
+ * The malam shift (19:00-07:00) wraps past midnight, so a note logged at
+ * 00:45 actually happens AFTER one at 19:05 and must sort at the BOTTOM of
+ * the malam list — not at the top. Any malam time earlier than the shift
+ * start (19:00) is therefore treated as belonging to the next day (+24h).
+ * Returns null when there is no parseable time so callers can sort those
+ * last.
+ */
+export function noteSortMinutes(shift: ShiftType, time: string | null): number | null {
+  if (!time) return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
+  if (!m) return null;
+  const minutes = Number(m[1]) * 60 + Number(m[2]);
+  if (shift === 'malam' && minutes < 19 * 60) {
+    return minutes + 24 * 60;
+  }
+  return minutes;
+}

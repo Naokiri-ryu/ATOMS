@@ -24,6 +24,7 @@ import { SignatureCanvas } from '@/components/shared/SignatureCanvas';
 import { SignatureDisplay } from '@/components/shared/SignatureDisplay';
 import { useAuth } from '@/hooks/useAuth';
 import { canEditCnsd } from '@/lib/roles';
+import { noteSortMinutes } from '@/lib/shiftUtils';
 import { logbookCnsdService } from '@/services/logbookCnsdService';
 import type {
   LogbookCnsdDetail as LogbookCnsdDetailType,
@@ -1110,10 +1111,12 @@ export const LogbookCnsdDetail: React.FC = () => {
                   if (notes.length === 0) return null;
 
                   const sortedNotes = [...notes].sort((a, b) => {
-                    if (!a.time && !b.time) return 0;
-                    if (!a.time) return 1;  // Notes tanpa time di akhir
-                    if (!b.time) return -1;
-                    return a.time.localeCompare(b.time);
+                    const ta = noteSortMinutes(shift, a.time);
+                    const tb = noteSortMinutes(shift, b.time);
+                    if (ta === null && tb === null) return 0;
+                    if (ta === null) return 1;  // Notes tanpa time di akhir
+                    if (tb === null) return -1;
+                    return ta - tb;
                   });
 
                   return (

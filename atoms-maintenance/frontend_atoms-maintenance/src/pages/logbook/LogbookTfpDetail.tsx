@@ -24,6 +24,7 @@ import { SignatureCanvas } from '@/components/shared/SignatureCanvas';
 import { SignatureDisplay } from '@/components/shared/SignatureDisplay';
 import { useAuth } from '@/hooks/useAuth';
 import { canEditTfp } from '@/lib/roles';
+import { noteSortMinutes } from '@/lib/shiftUtils';
 import { logbookTfpService } from '@/services/logbookTfpService';
 import type {
   LogbookTfpDetail as LogbookTfpDetailType,
@@ -1036,10 +1037,12 @@ export const LogbookTfpDetail: React.FC = () => {
                   if (notes.length === 0) return null;
 
                   const sortedNotes = [...notes].sort((a, b) => {
-                    if (!a.time && !b.time) return 0;
-                    if (!a.time) return 1;
-                    if (!b.time) return -1;
-                    return a.time.localeCompare(b.time);
+                    const ta = noteSortMinutes(shift, a.time);
+                    const tb = noteSortMinutes(shift, b.time);
+                    if (ta === null && tb === null) return 0;
+                    if (ta === null) return 1;
+                    if (tb === null) return -1;
+                    return ta - tb;
                   });
 
                   return (
