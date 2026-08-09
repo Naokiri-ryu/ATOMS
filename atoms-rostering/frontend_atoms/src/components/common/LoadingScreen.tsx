@@ -20,7 +20,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
   variant = 'default'
 }) => {
   const containerClass = fullScreen 
-    ? 'fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50/30'
+    ? 'fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-navy-50/30'
     : 'flex items-center justify-center py-16';
 
   // Default - Modern animated spinner with rings
@@ -31,19 +31,19 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
           {/* Animated Logo Container */}
           <div className="relative w-32 h-32">
             {/* Outer rotating ring */}
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#222E6A] border-r-[#222E6A]/30 animate-spin" 
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-navy-700 border-r-navy-700/30 animate-spin" 
                  style={{ animationDuration: '1.5s' }} />
             
             {/* Middle pulsing ring */}
-            <div className="absolute inset-3 rounded-full border-2 border-[#222E6A]/20 animate-pulse" />
+            <div className="absolute inset-3 rounded-full border-2 border-navy-700/20 animate-pulse" />
             
             {/* Inner rotating ring (opposite direction) */}
-            <div className="absolute inset-6 rounded-full border-2 border-transparent border-b-[#222E6A]/60 border-l-[#222E6A]/60"
+            <div className="absolute inset-6 rounded-full border-2 border-transparent border-b-navy-700/60 border-l-navy-700/60"
                  style={{ animation: 'spin 1s linear infinite reverse' }} />
             
             {/* Center icon container */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-14 h-14 bg-gradient-to-br from-[#222E6A] to-[#3a4a8a] rounded-2xl flex items-center justify-center shadow-xl"
+              <div className="w-14 h-14 bg-gradient-to-br from-[#222E6A] to-navy-600 rounded-2xl flex items-center justify-center shadow-xl"
                    style={{ animation: 'pulse 2s ease-in-out infinite' }}>
                 {Icon ? (
                   <Icon className="h-7 w-7 text-white" />
@@ -64,11 +64,11 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
             
             {/* Animated dots */}
             <div className="flex gap-1.5 mt-2">
-              <span className="w-2 h-2 bg-[#222E6A] rounded-full"
+              <span className="w-2 h-2 bg-navy-700 rounded-full"
                     style={{ animation: 'bounce 1s ease-in-out infinite' }} />
-              <span className="w-2 h-2 bg-[#222E6A]/70 rounded-full"
+              <span className="w-2 h-2 bg-navy-700/70 rounded-full"
                     style={{ animation: 'bounce 1s ease-in-out 0.1s infinite' }} />
-              <span className="w-2 h-2 bg-[#222E6A]/40 rounded-full"
+              <span className="w-2 h-2 bg-navy-700/40 rounded-full"
                     style={{ animation: 'bounce 1s ease-in-out 0.2s infinite' }} />
             </div>
           </div>
@@ -84,7 +84,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         <div className="flex flex-col items-center gap-4">
           <div className="relative w-12 h-12">
             <div className="absolute inset-0 rounded-full border-2 border-gray-200" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#222E6A] animate-spin" />
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-navy-700 animate-spin" />
           </div>
           {title && <p className="text-sm font-medium text-gray-600">{title}</p>}
         </div>
@@ -98,11 +98,11 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
       <div className={containerClass}>
         <div className="flex flex-col items-center gap-4">
           <div className="flex gap-2">
-            <div className="w-4 h-4 bg-[#222E6A] rounded-full"
+            <div className="w-4 h-4 bg-navy-700 rounded-full"
                  style={{ animation: 'bounce 0.6s ease-in-out infinite' }} />
-            <div className="w-4 h-4 bg-[#222E6A]/70 rounded-full"
+            <div className="w-4 h-4 bg-navy-700/70 rounded-full"
                  style={{ animation: 'bounce 0.6s ease-in-out 0.15s infinite' }} />
-            <div className="w-4 h-4 bg-[#222E6A]/40 rounded-full"
+            <div className="w-4 h-4 bg-navy-700/40 rounded-full"
                  style={{ animation: 'bounce 0.6s ease-in-out 0.3s infinite' }} />
           </div>
           {title && <p className="text-sm text-gray-600">{title}</p>}
@@ -118,15 +118,15 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         <div className="flex flex-col items-center gap-6">
           <div className="relative w-24 h-24">
             {/* Pulsing rings */}
-            <div className="absolute inset-0 rounded-full bg-[#222E6A]/5"
+            <div className="absolute inset-0 rounded-full bg-navy-700/5"
                  style={{ animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
-            <div className="absolute inset-3 rounded-full bg-[#222E6A]/10"
+            <div className="absolute inset-3 rounded-full bg-navy-700/10"
                  style={{ animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) 0.3s infinite' }} />
-            <div className="absolute inset-6 rounded-full bg-[#222E6A]/20 animate-pulse" />
+            <div className="absolute inset-6 rounded-full bg-navy-700/20 animate-pulse" />
             
             {/* Center icon */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-10 h-10 bg-[#222E6A] rounded-full shadow-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-navy-700 rounded-full shadow-lg flex items-center justify-center">
                 {Icon ? (
                   <Icon className="h-5 w-5 text-white" />
                 ) : (
@@ -154,17 +154,17 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
           <div className="relative w-24 h-24">
             {/* Orbiting container */}
             <div className="absolute inset-0 animate-spin" style={{ animationDuration: '2s' }}>
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#222E6A] rounded-full" />
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#222E6A]/50 rounded-full" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-navy-700 rounded-full" />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-navy-700/50 rounded-full" />
             </div>
             <div className="absolute inset-0 animate-spin" style={{ animationDuration: '2s', animationDelay: '0.5s' }}>
-              <div className="absolute top-1/2 left-0 -translate-y-1/2 w-3 h-3 bg-[#222E6A]/70 rounded-full" />
-              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-3 h-3 bg-[#222E6A]/30 rounded-full" />
+              <div className="absolute top-1/2 left-0 -translate-y-1/2 w-3 h-3 bg-navy-700/70 rounded-full" />
+              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-3 h-3 bg-navy-700/30 rounded-full" />
             </div>
             
             {/* Center */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#222E6A] to-[#3a4a8a] rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#222E6A] to-navy-600 rounded-xl flex items-center justify-center shadow-lg">
                 {Icon ? (
                   <Icon className="h-6 w-6 text-white" />
                 ) : (

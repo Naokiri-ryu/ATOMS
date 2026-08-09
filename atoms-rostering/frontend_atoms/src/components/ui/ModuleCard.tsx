@@ -26,18 +26,18 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="text-[#222E6A] group-hover:text-[#1a2455] transition-colors">
+          <div className="text-navy-700 group-hover:text-navy-900 transition-colors">
             {icon}
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 group-hover:text-[#222E6A] transition-colors">
+            <h3 className="font-semibold text-navy-900 group-hover:text-navy-700 transition-colors">
               {title}
             </h3>
-            <p className="text-sm text-gray-600">{description}</p>
+            <p className="text-sm text-slate-600">{description}</p>
           </div>
         </div>
         {!isDisabled && (
-          <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-[#222E6A] transition-colors" />
+          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-navy-700 transition-colors" />
         )}
       </div>
     </Card>

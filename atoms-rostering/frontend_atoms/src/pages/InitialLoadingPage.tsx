@@ -12,11 +12,11 @@ const InitialLoadingPage: React.FC<InitialLoadingPageProps> = ({
   message = 'Preparing your workspace...' 
 }) => {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50/50">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-navy-50/50">
       {/* Background Pattern */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#222E6A]/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-navy-700/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-navy-700/5 rounded-full blur-3xl" />
       </div>
       
       <div className="relative flex flex-col items-center gap-4">
@@ -32,10 +32,10 @@ const InitialLoadingPage: React.FC<InitialLoadingPageProps> = ({
 
         {/* Text Content */}
         <div className="flex flex-col items-center gap-2 text-center">
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-navy-900">
             AirNav Indonesia
           </h1>
-          <p className="text-gray-500">{message}</p>
+          <p className="text-slate-500">{message}</p>
         </div>
       </div>
 

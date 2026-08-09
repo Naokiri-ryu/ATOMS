@@ -22,7 +22,7 @@ const HomePage: React.FC = () => {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 relative">
+    <div className="min-h-screen bg-slate-50 relative">
       {/* App Header */}
       <AppHeader 
         onProfileClick={() => setIsProfileModalOpen(true)}
@@ -30,7 +30,7 @@ const HomePage: React.FC = () => {
       />
 
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-[#454D7C] to-[#222E6A] text-white">
+      <div className="relative bg-gradient-to-br from-navy-900 via-navy-800 to-navy-950 text-white">
         <div className="absolute inset-0 overflow-hidden">
           <picture>
             <source
@@ -51,14 +51,15 @@ const HomePage: React.FC = () => {
               fetchPriority="low"
             />
           </picture>
+          <div className="absolute inset-0 bg-gradient-to-t from-navy-950/60 to-transparent"></div>
         </div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
                 Integrated Aviation
-                <span className="text-blue-300"> Management</span>
+                <span className="text-accent-400"> Management</span>
               </h1>
               <p className="text-xl opacity-90 mb-8 leading-relaxed">
                 Streamline operations with our comprehensive system for personnel management, 
@@ -70,8 +71,8 @@ const HomePage: React.FC = () => {
                   disabled={!isInitialized || isLoading}
                   className={`px-8 py-4 rounded-xl font-semibold transition-all flex items-center gap-2 shadow-lg ${
                     isInitialized && !isLoading
-                      ? 'bg-white text-[#222E6A] hover:bg-gray-100'
-                      : 'bg-white/50 text-gray-400 cursor-not-allowed'
+                      ? 'bg-accent-500 text-navy-900 hover:bg-accent-400'
+                      : 'bg-white/50 text-slate-400 cursor-not-allowed'
                   }`}
                 >
                   {isLoading ? (
@@ -129,10 +130,10 @@ const HomePage: React.FC = () => {
               </svg>
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-600">
                 Are you sure you want to logout?
               </p>
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-slate-500 mt-2">
                 You will need to login again to access the system.
               </p>
             </div>

@@ -31,7 +31,7 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
       <div className="flex flex-col items-center justify-center py-12">
         <div className="relative w-16 h-16">
           <div className="absolute inset-0 rounded-full border-4 border-gray-200" />
-          <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#222E6A] animate-spin" />
+          <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-navy-700 animate-spin" />
         </div>
         {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
       </div>
@@ -49,7 +49,7 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
       {variant === 'overlay' && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[2px] z-10">
           <div className="flex flex-col items-center gap-3 p-4 bg-white rounded-xl shadow-lg">
-            <RefreshCw className="h-8 w-8 text-[#222E6A] animate-spin" />
+            <RefreshCw className="h-8 w-8 text-navy-700 animate-spin" />
             {message && <p className="text-sm text-gray-600">{message}</p>}
           </div>
         </div>

@@ -26,7 +26,7 @@ const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   // Base classes with 3D effect - removed focus ring for cleaner look
-  const baseClasses = `inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed select-none ${
+  const baseClasses = `inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed select-none ${
     effect3d 
       ? 'transform group-hover:translate-y-[2px] group-active:translate-y-[4px]' 
       : 'transition-colors'
@@ -34,11 +34,11 @@ const Button: React.FC<ButtonProps> = ({
 
   const variantClasses = {
     primary: effect3d 
-      ? 'bg-[#454D7C] text-white group-hover:bg-[#3a4166] border-b-[4px] sm:border-b-[6px] group-hover:border-b-[2px] sm:group-hover:border-b-[3px] group-active:border-b-[1px] border-[#222E6A]'
-      : 'bg-[#222E6A] text-white hover:bg-[#1a2550] shadow-md hover:shadow-lg',
+      ? 'bg-navy-700 text-white group-hover:bg-navy-800 border-b-[4px] sm:border-b-[6px] group-hover:border-b-[2px] sm:group-hover:border-b-[3px] group-active:border-b-[1px] border-navy-900'
+      : 'bg-navy-700 text-white hover:bg-navy-800 shadow-md hover:shadow-lg',
     secondary: effect3d
-      ? 'bg-[#6B7399] text-white group-hover:bg-[#5A628F] border-b-[4px] sm:border-b-[6px] group-hover:border-b-[2px] sm:group-hover:border-b-[3px] group-active:border-b-[1px] border-[#454D7C]'
-      : 'bg-[#454D7C] hover:bg-[#3a4166] text-white',
+      ? 'bg-navy-500 text-white group-hover:bg-navy-600 border-b-[4px] sm:border-b-[6px] group-hover:border-b-[2px] sm:group-hover:border-b-[3px] group-active:border-b-[1px] border-navy-700'
+      : 'bg-navy-500 hover:bg-navy-600 text-white',
     danger: effect3d
       ? 'bg-gradient-to-b from-[#EF5350] to-[#E53935] text-white group-hover:from-[#E53935] group-hover:to-[#D32F2F] border-b-[4px] sm:border-b-[6px] group-hover:border-b-[2px] sm:group-hover:border-b-[3px] group-active:border-b-[1px] border-[#D32F2F]'
       : 'bg-red-600 text-white hover:bg-red-700',
@@ -46,11 +46,11 @@ const Button: React.FC<ButtonProps> = ({
       ? 'bg-gradient-to-b from-[#66BB6A] to-[#4CAF50] text-white group-hover:from-[#4CAF50] group-hover:to-[#43A047] border-b-[4px] sm:border-b-[6px] group-hover:border-b-[2px] sm:group-hover:border-b-[3px] group-active:border-b-[1px] border-[#43A047]'
       : 'bg-green-600 text-white hover:bg-green-700',
     outline: effect3d
-      ? 'border-2 border-b-[4px] sm:border-b-[6px] group-hover:border-b-[2px] sm:group-hover:border-b-[3px] group-active:border-b-[1px] border-[#454D7C] text-[#454D7C] group-hover:bg-gradient-to-b group-hover:from-[#EEF0FF] group-hover:to-[#E3E6FF] bg-white'
-      : 'border-2 border-[#222E6A] text-[#222E6A] hover:bg-[#D8DAED]',
+      ? 'border-2 border-b-[4px] sm:border-b-[6px] group-hover:border-b-[2px] sm:group-hover:border-b-[3px] group-active:border-b-[1px] border-navy-500 text-navy-700 group-hover:bg-navy-50 bg-white'
+      : 'border-2 border-navy-700 text-navy-700 hover:bg-navy-50',
     ghost: effect3d
-      ? 'group-hover:bg-gradient-to-b group-hover:from-gray-100 group-hover:to-gray-200 text-gray-700 border-b-[4px] sm:border-b-[6px] group-hover:border-b-[2px] sm:group-hover:border-b-[3px] group-active:border-b-[1px] border-transparent group-hover:border-gray-300'
-      : 'hover:bg-gray-100 text-gray-700'
+      ? 'group-hover:bg-navy-50 text-slate-700 border-b-[4px] sm:border-b-[6px] group-hover:border-b-[2px] sm:group-hover:border-b-[3px] group-active:border-b-[1px] border-transparent group-hover:border-navy-100'
+      : 'hover:bg-navy-50 text-slate-700'
   };
 
   const sizeClasses = {

@@ -80,7 +80,7 @@ function Table<T>({
     return (
       <div className="overflow-x-auto">
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy-600"></div>
         </div>
       </div>
     );
@@ -89,7 +89,7 @@ function Table<T>({
   if (data.length === 0) {
     return (
       <div className="overflow-x-auto">
-        <div className="text-center py-12 text-gray-500">{emptyMessage}</div>
+        <div className="text-center py-12 text-slate-500">{emptyMessage}</div>
       </div>
     );
   }
@@ -101,16 +101,16 @@ function Table<T>({
         <div className="lg:hidden px-4 sm:px-6 pb-3 bg-white">
           <div className="flex items-center justify-center gap-2 mb-2">
             <svg 
-              className="w-4 h-4 text-blue-500 animate-pulse" 
+              className="w-4 h-4 text-navy-500 animate-pulse" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
             </svg>
-            <span className="text-xs font-medium text-gray-700">Scroll untuk melihat lebih banyak</span>
+            <span className="text-xs font-medium text-slate-700">Scroll untuk melihat lebih banyak</span>
             <svg 
-              className="w-4 h-4 text-blue-500 animate-pulse" 
+              className="w-4 h-4 text-navy-500 animate-pulse" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -120,7 +120,7 @@ function Table<T>({
           </div>
           <div 
             ref={topScrollRef}
-            className="overflow-x-auto bg-gray-200 rounded-full cursor-grab active:cursor-grabbing"
+            className="overflow-x-auto bg-navy-100 rounded-full cursor-grab active:cursor-grabbing"
             style={{ 
               overflowY: 'hidden',
               height: '14px',
@@ -128,7 +128,7 @@ function Table<T>({
           >
             <div 
               ref={thumbRef}
-              className="h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full shadow-sm transition-all" 
+              className="h-full bg-gradient-to-r from-navy-500 to-navy-700 rounded-full shadow-sm transition-all" 
               style={{ minWidth: '40%', height: '14px' }}
             ></div>
           </div>
@@ -137,24 +137,24 @@ function Table<T>({
 
       {/* Main Table */}
       <div ref={tableScrollRef} className="overflow-x-auto overflow-y-visible">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-slate-200">
+          <thead className="bg-navy-50/80">
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-bold text-navy-700 uppercase tracking-wider"
                 >
                   {column.header}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-slate-100">
             {data.map((row) => (
-              <tr key={keyExtractor(row)} className="hover:bg-gray-50">
+              <tr key={keyExtractor(row)} className="hover:bg-navy-50/40 transition-colors">
                 {columns.map((column) => (
-                  <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                     {column.render ? column.render(row) : (row as any)[column.key]}
                   </td>
                 ))}

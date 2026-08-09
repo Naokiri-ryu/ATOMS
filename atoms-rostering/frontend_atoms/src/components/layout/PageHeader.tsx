@@ -24,7 +24,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, breadcrumbs, c
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* App Header */}
       <AppHeader 
         onProfileClick={() => setIsProfileModalOpen(true)}
@@ -35,16 +35,16 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, breadcrumbs, c
       <div className={contentContainerClassName ?? 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'}>
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <div className="mb-6">
+          <div className="mb-5">
             <Breadcrumbs items={breadcrumbs} />
           </div>
         )}
         
         {/* Page Title */}
         <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{title}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-navy-900">{title}</h1>
           {subtitle && (
-            <p className="text-gray-600 mt-1">{subtitle}</p>
+            <p className="text-slate-600 mt-1">{subtitle}</p>
           )}
         </div>
 

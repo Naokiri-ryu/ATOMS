@@ -4,12 +4,20 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-slate-50 text-slate-900 antialiased;
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+      'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  h1 { @apply text-2xl font-bold tracking-tight; }
+  h2 { @apply text-lg font-semibold tracking-tight; }
+  h3 { @apply text-base font-semibold; }
+
+  /* Numeric / time data uses the mono face for tabular alignment */
+  .tabular { @apply font-mono tabular-nums; }
 }
 
 /* Landing Page Animations */
@@ -111,6 +119,7 @@
 
 .animate-slide-in-left {
   animation: slideInFromLeft 0.4s ease-out forwards;
+  opacity: 0;
 }
 
 /* Homepage Card Animations */
@@ -142,7 +151,7 @@
   /* Custom Scrollbar Styles */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: #d1d5db #f3f4f6;
+    scrollbar-color: #c6cce8 #f1f3fa;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -151,26 +160,26 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
-    background: #f3f4f6;
+    background: #f1f3fa;
     border-radius: 4px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: #d1d5db;
+    background: #c6cce8;
     border-radius: 4px;
     transition: background 0.2s;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+    background: #9da5d2;
   }
 
   .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
-    background: #d1d5db;
+    background: #c6cce8;
   }
 
   .scrollbar-track-gray-100::-webkit-scrollbar-track {
-    background: #f3f4f6;
+    background: #f1f3fa;
   }
 }
 

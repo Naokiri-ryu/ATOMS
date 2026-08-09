@@ -27,9 +27,9 @@ const Avatar: React.FC<AvatarProps> = ({
   };
 
   const variantClasses = {
-    primary: 'bg-[#222E6A]',
-    secondary: 'bg-[#454D7C]',
-    gradient: 'bg-gradient-to-r from-blue-500 to-purple-500'
+    primary: 'bg-navy-700',
+    secondary: 'bg-navy-500',
+    gradient: 'bg-gradient-to-r from-navy-500 to-accent-500'
   };
 
   return (

@@ -55,17 +55,17 @@ const Modal: React.FC<ModalProps> = ({
       {/* Modal */}
       <div className="flex min-h-screen items-center justify-center p-4">
         <div
-          className={`relative bg-white rounded-lg shadow-xl ${sizeClasses[size]} w-full overflow-hidden animate-fade-scale-up`}
+          className={`relative bg-white rounded-xl shadow-modal ${sizeClasses[size]} w-full overflow-hidden animate-fade-scale-up`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           {title && (
-            <div className={`flex items-start justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 rounded-t-lg ${
+            <div className={`flex items-start justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 rounded-t-xl ${
               headerVariant === 'danger' 
                 ? 'bg-gradient-to-r from-red-600 to-red-700' 
-                : 'bg-gradient-to-r from-[#454D7C] to-[#222E6A]'
+                : 'bg-gradient-to-r from-navy-500 to-navy-800'
             } ${headerClassName || ''}`}>
-              <h2 className="min-w-0 flex-1 text-lg sm:text-xl font-semibold leading-tight text-white">{title}</h2>
+              <h2 className="min-w-0 flex-1 text-lg sm:text-xl font-bold leading-tight text-white">{title}</h2>
               <button
                 onClick={onClose}
                 className="shrink-0 rounded-md p-2 text-white transition duration-200 ease-in-out hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/60"
@@ -80,7 +80,7 @@ const Modal: React.FC<ModalProps> = ({
 
           {/* Footer */}
           {footer && (
-            <div className="px-6 py-4 bg-[#D8DAED]/30 border-t border-gray-200 rounded-b-lg">
+            <div className="px-6 py-4 bg-navy-50/70 border-t border-slate-100 rounded-b-xl">
               {footer}
             </div>
           )}

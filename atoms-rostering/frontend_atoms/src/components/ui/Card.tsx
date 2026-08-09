@@ -22,11 +22,11 @@ const Card: React.FC<CardProps> = ({
   onClick
 }) => {
   const baseClasses = 'rounded-xl transition-all duration-300';
-  
+
   const variantClasses = {
-    default: 'bg-white border border-gray-200 hover:shadow-lg',
-    glass: 'bg-white/90 backdrop-blur-sm border border-gray-200/30 shadow-lg hover:shadow-xl',
-    shadow: 'bg-white shadow-lg hover:shadow-xl border-0'
+    default: 'bg-white border border-slate-200 shadow-card hover:shadow-card-hover',
+    glass: 'bg-white/90 backdrop-blur-sm border border-navy-100/60 shadow-card hover:shadow-card-hover',
+    shadow: 'bg-white shadow-card-hover border border-navy-100/40 hover:shadow-modal border-0'
   };
 
   const paddingClasses = {
@@ -41,16 +41,16 @@ const Card: React.FC<CardProps> = ({
       onClick={onClick}
     >
       {(title || subtitle) && (
-        <div className={`border-b border-gray-200 ${padding === 'sm' ? 'px-4 py-3' : padding === 'md' ? 'px-6 py-4' : 'px-8 py-5'}`}>
-          {title && <h3 className="text-lg font-semibold text-gray-900">{title}</h3>}
-          {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
+        <div className={`border-b border-slate-100 ${padding === 'sm' ? 'px-4 py-3' : padding === 'md' ? 'px-6 py-4' : 'px-8 py-5'}`}>
+          {title && <h3 className="text-lg font-bold text-navy-900">{title}</h3>}
+          {subtitle && <p className="mt-1 text-sm text-slate-600">{subtitle}</p>}
         </div>
       )}
       <div className={paddingClasses[padding]}>
         {children}
       </div>
       {footer && (
-        <div className={`bg-gray-50 border-t border-gray-200 rounded-b-xl ${padding === 'sm' ? 'px-4 py-3' : padding === 'md' ? 'px-6 py-4' : 'px-8 py-5'}`}>
+        <div className={`bg-navy-50/60 border-t border-slate-100 rounded-b-xl ${padding === 'sm' ? 'px-4 py-3' : padding === 'md' ? 'px-6 py-4' : 'px-8 py-5'}`}>
           {footer}
         </div>
       )}

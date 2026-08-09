@@ -240,12 +240,12 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4 py-8">
-      <div className="w-full max-w-md bg-[#D8DAED] rounded-3xl shadow-xl p-8 animate-fade-scale-up">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-navy-50 via-white to-navy-100 px-4 py-8">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-modal border border-navy-100 p-8 animate-fade-scale-up">
         {/* Back Button */}
         <button
           onClick={handleBack}
-          className="flex items-center gap-1 text-[#4A5578] hover:text-[#2C3558] mb-6 transition-colors"
+          className="flex items-center gap-1 text-slate-600 hover:text-navy-800 mb-6 transition-colors"
         >
           <ChevronLeft size={20} />
           <span className="text-sm font-medium">Back</span>
@@ -261,15 +261,15 @@ const AuthPage: React.FC = () => {
             height={48}
             decoding="async"
           />
-          <h1 className="text-3xl font-bold text-[#2C3558]">ATOMS</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-navy-900">ATOMS</h1>
         </div>
 
         {/* Welcome Text */}
         <div className="text-center mb-6">
           {currentView === 'reset-code' && (
             <div className="flex justify-center mb-4">
-              <div className="bg-white rounded-full p-4 shadow-md">
-                <KeyRound className="text-[#222E6A]" size={32} />
+              <div className="bg-white rounded-full p-4 shadow-card border border-navy-100">
+                <KeyRound className="text-navy-700" size={32} />
               </div>
             </div>
           )}
@@ -280,15 +280,15 @@ const AuthPage: React.FC = () => {
               </div>
             </div>
           )}
-          <h2 className="text-xl font-semibold text-[#2C3558] mb-1">{getTitle()}</h2>
-          {getSubtitle() && <p className="text-sm text-[#7B8199]">{getSubtitle()}</p>}
+          <h2 className="text-xl font-semibold text-navy-900 mb-1">{getTitle()}</h2>
+          {getSubtitle() && <p className="text-sm text-slate-500">{getSubtitle()}</p>}
         </div>
 
         {/* Tabs - Only show for login/activate */}
         {(currentView === 'login' || currentView === 'activate') && (
-          <div className="relative bg-white rounded-xl p-1 mb-6 shadow-sm">
+          <div className="relative bg-navy-50 rounded-xl p-1 mb-6">
             <div 
-              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#222E6A] rounded-lg transition-transform duration-300 ease-out shadow-md ${
+              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-navy-700 rounded-lg transition-transform duration-300 ease-out shadow-md ${
                 activeTab === 'activate' ? 'translate-x-[calc(100%+8px)]' : 'translate-x-0'
               }`}
             />
@@ -297,7 +297,7 @@ const AuthPage: React.FC = () => {
                 type="button"
                 onClick={() => handleTabChange('login')}
                 className={`flex-1 py-3 rounded-lg font-semibold transition-colors duration-300 z-10 ${
-                  activeTab === 'login' ? 'text-white' : 'text-[#7B8199] hover:text-[#5A6382]'
+                  activeTab === 'login' ? 'text-white' : 'text-slate-500 hover:text-navy-800'
                 }`}
               >
                 Log In
@@ -306,7 +306,7 @@ const AuthPage: React.FC = () => {
                 type="button"
                 onClick={() => handleTabChange('activate')}
                 className={`flex-1 py-3 rounded-lg font-semibold transition-colors duration-300 z-10 ${
-                  activeTab === 'activate' ? 'text-white' : 'text-[#7B8199] hover:text-[#5A6382]'
+                  activeTab === 'activate' ? 'text-white' : 'text-slate-500 hover:text-navy-800'
                 }`}
               >
                 Activate Account
@@ -320,31 +320,31 @@ const AuthPage: React.FC = () => {
         {currentView === 'login' && (
           <form onSubmit={handleLogin} className="space-y-5 animate-slide-in-left">
             <div>
-              <label className="block text-sm font-semibold text-[#2C3558] mb-2">Email</label>
+              <label className="block text-sm font-semibold text-navy-900 mb-2">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="example@airnav.com"
-                className="w-full px-4 py-3 rounded-xl bg-white border-none focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-[#2C3558] placeholder:text-[#B0B6C7] shadow-md"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy-600/30 focus:border-navy-600 text-navy-900 placeholder:text-slate-400 shadow-sm"
                 autoComplete="email"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-[#2C3558] mb-2">Password</label>
+              <label className="block text-sm font-semibold text-navy-900 mb-2">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  className="w-full px-4 py-3 rounded-xl bg-white border-none focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-[#2C3558] placeholder:text-[#B0B6C7] pr-12 shadow-md"
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy-600/30 focus:border-navy-600 text-navy-900 placeholder:text-slate-400 pr-12 shadow-sm"
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7B8199] hover:text-[#2C3558] transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-navy-800 transition-colors"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -354,7 +354,7 @@ const AuthPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCurrentView('forgot-password')}
-                className="text-[#7B8199] hover:text-[#2C3558] transition-colors"
+                className="text-slate-500 hover:text-navy-800 transition-colors"
               >
                 Forgot Password?
               </button>
@@ -362,15 +362,15 @@ const AuthPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#222E6A] hover:bg-[#1a2550] text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-navy-700 hover:bg-navy-800 text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
-            <p className="text-xs text-center text-[#7B8199] mt-6">
+            <p className="text-xs text-center text-slate-500 mt-6">
               By continuing, you agree to our{' '}
-              <a href="#" className="text-[#5A6382] hover:text-[#2C3558] underline">Terms & Conditions</a>
+              <a href="#" className="text-navy-700 hover:text-navy-900 underline">Terms & Conditions</a>
               {' '}and{' '}
-              <a href="#" className="text-[#5A6382] hover:text-[#2C3558] underline">Privacy Policy</a>.
+              <a href="#" className="text-navy-700 hover:text-navy-900 underline">Privacy Policy</a>.
             </p>
           </form>
         )}
@@ -379,19 +379,19 @@ const AuthPage: React.FC = () => {
         {currentView === 'activate' && (
           <form onSubmit={handleActivate} className="space-y-5 animate-slide-in-right">
             <div>
-              <label className="block text-sm font-semibold text-[#2C3558] mb-2">Activation Code</label>
+              <label className="block text-sm font-semibold text-navy-900 mb-2">Activation Code</label>
               <input
                 type="text"
                 value={activationCode}
                 onChange={(e) => setActivationCode(e.target.value.toUpperCase())}
                 placeholder="XXX-XXXXXX"
-                className="w-full px-4 py-3 rounded-xl bg-white border-none focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-[#2C3558] placeholder:text-[#B0B6C7] shadow-md text-center text-2xl tracking-wider font-mono"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy-600/30 focus:border-navy-600 text-navy-900 placeholder:text-slate-400 shadow-sm text-center text-2xl tracking-wider font-mono"
                 maxLength={10}
                 autoFocus
               />
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-xs text-blue-800">
+            <div className="bg-navy-50 border border-navy-100 rounded-xl p-4">
+              <p className="text-xs text-navy-800">
                 <strong>📧 Check your notification</strong><br />
                 Your administrator has generated an activation code for you (format: XXX-XXXXXX).
               </p>
@@ -399,13 +399,13 @@ const AuthPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#222E6A] hover:bg-[#1a2550] text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-navy-700 hover:bg-navy-800 text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Verifying...' : 'Continue to Activate'}
             </button>
-            <p className="text-xs text-center text-[#7B8199]">
+            <p className="text-xs text-center text-slate-500">
               Don't have an activation code?{' '}
-              <span className="text-[#5A6382]">Contact your administrator</span>
+              <span className="text-navy-700">Contact your administrator</span>
             </p>
           </form>
         )}
@@ -414,29 +414,29 @@ const AuthPage: React.FC = () => {
         {currentView === 'forgot-password' && (
           <form onSubmit={handleForgotPassword} className="space-y-5 animate-fade-scale-up">
             <div>
-              <label className="block text-sm font-semibold text-[#2C3558] mb-2">Email</label>
+              <label className="block text-sm font-semibold text-navy-900 mb-2">Email</label>
               <div className="relative">
                 <input
                   type="email"
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
                   placeholder="example@airnav.com"
-                  className="w-full px-4 py-3 pl-11 rounded-xl bg-white border-none focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-[#2C3558] placeholder:text-[#B0B6C7] shadow-md"
+                  className="w-full px-4 py-3 pl-11 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy-600/30 focus:border-navy-600 text-navy-900 placeholder:text-slate-400 shadow-sm"
                   autoComplete="email"
                   autoFocus
                 />
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7B8199]" size={20} />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
               </div>
             </div>
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#222E6A] hover:bg-[#1a2550] text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-navy-700 hover:bg-navy-800 text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Sending...' : 'Send Reset Code'}
             </button>
             <div className="mt-4 text-center">
-              <p className="text-xs text-[#7B8199]">
+              <p className="text-xs text-slate-500">
                 Remember your password?{' '}
                 <button
                   type="button"
@@ -444,7 +444,7 @@ const AuthPage: React.FC = () => {
                     setCurrentView('login');
                     setActiveTab('login');
                   }}
-                  className="text-[#222E6A] hover:text-[#1a2550] font-medium underline"
+                  className="text-navy-700 hover:text-navy-900 font-medium underline"
                 >
                   Sign in
                 </button>
@@ -456,14 +456,14 @@ const AuthPage: React.FC = () => {
         {/* Forgot Password Success */}
         {currentView === 'forgot-password-success' && (
           <div className="text-center py-8 animate-fade-scale-up">
-            <p className="text-sm text-[#7B8199] mb-6">
-              We've sent a 6-digit password reset code to <strong>{forgotEmail}</strong>. 
+            <p className="text-sm text-slate-500 mb-6">
+              We've sent a 6-digit password reset code to <strong className="text-navy-900">{forgotEmail}</strong>. 
               Please check your inbox and enter the code to reset your password.
             </p>
             <div className="space-y-3">
               <button
                 onClick={() => setCurrentView('reset-code')}
-                className="w-full bg-[#222E6A] hover:bg-[#1a2550] text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg"
+                className="w-full bg-navy-700 hover:bg-navy-800 text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg"
               >
                 Enter Reset Code
               </button>
@@ -472,19 +472,19 @@ const AuthPage: React.FC = () => {
                   setCurrentView('login');
                   setActiveTab('login');
                 }}
-                className="w-full bg-white hover:bg-gray-50 text-[#222E6A] font-medium py-3 rounded-xl transition-all shadow-sm"
+                className="w-full bg-white hover:bg-navy-50 border border-navy-100 text-navy-700 font-medium py-3 rounded-xl transition-all shadow-sm"
               >
                 Back to Login
               </button>
             </div>
-            <p className="text-xs text-[#7B8199] mt-6">
+            <p className="text-xs text-slate-500 mt-6">
               Didn't receive the code?{' '}
               <button
                 onClick={() => {
                   setCurrentView('forgot-password');
                   setForgotEmail('');
                 }}
-                className="text-[#222E6A] hover:text-[#1a2550] font-medium underline"
+                className="text-navy-700 hover:text-navy-900 font-medium underline"
               >
                 Try again
               </button>
@@ -496,21 +496,21 @@ const AuthPage: React.FC = () => {
         {currentView === 'reset-code' && (
           <form onSubmit={handleResetCode} className="space-y-6 animate-fade-scale-up">
             <div>
-              <label className="block text-sm font-semibold text-[#2C3558] mb-3 text-center">Password Reset Code</label>
+              <label className="block text-sm font-semibold text-navy-900 mb-3 text-center">Password Reset Code</label>
               <input
                 type="text"
                 value={resetCode}
                 onChange={(e) => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000"
-                className="w-full px-4 py-4 rounded-xl bg-white border-none focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-[#2C3558] placeholder:text-[#B0B6C7] shadow-md text-center text-4xl tracking-[0.5em] font-bold"
+                className="w-full px-4 py-4 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy-600/30 focus:border-navy-600 text-navy-900 placeholder:text-slate-400 shadow-sm text-center text-4xl tracking-[0.5em] font-bold"
                 maxLength={6}
                 inputMode="numeric"
                 pattern="[0-9]*"
                 autoFocus
               />
             </div>
-            <div className="bg-white border-l-4 border-[#222E6A] rounded-lg p-4 shadow-sm">
-              <p className="text-xs text-[#4A5578]">
+            <div className="bg-white border-l-4 border-navy-600 rounded-lg p-4 shadow-card">
+              <p className="text-xs text-slate-600">
                 <strong>🔐 Password Reset Code</strong><br />
                 This is a 6-digit numeric code sent to your email. The code will expire in 24 hours.
               </p>
@@ -518,17 +518,17 @@ const AuthPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || resetCode.length !== 6}
-              className="w-full bg-[#222E6A] hover:bg-[#1a2550] text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-navy-700 hover:bg-navy-800 text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Verifying...' : 'Verify Code & Reset Password'}
             </button>
             <div className="text-center space-y-3 pt-2">
-              <p className="text-xs text-[#7B8199]">
+              <p className="text-xs text-slate-500">
                 Didn't receive the code?{' '}
                 <button
                   type="button"
                   onClick={() => setCurrentView('forgot-password')}
-                  className="text-[#222E6A] hover:text-[#1a2550] font-semibold underline"
+                  className="text-navy-700 hover:text-navy-900 font-semibold underline"
                 >
                   Resend code
                 </button>
@@ -541,47 +541,47 @@ const AuthPage: React.FC = () => {
         {currentView === 'set-password' && (
           <form onSubmit={handleSetPassword} className="space-y-5 animate-fade-scale-up">
             <div>
-              <label className="block text-sm font-semibold text-[#2C3558] mb-2">New Password</label>
+              <label className="block text-sm font-semibold text-navy-900 mb-2">New Password</label>
               <div className="relative">
                 <input
                   type={showNewPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
-                  className="w-full px-4 py-3 rounded-xl bg-white border-none focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-[#2C3558] placeholder:text-[#B0B6C7] pr-12 shadow-md"
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy-600/30 focus:border-navy-600 text-navy-900 placeholder:text-slate-400 pr-12 shadow-sm"
                   autoFocus
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7B8199] hover:text-[#2C3558] transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-navy-800 transition-colors"
                 >
                   {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-[#2C3558] mb-2">Confirm Password</label>
+              <label className="block text-sm font-semibold text-navy-900 mb-2">Confirm Password</label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter password"
-                  className="w-full px-4 py-3 rounded-xl bg-white border-none focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-[#2C3558] placeholder:text-[#B0B6C7] pr-12 shadow-md"
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy-600/30 focus:border-navy-600 text-navy-900 placeholder:text-slate-400 pr-12 shadow-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7B8199] hover:text-[#2C3558] transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-navy-800 transition-colors"
                 >
                   {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-xs text-blue-800 font-semibold mb-2">Password Requirements:</p>
-              <ul className="text-xs text-blue-800 space-y-1">
+            <div className="bg-navy-50 border border-navy-100 rounded-xl p-4">
+              <p className="text-xs text-navy-800 font-semibold mb-2">Password Requirements:</p>
+              <ul className="text-xs text-navy-800 space-y-1">
                 <li className={newPassword.length >= 8 ? 'text-green-600' : ''}>
                   • At least 8 characters
                 </li>
@@ -599,7 +599,7 @@ const AuthPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#222E6A] hover:bg-[#1a2550] text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-navy-700 hover:bg-navy-800 text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Setting Password...' : isNewUser ? 'Activate Account' : 'Reset Password'}
             </button>
