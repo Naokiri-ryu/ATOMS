@@ -409,7 +409,7 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
                 }}
                 className={`flex-1 flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                   woType === 'shift'
-                    ? 'bg-blue-50 border-brand-primary'
+                    ? 'bg-brand-50 border-brand-primary'
                     : 'bg-white border-gray-200 hover:border-gray-300'
                 } ${isEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
@@ -436,7 +436,7 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
                 }}
                 className={`flex-1 flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                   woType === 'personal'
-                    ? 'bg-blue-50 border-brand-primary'
+                    ? 'bg-brand-50 border-brand-primary'
                     : 'bg-white border-gray-200 hover:border-gray-300'
                 } ${isEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
               >

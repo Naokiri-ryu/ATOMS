@@ -72,8 +72,8 @@ export const SettingsChecklistPage: React.FC = () => {
 
       <PageHeader
         icon={ClipboardCheck}
-        iconBg="bg-violet-100"
-        iconColor="text-violet-700"
+        iconBg="bg-brand-50"
+        iconColor="text-brand-primary"
         title="Pengaturan Pengingat Pengecekan"
         subtitle="Atur modul yang muncul di card pengingat (Dashboard + Monitor Workshop)."
       />

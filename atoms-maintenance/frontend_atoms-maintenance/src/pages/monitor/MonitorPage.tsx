@@ -258,7 +258,7 @@ const PersonnelCard: React.FC<{ snapshot: MonitorSnapshot }> = ({ snapshot }) =>
       icon={Users}
       title="Personel Bertugas"
       accent="text-blue-700"
-      iconBg="bg-blue-50"
+      iconBg="bg-brand-50"
       className="col-span-4 row-span-1"
       rightSlot={<HeaderPill>{total} orang</HeaderPill>}
     >
@@ -750,7 +750,7 @@ const DamageReportsCard: React.FC<{ snapshot: MonitorSnapshot }> = ({ snapshot }
       icon={AlertTriangle}
       title="Laporan Kerusakan Terbaru"
       accent="text-orange-700"
-      iconBg="bg-orange-50"
+      iconBg="bg-brand-50"
       className="col-span-5 row-span-1"
       rightSlot={<HeaderPill>{snapshot.damage_reports.length} laporan</HeaderPill>}
     >
@@ -828,7 +828,7 @@ const LogbookCard: React.FC<{ snapshot: MonitorSnapshot }> = ({ snapshot }) => {
       icon={BookOpen}
       title="Ringkasan Logbook"
       accent="text-rose-700"
-      iconBg="bg-rose-50"
+      iconBg="bg-brand-50"
       className="col-span-7 row-span-1"
       rightSlot={
         <div className="flex items-center gap-1.5 text-[11px]">

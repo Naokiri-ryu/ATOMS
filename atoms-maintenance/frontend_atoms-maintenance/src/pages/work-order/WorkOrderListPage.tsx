@@ -219,8 +219,8 @@ export const WorkOrderListPage: React.FC = () => {
       {/* ─── Page Header ─────────────────────────────────── */}
       <PageHeader
         icon={FileText}
-        iconBg="bg-indigo-100"
-        iconColor="text-indigo-600"
+        iconBg="bg-brand-50"
+        iconColor="text-brand-primary"
         title="Work Order"
         subtitle="Kelola perintah kerja dan tugas operasional"
         actions={
@@ -379,8 +379,8 @@ export const WorkOrderListPage: React.FC = () => {
         ) : isDBEmpty ? (
           /* Empty state — database is genuinely empty */
           <div className="flex flex-col items-center justify-center py-20 space-y-3 px-4 text-center">
-            <div className="h-14 w-14 rounded-full bg-indigo-50 flex items-center justify-center">
-              <FileText size={24} className="text-indigo-400" />
+            <div className="h-14 w-14 rounded-full bg-brand-50 flex items-center justify-center">
+              <FileText size={24} className="text-brand-300" />
             </div>
             <p className="text-base font-semibold text-slate-700">Belum ada Work Order</p>
             <p className="text-sm text-slate-400 max-w-xs">
@@ -407,7 +407,7 @@ export const WorkOrderListPage: React.FC = () => {
             </p>
             <button
               onClick={resetFilters}
-              className="mt-2 text-sm text-blue-600 underline hover:no-underline"
+              className="mt-2 text-sm text-brand-primary underline hover:no-underline"
             >
               Reset semua filter
             </button>

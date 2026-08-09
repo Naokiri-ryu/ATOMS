@@ -64,8 +64,8 @@ export const LogbookPage: React.FC = () => {
     <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
       <PageHeader
         icon={BookOpen}
-        iconBg="bg-rose-100"
-        iconColor="text-rose-700"
+        iconBg="bg-brand-50"
+        iconColor="text-brand-primary"
         title="Logbook"
         subtitle="Catatan aktivitas operasional harian per divisi"
       />

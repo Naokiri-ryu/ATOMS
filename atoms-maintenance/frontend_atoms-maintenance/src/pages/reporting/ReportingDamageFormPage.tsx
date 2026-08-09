@@ -392,8 +392,8 @@ export const ReportingDamageFormPage: React.FC = () => {
 
       <PageHeader
         icon={ClipboardList}
-        iconBg="bg-purple-100"
-        iconColor="text-purple-700"
+        iconBg="bg-brand-50"
+        iconColor="text-brand-primary"
         title={isEdit ? `Laporan Kerusakan — ${record?.report_number ?? ''}` : 'LAPORAN TERJADINYA KERUSAKAN DAN KEGIATAN PERBAIKAN FASILITAS TELEKOMUNIKASI PENERBANGAN'}
         subtitle={
           isEdit

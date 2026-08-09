@@ -269,7 +269,7 @@ const PersonnelBlock: React.FC<{
               key={i}
               title={p.role}
               className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-                p.role === 'Manager Teknik' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                p.role === 'Manager Teknik' ? 'bg-brand-50 text-brand-primary border-brand-100' :
                 p.role === 'Supervisor TFP' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                 'bg-white text-slate-700 border-slate-200'
               }`}

@@ -30,10 +30,10 @@ export const MonthlyReminderCard: React.FC<Props> = ({ monthly, items, metCount,
       <div className="px-6 py-4 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Calendar size={20} className="text-rose-700" />
+            <Calendar size={20} className="text-brand-primary" />
             <h3 className="text-base font-bold text-slate-800">Pengingat Pengecekan Bulanan</h3>
             {monthly && (
-              <span className="inline-flex items-center rounded-md bg-rose-50 text-rose-700 text-xs font-bold px-2 py-0.5 ring-1 ring-rose-200">
+              <span className="inline-flex items-center rounded-md bg-brand-50 text-brand-primary text-xs font-bold px-2 py-0.5 ring-1 ring-brand-100">
                 {monthly.month_label}
               </span>
             )}
@@ -52,7 +52,7 @@ export const MonthlyReminderCard: React.FC<Props> = ({ monthly, items, metCount,
               <button
                 type="button"
                 onClick={() => onNavigate('/settings/checklist?tab=monthly')}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-brand-primary hover:bg-brand-50 px-2 py-1 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
                 title="Atur target bulanan"
               >
                 <Settings size={13} aria-hidden="true" /> Kelola
@@ -75,7 +75,7 @@ export const MonthlyReminderCard: React.FC<Props> = ({ monthly, items, metCount,
             <p className="text-sm font-medium text-slate-600">Belum ada target bulanan</p>
             {canEdit ? (
               <p className="text-xs text-slate-400">
-                Klik <button onClick={() => onNavigate('/settings/checklist?tab=monthly')} className="text-rose-700 font-semibold hover:underline">Kelola</button> untuk menambah target
+                Klik <button onClick={() => onNavigate('/settings/checklist?tab=monthly')} className="text-brand-primary font-semibold hover:underline">Kelola</button> untuk menambah target
                 (contoh: Ground Check VHF minimum 2× per bulan).
               </p>
             ) : (

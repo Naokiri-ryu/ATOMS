@@ -17,11 +17,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 mb-4">
-        <Icon className="h-7 w-7 text-gray-400" />
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 border border-brand-100 mb-4">
+        <Icon className="h-7 w-7 text-brand-300" />
       </div>
-      <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-      <p className="mt-1 text-sm text-gray-500 max-w-sm">{description}</p>
+      <h3 className="text-sm font-semibold text-brand-900">{title}</h3>
+      <p className="mt-1 text-sm text-slate-500 max-w-sm">{description}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

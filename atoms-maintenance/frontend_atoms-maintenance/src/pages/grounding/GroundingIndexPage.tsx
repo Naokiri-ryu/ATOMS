@@ -411,8 +411,8 @@ export const GroundingIndexPage: React.FC = () => {
     <div className="space-y-5 animate-fade-in max-w-7xl mx-auto">
       <PageHeader
         icon={Zap}
-        iconBg="bg-yellow-100"
-        iconColor="text-yellow-700"
+        iconBg="bg-brand-50"
+        iconColor="text-brand-primary"
         title="Laporan Grounding & Penangkal Petir"
         subtitle="Laporan Grounding & Penangkal Petir Cluster Surabaya"
         actions={canCreate && (

@@ -382,7 +382,7 @@ export const WorkOrderDetailPage: React.FC = () => {
           <div className="flex flex-wrap gap-3">
             {/* Manager */}
             <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 border border-gray-200">
-              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">
+              <div className="h-8 w-8 rounded-full bg-brand-50 ring-1 ring-brand-100 flex items-center justify-center text-sm font-bold text-brand-primary">
                 {(wo.manager_name_snapshot || 'M').charAt(0)}
               </div>
               <div>
@@ -392,7 +392,7 @@ export const WorkOrderDetailPage: React.FC = () => {
             </div>
             {/* Supervisor */}
             <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 border border-gray-200">
-              <div className="h-8 w-8 rounded-full bg-sky-100 flex items-center justify-center text-sm font-bold text-sky-700">
+              <div className="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-sm font-bold text-brand-600">
                 {(wo.supervisor_name_snapshot || 'S').charAt(0)}
               </div>
               <div>

@@ -19,17 +19,17 @@
   --table-text:         #334155;
   --table-text-muted:   #475569;
   
-  /* Scrollbar colors */
-  --scrollbar-track:    #F1F5F9;
-  --scrollbar-thumb:    #CBD5E1;
-  --scrollbar-thumb-hover: #94A3B8;
+/* ─── Scrollbar colors ─── */
+  --scrollbar-track:    #EEF2F8;
+  --scrollbar-thumb:    #B4C3DC;
+  --scrollbar-thumb-hover: #7F97BF;
 }
 
 @layer base {
   body {
     @apply antialiased;
     margin: 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
       'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

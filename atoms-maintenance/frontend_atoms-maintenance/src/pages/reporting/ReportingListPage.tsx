@@ -224,8 +224,8 @@ export const ReportingListPage: React.FC = () => {
     <div className="space-y-5 animate-fade-in max-w-7xl mx-auto">
       <PageHeader
         icon={ClipboardList}
-        iconBg="bg-purple-100"
-        iconColor="text-purple-700"
+        iconBg="bg-brand-50"
+        iconColor="text-brand-primary"
         title="Reporting"
         subtitle="Kelola laporan kerusakan peralatan"
         actions={

@@ -7,9 +7,31 @@ export default {
   theme: {
     extend: {
       colors: {
+        // ─── Brand: AirNav navy scale (from #1B3A6B) ─────────────
         brand: {
           primary: '#1B3A6B',
           secondary: '#F5A623',
+          50: '#EEF2F8',
+          100: '#DCE4F0',
+          200: '#B4C3DC',
+          300: '#7F97BF',
+          400: '#4F6C9E',
+          500: '#2F4D82',
+          600: '#1B3A6B',
+          700: '#162F57',
+          800: '#102442',
+          900: '#0C1B33',
+        },
+        // ─── Single accent: amber ────────────────────────────────
+        accent: {
+          50: '#FEF9EC',
+          100: '#FDF0D3',
+          200: '#FAE0A6',
+          300: '#F7CE6E',
+          400: '#F5B23B',
+          500: '#F5A623',
+          600: '#D98A0F',
+          700: '#B96E0E',
         },
         sidebar: {
           DEFAULT: '#222E6A',
@@ -70,6 +92,15 @@ export default {
             ring: '#4F46E533',  // ring-indigo-600/20
           },
         },
+      },
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+      },
+      boxShadow: {
+        card: '0 1px 2px 0 rgba(12, 27, 51, 0.05), 0 1px 3px 0 rgba(12, 27, 51, 0.06)',
+        'card-hover': '0 4px 12px -2px rgba(12, 27, 51, 0.12), 0 2px 4px -2px rgba(12, 27, 51, 0.06)',
+        modal: '0 10px 40px -6px rgba(12, 27, 51, 0.25)',
       },
       animation: {
         'shimmer': 'shimmer 2s linear infinite',

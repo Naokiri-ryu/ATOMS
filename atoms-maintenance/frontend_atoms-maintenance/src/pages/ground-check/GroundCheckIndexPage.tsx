@@ -31,8 +31,8 @@ export const GroundCheckIndexPage: React.FC = () => {
     <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
       <PageHeader
         icon={Radar}
-        iconBg="bg-indigo-100"
-        iconColor="text-indigo-700"
+        iconBg="bg-brand-50"
+        iconColor="text-brand-primary"
         title="Ground Check"
         subtitle="Pengujian Berkala di Darat — Peralatan Faselektrik Penerbangan"
       />

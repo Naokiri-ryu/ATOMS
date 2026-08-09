@@ -66,14 +66,14 @@ const quickNavItems: Array<{
   hoverColor: string;
   hideForRoles?: string[];
 }> = [
-  { label: 'Work Order', icon: FileText, path: '/work-orders', color: 'text-blue-700', bgColor: 'bg-blue-50', hoverColor: 'hover:bg-blue-100' },
-  { label: 'CNSD', icon: CheckSquare, path: '/cnsd', color: 'text-sky-700', bgColor: 'bg-sky-50', hoverColor: 'hover:bg-sky-100', hideForRoles: ['General Manager'] },
-  { label: 'TFP', icon: Activity, path: '/tfp', color: 'text-emerald-700', bgColor: 'bg-emerald-50', hoverColor: 'hover:bg-emerald-100', hideForRoles: ['General Manager'] },
-  { label: 'Ground Check', icon: Plane, path: '/ground-check', color: 'text-indigo-700', bgColor: 'bg-indigo-50', hoverColor: 'hover:bg-indigo-100', hideForRoles: ['General Manager'] },
-  { label: 'Grounding', icon: Zap, path: '/grounding', color: 'text-yellow-700', bgColor: 'bg-yellow-50', hoverColor: 'hover:bg-yellow-100', hideForRoles: ['General Manager'] },
-  { label: 'Reporting', icon: ClipboardList, path: '/reporting', color: 'text-purple-700', bgColor: 'bg-purple-50', hoverColor: 'hover:bg-purple-100' },
-  { label: 'Statistik', icon: BarChart3, path: '/statistics', color: 'text-orange-700', bgColor: 'bg-orange-50', hoverColor: 'hover:bg-orange-100' },
-  { label: 'Logbook', icon: BookOpen, path: '/logbooks', color: 'text-rose-700', bgColor: 'bg-rose-50', hoverColor: 'hover:bg-rose-100' },
+  { label: 'Work Order', icon: FileText, path: '/work-orders', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100' },
+  { label: 'CNSD', icon: CheckSquare, path: '/cnsd', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100', hideForRoles: ['General Manager'] },
+  { label: 'TFP', icon: Activity, path: '/tfp', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100', hideForRoles: ['General Manager'] },
+  { label: 'Ground Check', icon: Plane, path: '/ground-check', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100', hideForRoles: ['General Manager'] },
+  { label: 'Grounding', icon: Zap, path: '/grounding', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100', hideForRoles: ['General Manager'] },
+  { label: 'Reporting', icon: ClipboardList, path: '/reporting', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100' },
+  { label: 'Statistik', icon: BarChart3, path: '/statistics', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100' },
+  { label: 'Logbook', icon: BookOpen, path: '/logbooks', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100' },
 ];
 
 // ─── Helper: map employee_type → division label ────────────
@@ -428,14 +428,14 @@ export const DashboardPage: React.FC = () => {
       {/* ─── Page Header ─────────────────────────────────────── */}
       <PageHeader
         icon={LayoutDashboard}
-        iconBg="bg-blue-100"
-        iconColor="text-blue-700"
+        iconBg="bg-brand-50"
+        iconColor="text-brand-primary"
         title="Dashboard Operasional"
         subtitle={`Selamat datang, ${user?.name} • ${shiftInfo.label}`}
         actions={
           <div className="text-left sm:text-right shrink-0">
             <p className="text-xs text-slate-500">Jam Shift</p>
-            <p className="text-sm font-bold text-blue-700">
+            <p className="text-sm font-bold text-brand-primary">
               {shiftStart} – {shiftEnd} WIB
             </p>
           </div>
@@ -480,7 +480,7 @@ export const DashboardPage: React.FC = () => {
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Users size={20} className="text-blue-700" />
+                <Users size={20} className="text-brand-primary" />
                 <h3 className="text-base font-bold text-slate-800">Personel Bertugas</h3>
               </div>
               <div className="flex items-center gap-2">
@@ -527,7 +527,7 @@ export const DashboardPage: React.FC = () => {
             ) : shiftError ? (
               <div className="text-center py-8">
                 <p className="text-sm text-red-500 mb-2">Gagal memuat data roster dari atoms-rostering.</p>
-                <button onClick={fetchShiftContext} className="text-xs text-blue-600 underline">Coba lagi</button>
+                <button onClick={fetchShiftContext} className="text-xs text-brand-primary underline">Coba lagi</button>
               </div>
             ) : !shiftCtx?.roster_available ? (
               <div className="text-center py-8">
@@ -543,7 +543,7 @@ export const DashboardPage: React.FC = () => {
                     <div className="flex flex-wrap gap-2">
                       {displayPersonnel.filter((p) => p.role === 'Manager Teknik').map((p) => (
                         <div key={p.id} className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 border border-gray-200">
-                          <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">
+                          <div className="h-8 w-8 rounded-full bg-brand-50 ring-1 ring-brand-100 flex items-center justify-center text-sm font-bold text-brand-primary">
                             {p.name.charAt(0)}
                           </div>
                           <div>
@@ -607,7 +607,7 @@ export const DashboardPage: React.FC = () => {
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CheckSquare size={20} className="text-blue-700" />
+                <CheckSquare size={20} className="text-brand-primary" />
                 <h3 className="text-base font-bold text-slate-800">Pengingat Pengecekan Harian</h3>
               </div>
               <div className="flex items-center gap-2">
@@ -615,7 +615,7 @@ export const DashboardPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/settings/checklist')}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-brand-primary hover:bg-brand-50 px-2 py-1 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
                     title="Kelola modul yang muncul di pengingat ini"
                   >
                     <Settings size={13} aria-hidden="true" /> Kelola
@@ -684,22 +684,22 @@ export const DashboardPage: React.FC = () => {
 
             {/* Current shift — expanded, with real has_record from API */}
             {currentShiftItems.length > 0 && (
-              <section className="rounded-xl border border-blue-200 bg-blue-50/40">
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-blue-200/70">
+              <section className="rounded-xl border border-brand-100 bg-brand-50/40">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-brand-100">
                   <div className="flex items-center gap-2">
                     <span aria-hidden="true">{getShiftLabel(currentShift).emoji}</span>
-                    <p className="text-xs font-bold uppercase tracking-wider text-blue-800">
+                    <p className="text-xs font-bold uppercase tracking-wider text-brand-700">
                       {getShiftLabel(currentShift).label}
                     </p>
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
                       Aktif
                     </span>
                   </div>
-                  <span className="text-[11px] font-medium text-blue-700/80">
+                  <span className="text-[11px] font-medium text-brand-600">
                     {currentShiftItems.filter((i) => i.has_record).length}/{currentShiftItems.length} item
                   </span>
                 </div>
-                <ul className="divide-y divide-blue-100">
+                <ul className="divide-y divide-brand-100">
                   {currentShiftItems.map((item) => {
                     const done = item.has_record;
                     const targetRoute = done && item.record_id
@@ -710,15 +710,15 @@ export const DashboardPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => navigate(targetRoute)}
-                          className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-blue-100/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
+                          className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-brand-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-inset"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <span className={`h-7 w-7 rounded-md flex items-center justify-center shrink-0 ${
-                              done ? 'bg-emerald-100' : 'bg-blue-100'
+                              done ? 'bg-emerald-100' : 'bg-brand-100'
                             }`}>
                               {done
                                 ? <Check size={14} className="text-emerald-700" aria-hidden="true" />
-                                : <Gauge size={14} className="text-blue-700" aria-hidden="true" />}
+                                : <Gauge size={14} className="text-brand-600" aria-hidden="true" />}
                             </span>
                             <span className={`text-sm font-medium truncate ${
                               done ? 'text-slate-500' : 'text-slate-800'
@@ -827,10 +827,10 @@ export const DashboardPage: React.FC = () => {
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText size={20} className="text-blue-700" />
+                <FileText size={20} className="text-brand-primary" />
                 <h3 className="text-base font-bold text-slate-800">Work Order Aktif</h3>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/work-orders')} className="text-xs gap-1 text-blue-700 hover:text-blue-800">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/work-orders')} className="text-xs gap-1 text-brand-primary hover:text-brand-700">
                 Lihat semua <ArrowRight size={14} />
               </Button>
             </div>
@@ -895,10 +895,10 @@ export const DashboardPage: React.FC = () => {
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <ClipboardList size={20} className="text-purple-600" />
+                <ClipboardList size={20} className="text-brand-primary" />
                 <h3 className="text-base font-bold text-slate-800">Laporan Kerusakan Terbaru</h3>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/reporting')} className="text-xs gap-1 text-purple-700 hover:text-purple-800">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/reporting')} className="text-xs gap-1 text-brand-primary hover:text-brand-700">
                 Lihat semua <ArrowRight size={14} />
               </Button>
             </div>
@@ -966,7 +966,7 @@ export const DashboardPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BookOpen size={20} className="text-rose-700" />
+            <BookOpen size={20} className="text-brand-primary" />
             <h3 className="text-base font-bold text-slate-800">Ringkasan Logbook</h3>
             {logbookSummary?.is_fallback && (
               <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
@@ -984,7 +984,7 @@ export const DashboardPage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/logbooks')}
-              className="text-xs font-semibold text-rose-700 hover:text-rose-800 inline-flex items-center gap-0.5"
+              className="text-xs font-semibold text-brand-primary hover:text-brand-700 inline-flex items-center gap-0.5"
             >
               Lihat semua <ChevronRight size={12} />
             </button>
@@ -1007,7 +1007,7 @@ export const DashboardPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate('/logbooks')}
-                className="mt-2 text-xs font-semibold text-rose-700 hover:underline"
+                className="mt-2 text-xs font-semibold text-brand-primary hover:underline"
               >
                 Buka Logbook →
               </button>
@@ -1028,7 +1028,7 @@ export const DashboardPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => navigate(targetRoute)}
-                      className="w-full flex items-center gap-3 px-2 py-2.5 text-left rounded-lg hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-inset"
+                      className="w-full flex items-center gap-3 px-2 py-2.5 text-left rounded-lg hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 focus-visible:ring-inset"
                     >
                       {/* Shift indicator (emoji + time stacked) */}
                       <div className="flex flex-col items-center w-14 shrink-0">
@@ -1074,7 +1074,7 @@ export const DashboardPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Bell size={20} className="text-blue-700" />
+            <Bell size={20} className="text-brand-primary" />
             <h3 className="text-base font-bold text-slate-800">Notifikasi Terbaru</h3>
           </div>
           <span className="text-xs text-slate-400">Diperbarui otomatis</span>
@@ -1107,7 +1107,7 @@ export const DashboardPage: React.FC = () => {
                       {/* Timeline Dot */}
                       <div className={`relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
                         !notif.is_read
-                          ? 'bg-blue-600 ring-4 ring-blue-100'
+                          ? 'bg-brand-primary ring-4 ring-brand-100'
                           : 'bg-slate-300'
                       }`}>
                         {!notif.is_read && <div className="w-2 h-2 bg-white rounded-full" />}

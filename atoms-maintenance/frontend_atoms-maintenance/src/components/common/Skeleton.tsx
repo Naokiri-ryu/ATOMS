@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 export const Skeleton: React.FC<{ className?: string }> = ({ className }) => {
   return (
-    <div className={cn('animate-pulse rounded-md bg-gray-200', className)} />
+    <div className={cn('animate-pulse rounded-md bg-brand-100', className)} />
   );
 };
 

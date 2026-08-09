@@ -262,13 +262,13 @@ export const Topbar: React.FC = () => {
                           key={notif.id}
                           onClick={() => handleNotifClick(notif)}
                           className={`w-full text-left px-4 py-3 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-primary ${
-                            !notif.is_read ? 'bg-blue-50/60 hover:bg-blue-50' : 'hover:bg-slate-50'
+                            !notif.is_read ? 'bg-brand-50/60 hover:bg-brand-50' : 'hover:bg-slate-50'
                           }`}
                           role="menuitem"
                         >
                           <div className="flex items-start gap-2.5">
                             {!notif.is_read && (
-                              <span className="h-2 w-2 mt-1.5 rounded-full bg-blue-500 shrink-0" aria-label="Belum dibaca" />
+                              <span className="h-2 w-2 mt-1.5 rounded-full bg-brand-primary shrink-0" aria-label="Belum dibaca" />
                             )}
                             <div className={`flex-1 min-w-0 ${notif.is_read ? 'pl-[18px]' : ''}`}>
                               <p className="text-sm font-medium text-slate-800 leading-snug">{notif.title}</p>

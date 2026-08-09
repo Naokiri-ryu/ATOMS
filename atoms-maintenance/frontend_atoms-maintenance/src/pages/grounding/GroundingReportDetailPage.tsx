@@ -109,8 +109,8 @@ export const GroundingReportDetailPage: React.FC = () => {
       {/* Header */}
       <PageHeader
         icon={Zap}
-        iconBg="bg-yellow-100"
-        iconColor="text-yellow-700"
+        iconBg="bg-brand-50"
+        iconColor="text-brand-primary"
         title={`Laporan Grounding — ${record.report_number}`}
         subtitle={`${record.equipment_name} | ${record.equipment_location}`}
         actions={
