@@ -496,38 +496,75 @@ export const LogbookCnsd: React.FC = () => {
                         <p className="text-xs text-slate-400 mt-0.5">{formatDate(lb.date).split(',')[0]}</p>
                       </td>
 
-                      <td className="px-6 py-4">
-                        {lb.managers_on_duty && lb.managers_on_duty.length > 0 ? (
-                          <div className="space-y-1">
-                            {lb.managers_on_duty.map((mgr) => {
-                              // [TAMBAH] highlight nama yang cocok dengan pencarian
-                              const isMatch = employeeSearch && normalize(mgr.name).includes(normalize(employeeSearch));
-                              return (
-                                <div key={`${mgr.shift}-${mgr.user_id}`} className="flex items-center gap-2">
-                                  <span
-                                    className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${SHIFT_BADGE[mgr.shift]}`}
-                                  >
-                                    <span className={`h-1.5 w-1.5 rounded-full ${SHIFT_DOT[mgr.shift]}`} />
-                                    {mgr.shift}
-                                  </span>
-                                  <span
-                                    className={`text-xs font-medium leading-tight ${isMatch ? 'text-blue-700 bg-blue-50 px-1 rounded' : 'text-slate-700'}`}
-                                  >
-                                    {mgr.name}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-slate-400 italic">Roster belum dipublish</span>
-                        )}
-                        {lb.notes_count > 0 && (
-                          <p className="inline-flex items-center gap-1 mt-2 rounded-full bg-slate-100 text-slate-600 text-[10px] font-medium px-1.5 py-0.5">
-                            {lb.notes_count} catatan
-                          </p>
-                        )}
-                      </td>
+                     <td className="px-6 py-4">
+                      {(() => {
+                        // 1. Buat Map dari managers_on_duty (data roster saat ini)
+                        const managerMap = new Map();
+                        if (lb.managers_on_duty && lb.managers_on_duty.length > 0) {
+                          lb.managers_on_duty.forEach((mgr: any) => {
+                            managerMap.set(mgr.shift, { ...mgr, isHistorical: false });
+                          });
+                        }
+
+                        // 2. FALLBACK: Jika ada tanda tangan tapi tidak ada di roster saat ini, 
+                        // tambahkan sebagai data historis agar nama tidak hilang
+                        if (lb.manager_signatures) {
+                          (['pagi', 'siang', 'malam'] as const).forEach((shift) => {
+                            const sig = lb.manager_signatures[shift];
+                            if (sig?.signature && !managerMap.has(shift)) {
+                              managerMap.set(shift, {
+                                shift,
+                                name: sig.signed_by_name,
+                                user_id: sig.signed_by_user_id || 0,
+                                isHistorical: true,
+                              });
+                            }
+                          });
+                        }
+
+                        const managers = Array.from(managerMap.values());
+
+                        if (managers.length > 0) {
+                          return (
+                            <div className="space-y-1">
+                              {managers.map((mgr) => {
+                                const isMatch = employeeSearch && normalize(mgr.name).includes(normalize(employeeSearch));
+                                return (
+                                  <div key={`${mgr.shift}-${mgr.user_id}`} className="flex items-center gap-2">
+                                    <span
+                                      className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${SHIFT_BADGE[mgr.shift]}`}
+                                    >
+                                      <span className={`h-1.5 w-1.5 rounded-full ${SHIFT_DOT[mgr.shift]}`} />
+                                      {mgr.shift}
+                                    </span>
+                                    <span
+                                      className={`text-xs font-medium leading-tight flex items-center gap-1.5 ${
+                                        isMatch ? 'text-blue-700 bg-blue-50 px-1 rounded' : 'text-slate-700'
+                                      }`}
+                                    >
+                                      {mgr.name}
+                                      {/* Indikator kecil jika nama diambil dari data tanda tangan (historis) */}
+                                      {mgr.isHistorical && (
+                                        <span className="text-[9px] text-slate-400 italic font-normal border border-slate-200 rounded px-1 py-0.5 bg-slate-50">
+                                          TTD
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        }
+                        return <span className="text-xs text-slate-400 italic">Roster belum dipublish</span>;
+                      })()}
+                      
+                      {lb.notes_count > 0 && (
+                        <p className="inline-flex items-center gap-1 mt-2 rounded-full bg-slate-100 text-slate-600 text-[10px] font-medium px-1.5 py-0.5">
+                          {lb.notes_count} catatan
+                        </p>
+                      )}
+                    </td>
 
                       <td className="px-6 py-4">
                         <div className="flex flex-col items-start gap-1">

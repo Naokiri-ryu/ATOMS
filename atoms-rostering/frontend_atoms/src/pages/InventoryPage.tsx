@@ -9,16 +9,16 @@ const InventoryPage: React.FC = () => {
   const { user } = useAuth();
 
   const inventoryStats = [
-    { id: 1, title: 'Total Items', count: 0, icon: Package, color: 'text-[#454D7C]' },
-    { id: 2, title: 'In Stock', count: 0, icon: Archive, color: 'text-[#454D7C]' },
-    { id: 3, title: 'Low Stock', count: 0, icon: AlertTriangle, color: 'text-[#454D7C]' },
-    { id: 4, title: 'Orders', count: 0, icon: ShoppingCart, color: 'text-[#454D7C]' },
+    { id: 1, title: 'Total Items', count: 0, icon: Package, color: 'text-navy-600' },
+    { id: 2, title: 'In Stock', count: 0, icon: Archive, color: 'text-navy-600' },
+    { id: 3, title: 'Low Stock', count: 0, icon: AlertTriangle, color: 'text-navy-600' },
+    { id: 4, title: 'Orders', count: 0, icon: ShoppingCart, color: 'text-navy-600' },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#454D7C] to-[#222E6A] text-white">
+      <div className="bg-gradient-to-r from-navy-600 to-navy-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between mb-4">
             <Breadcrumbs items={[{ label: 'Inventory Management' }]} />
@@ -73,8 +73,8 @@ const InventoryPage: React.FC = () => {
         {/* Coming Soon Notice */}
         <div className="bg-white rounded-xl shadow-sm p-12 text-center">
           <div className="max-w-md mx-auto">
-            <div className="bg-[#D8DAED] w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Package className="h-10 w-10 text-[#454D7C]" />
+            <div className="bg-navy-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Package className="h-10 w-10 text-navy-600" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Coming Soon</h2>
             <p className="text-gray-600 mb-6">
@@ -82,7 +82,7 @@ const InventoryPage: React.FC = () => {
             </p>
             <button
               onClick={() => navigate('/home')}
-              className="bg-[#222E6A] hover:bg-[#1a2550] text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-md hover:shadow-lg"
+              className="bg-navy-700 hover:bg-navy-800 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-md hover:shadow-lg"
             >
               Back to Home
             </button>

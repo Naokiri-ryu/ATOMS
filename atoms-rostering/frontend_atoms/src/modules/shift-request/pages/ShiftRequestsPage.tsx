@@ -112,7 +112,7 @@ const ShiftRequestsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#454D7C] to-[#222E6A] text-white">
+      <div className="bg-gradient-to-r from-navy-600 to-navy-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between mb-4">
             <Breadcrumbs items={[{ label: 'Tukar Shift' }]} />
@@ -152,7 +152,7 @@ const ShiftRequestsPage: React.FC = () => {
             
             <button 
               onClick={() => setShowCreateModal(true)}
-              className="bg-white text-[#222E6A] hover:bg-gray-100 px-4 py-2 rounded-lg font-semibold transition-colors flex items-center shadow-md"
+              className="bg-white text-navy-700 hover:bg-gray-100 px-4 py-2 rounded-lg font-semibold transition-colors flex items-center shadow-md"
             >
               <Plus className="h-4 w-4 mr-2" />
               Tukar Shift
@@ -170,7 +170,7 @@ const ShiftRequestsPage: React.FC = () => {
               onClick={() => setFilter(tab.key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                 filter === tab.key
-                  ? 'bg-[#222E6A] text-white'
+                  ? 'bg-navy-700 text-white'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -194,7 +194,7 @@ const ShiftRequestsPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as ShiftRequestStatus | '')}
-            className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#222E6A] focus:border-transparent"
+            className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-navy-700 focus:border-transparent"
           >
             <option value="">Semua Status</option>
             <option value="pending">Menunggu</option>
@@ -218,14 +218,14 @@ const ShiftRequestsPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-10 w-10 text-[#222E6A] animate-spin" />
+            <Loader2 className="h-10 w-10 text-navy-700 animate-spin" />
             <p className="mt-3 text-gray-500">Memuat data...</p>
           </div>
         ) : requests.length === 0 ? (
           <Card>
             <div className="text-center py-12">
-              <div className="bg-[#D8DAED] w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <ArrowRightLeft className="h-10 w-10 text-[#454D7C]" />
+              <div className="bg-navy-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <ArrowRightLeft className="h-10 w-10 text-navy-600" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">Tidak Ada Permintaan</h3>
               <p className="text-gray-600 mb-6">
@@ -238,7 +238,7 @@ const ShiftRequestsPage: React.FC = () => {
               </p>
               <button 
                 onClick={() => setShowCreateModal(true)}
-                className="bg-[#222E6A] hover:bg-[#1a2550] text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-md hover:shadow-lg inline-flex items-center"
+                className="bg-navy-700 hover:bg-navy-800 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-md hover:shadow-lg inline-flex items-center"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Buat Permintaan Baru

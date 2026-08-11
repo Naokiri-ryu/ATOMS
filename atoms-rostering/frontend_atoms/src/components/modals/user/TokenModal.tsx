@@ -44,7 +44,7 @@ const TokenModal: React.FC<TokenModalProps> = ({
           </label>
           {isGenerating ? (
             <div className="flex items-center justify-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#222E6A]"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-700"></div>
             </div>
           ) : token ? (
             <div className="relative">
@@ -56,7 +56,7 @@ const TokenModal: React.FC<TokenModalProps> = ({
               />
               <button
                 onClick={onCopyToken}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-sm bg-[#222E6A] text-white rounded hover:bg-[#1a2452] transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-sm bg-navy-700 text-white rounded hover:bg-navy-800 transition-colors"
               >
                 Copy
               </button>

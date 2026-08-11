@@ -63,13 +63,13 @@ const ConfigureSwapShiftModal: React.FC<ConfigureSwapShiftModalProps> = ({ isOpe
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Configure Shifts" size="lg" headerClassName="bg-gradient-to-r from-[#454D7C] to-[#222E6A] text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Configure Shifts" size="lg" headerClassName="bg-gradient-to-r from-navy-600 to-navy-800 text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg">
       <div>
         {/* Subtitle and Add Button */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="bg-[#D8DAED] p-2 rounded-lg flex-shrink-0">
-              <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-[#454D7C]" />
+            <div className="bg-navy-100 p-2 rounded-lg flex-shrink-0">
+              <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-navy-600" />
             </div>
             <p className="text-xs sm:text-sm text-gray-600">Manage shift swap policies</p>
           </div>
@@ -79,7 +79,7 @@ const ConfigureSwapShiftModal: React.FC<ConfigureSwapShiftModalProps> = ({ isOpe
             size="sm"
             leftIcon={<Plus className="h-4 w-4" />}
             onClick={handleAddRule}
-            className="bg-[#222E6A] hover:bg-[#1a2452] text-xs sm:text-sm w-full sm:w-auto py-2"
+            className="bg-navy-700 hover:bg-navy-800 text-xs sm:text-sm w-full sm:w-auto py-2"
           >
             <span className="hidden sm:inline">Add New Rules</span>
             <span className="sm:hidden">Add Rule</span>
@@ -90,10 +90,10 @@ const ConfigureSwapShiftModal: React.FC<ConfigureSwapShiftModalProps> = ({ isOpe
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           {/* Table Header */}
           <div className="hidden sm:grid sm:grid-cols-[1fr_120px] bg-gray-50 border-b border-gray-200">
-            <div className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-[#222E6A]">
+            <div className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-navy-700">
               Rules
             </div>
-            <div className="px-4 sm:px-6 py-3 text-center text-xs sm:text-sm font-semibold text-[#222E6A]">
+            <div className="px-4 sm:px-6 py-3 text-center text-xs sm:text-sm font-semibold text-navy-700">
               Status
             </div>
           </div>
@@ -106,7 +106,7 @@ const ConfigureSwapShiftModal: React.FC<ConfigureSwapShiftModalProps> = ({ isOpe
                 index !== rules.length - 1 ? 'border-b border-gray-200' : ''
               } hover:bg-gray-50 transition-colors`}
             >
-              <div className="sm:px-6 sm:py-4 text-xs sm:text-sm text-[#222E6A] break-words">
+              <div className="sm:px-6 sm:py-4 text-xs sm:text-sm text-navy-700 break-words">
                 {rule.label}
               </div>
               <div className="flex items-center justify-between sm:justify-center sm:px-6 sm:py-4">
@@ -117,7 +117,7 @@ const ConfigureSwapShiftModal: React.FC<ConfigureSwapShiftModalProps> = ({ isOpe
                   type="button"
                   onClick={() => handleToggle(rule.id)}
                   className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors ${
-                    rule.enabled ? 'bg-[#222E6A]' : 'bg-gray-300'
+                    rule.enabled ? 'bg-navy-700' : 'bg-gray-300'
                   }`}
                 >
                   <span
@@ -147,7 +147,7 @@ const ConfigureSwapShiftModal: React.FC<ConfigureSwapShiftModalProps> = ({ isOpe
             variant="primary"
             onClick={handleSave}
             isLoading={isLoading}
-            className="flex-1 bg-[#222E6A] hover:bg-[#1a2452] text-sm"
+            className="flex-1 bg-navy-700 hover:bg-navy-800 text-sm"
           >
             Save Changes
           </Button>

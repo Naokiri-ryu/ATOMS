@@ -68,28 +68,28 @@ const getActivityColor = (action: string, module: string) => {
   // Module-based colors
   if (moduleLower.includes('roster')) {
     return {
-      bg: 'bg-gradient-to-r from-[#222E6A]/5 to-[#454D7C]/5',
-      icon: 'bg-[#222E6A]',
-      border: 'border-[#222E6A]/10',
-      gradient: 'from-[#222E6A]/5 to-[#454D7C]/5',
+      bg: 'bg-gradient-to-r from-navy-700/5 to-navy-600/5',
+      icon: 'bg-navy-700',
+      border: 'border-navy-700/10',
+      gradient: 'from-navy-700/5 to-navy-600/5',
     };
   }
 
   if (moduleLower.includes('user')) {
     return {
-      bg: 'bg-gradient-to-r from-[#454D7C]/5 to-purple-500/5',
-      icon: 'bg-[#454D7C]',
-      border: 'border-[#454D7C]/10',
-      gradient: 'from-[#454D7C]/5 to-purple-500/5',
+      bg: 'bg-gradient-to-r from-navy-600/5 to-purple-500/5',
+      icon: 'bg-navy-600',
+      border: 'border-navy-600/10',
+      gradient: 'from-navy-600/5 to-purple-500/5',
     };
   }
 
   // Default primary colors
   return {
-    bg: 'bg-gradient-to-r from-[#222E6A]/5 to-[#454D7C]/5',
-    icon: 'bg-[#222E6A]',
-    border: 'border-[#222E6A]/10',
-    gradient: 'from-[#222E6A]/5 to-[#454D7C]/5',
+    bg: 'bg-gradient-to-r from-navy-700/5 to-navy-600/5',
+    icon: 'bg-navy-700',
+    border: 'border-navy-700/10',
+    gradient: 'from-navy-700/5 to-navy-600/5',
   };
 };
 

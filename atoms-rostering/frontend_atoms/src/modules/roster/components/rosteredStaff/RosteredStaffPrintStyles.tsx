@@ -199,7 +199,7 @@ const RosteredStaffPrintStyles: React.FC = () => {
         .print-section-columns-header .print-col-header {
           background: #222e6a !important;
           color: #ffffff !important;
-          border: 1px solid #1a235c !important;
+          border: 1px solid #1A2452 !important;
           text-align: center !important;
           padding: 4px 2px !important;
           font-weight: 700 !important;

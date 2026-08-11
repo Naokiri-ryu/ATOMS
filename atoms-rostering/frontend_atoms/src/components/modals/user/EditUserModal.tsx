@@ -157,7 +157,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, user, onClose, on
             id="is_active"
             checked={formData.is_active}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, is_active: e.target.checked })}
-            className="w-4 h-4 text-[#222E6A] border-gray-300 rounded focus:ring-[#222E6A]"
+            className="w-4 h-4 text-navy-700 border-gray-300 rounded focus:ring-navy-700"
           />
           <label htmlFor="is_active" className="text-sm text-gray-700">
             Active User
@@ -167,7 +167,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, user, onClose, on
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
             Cancel
           </Button>
-          <Button type="submit" variant="primary" isLoading={isLoading} className="flex-1 bg-[#222E6A] hover:bg-[#1a2452]">
+          <Button type="submit" variant="primary" isLoading={isLoading} className="flex-1 bg-navy-700 hover:bg-navy-800">
             Update User
           </Button>
         </div>

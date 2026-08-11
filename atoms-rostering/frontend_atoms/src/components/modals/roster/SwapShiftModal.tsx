@@ -584,11 +584,11 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
       onClose={onClose} 
       title="Request Shift Change" 
       size="xl" 
-      headerClassName="bg-[#222E6A] text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg"
+      headerClassName="bg-navy-700 text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg"
     >
       {isLoadingData ? (
         <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 text-[#222E6A] animate-spin mb-3" />
+          <Loader2 className="h-8 w-8 text-navy-700 animate-spin mb-3" />
           <p className="text-gray-500 text-sm">Memuat data shift...</p>
         </div>
       ) : loadError && myShifts.length === 0 ? (
@@ -612,11 +612,11 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
             <div className="space-y-5">
               {/* Employee Info Section */}
               <div>
-                <h3 className="text-sm font-semibold text-[#222E6A] mb-3">Employee Info</h3>
+                <h3 className="text-sm font-semibold text-navy-700 mb-3">Employee Info</h3>
                 
                 {/* Employee Name */}
                 <div className="mb-4">
-                  <label className="block text-xs font-medium text-[#222E6A] mb-1.5">Employee Name</label>
+                  <label className="block text-xs font-medium text-navy-700 mb-1.5">Employee Name</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -630,7 +630,7 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
 
                 {/* Role & Group */}
                 <div className="mb-4">
-                  <label className="block text-xs font-medium text-[#222E6A] mb-1.5">Role & Group</label>
+                  <label className="block text-xs font-medium text-navy-700 mb-1.5">Role & Group</label>
                   <div className="relative flex items-center">
                     <div className="absolute left-3 text-gray-400">
                       <User className="w-4 h-4" />
@@ -650,7 +650,7 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-xs font-medium text-[#222E6A] mb-1.5">Kelas Jabatan</label>
+                  <label className="block text-xs font-medium text-navy-700 mb-1.5">Kelas Jabatan</label>
                   <input
                     type="text"
                     value={user?.grade != null ? `Level ${user.grade}` : '-'}
@@ -665,13 +665,13 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
 
               {/* Current Shift Section */}
               <div>
-                <h3 className="text-sm font-semibold text-[#222E6A] mb-3">Current Shift</h3>
+                <h3 className="text-sm font-semibold text-navy-700 mb-3">Current Shift</h3>
                 
                 {/* Original Date */}
                 <div className="mb-4">
-                  <label className="block text-xs font-medium text-[#222E6A] mb-1.5">Original Date</label>
+                  <label className="block text-xs font-medium text-navy-700 mb-1.5">Original Date</label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#222E6A]">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-700">
                       <Calendar className="w-4 h-4" />
                     </div>
                     <select
@@ -679,7 +679,7 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
                       onChange={(e) => {
                         setSelectedDate(e.target.value);
                       }}
-                      className="w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#222E6A] focus:border-transparent"
+                      className="w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-navy-700 focus:border-transparent"
                     >
                       <option value="">Select Date</option>
                       {availableDates.map(date => (
@@ -696,16 +696,16 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
 
                 {/* Original Shift */}
                 <div className="mb-4">
-                  <label className="block text-xs font-medium text-[#222E6A] mb-1.5">Original Shift</label>
+                  <label className="block text-xs font-medium text-navy-700 mb-1.5">Original Shift</label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#222E6A]">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-700">
                       <Clock className="w-4 h-4" />
                     </div>
                     <select
                       value={selectedShiftNotes}
                       onChange={(e) => setSelectedShiftNotes(e.target.value)}
                       disabled={!selectedDate}
-                      className="w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#222E6A] focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      className="w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-navy-700 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed"
                     >
                       <option value="">Select Shift</option>
                       {shiftsForSelectedDate.map(shift => (
@@ -759,23 +759,23 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
             <div className="space-y-5">
               {/* Requested Shift Section */}
               <div>
-                <h3 className="text-sm font-semibold text-[#222E6A] mb-3">Requested Shift (Same Date)</h3>
+                <h3 className="text-sm font-semibold text-navy-700 mb-3">Requested Shift (Same Date)</h3>
                 <p className="text-[11px] text-gray-500 mb-3">
                   Requested Shift otomatis mengikuti Original Date yang dipilih.
                 </p>
 
                 {/* New Shift */}
                 <div>
-                  <label className="block text-xs font-medium text-[#222E6A] mb-1.5">Requested Shift (Different Shift)</label>
+                  <label className="block text-xs font-medium text-navy-700 mb-1.5">Requested Shift (Different Shift)</label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#222E6A]">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-700">
                       <Clock className="w-4 h-4" />
                     </div>
                     <select
                       value={newShiftId}
                       onChange={(e) => setNewShiftId(e.target.value ? Number(e.target.value) : '')}
                       disabled={!selectedDate}
-                      className="w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#222E6A] focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      className="w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-navy-700 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed"
                     >
                       <option value="">Select Shift</option>
                       {availableRequestedShifts.map(shift => (
@@ -826,19 +826,19 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
 
               {/* Partner Approval Section */}
               <div>
-                <h3 className="text-sm font-semibold text-[#222E6A] mb-3">Partner Approval</h3>
+                <h3 className="text-sm font-semibold text-navy-700 mb-3">Partner Approval</h3>
                 
                 {/* Swap Partner */}
                 <div>
-                  <label className="block text-xs font-medium text-[#222E6A] mb-1.5">Peer Approver (Same Role/Grade)</label>
+                  <label className="block text-xs font-medium text-navy-700 mb-1.5">Peer Approver (Same Role/Grade)</label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#222E6A]">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-700">
                       <User className="w-4 h-4" />
                     </div>
                     <select
                       value={selectedPartnerId}
                       onChange={(e) => setSelectedPartnerId(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#222E6A] focus:border-transparent"
+                      className="w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-navy-700 focus:border-transparent"
                     >
                       <option value="">Select Partner</option>
                       {isLoadingPartners && (
@@ -873,15 +873,15 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
 
               {/* Reason Section */}
               <div>
-                <h3 className="text-sm font-semibold text-[#222E6A] mb-3">Reason</h3>
+                <h3 className="text-sm font-semibold text-navy-700 mb-3">Reason</h3>
                 
                 <div>
-                  <label className="block text-xs font-medium text-[#222E6A] mb-1.5">Reason for Swap</label>
+                  <label className="block text-xs font-medium text-navy-700 mb-1.5">Reason for Swap</label>
                   <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     rows={3}
-                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-[#222E6A] focus:border-transparent"
+                    className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-navy-700 focus:border-transparent"
                     placeholder="Enter reason for shift swap..."
                   />
                 </div>
@@ -896,7 +896,7 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
               variant="primary"
               isLoading={isLoading}
               disabled={!isFormValid}
-              className="bg-[#222E6A] hover:bg-[#1a2452] px-6"
+              className="bg-navy-700 hover:bg-navy-800 px-6"
             >
               Submit Change Request
             </Button>

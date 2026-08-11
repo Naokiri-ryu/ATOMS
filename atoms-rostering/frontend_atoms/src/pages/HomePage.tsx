@@ -59,7 +59,7 @@ const HomePage: React.FC = () => {
             <div>
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
                 Integrated Aviation
-                <span className="text-accent-400"> Management</span>
+                <span className="text-white-400"> Management</span>
               </h1>
               <p className="text-xl opacity-90 mb-8 leading-relaxed">
                 Streamline operations with our comprehensive system for personnel management, 
@@ -71,7 +71,7 @@ const HomePage: React.FC = () => {
                   disabled={!isInitialized || isLoading}
                   className={`px-8 py-4 rounded-xl font-semibold transition-all flex items-center gap-2 shadow-lg ${
                     isInitialized && !isLoading
-                      ? 'bg-accent-500 text-navy-900 hover:bg-accent-400'
+                      ? 'bg-white text-navy-900 hover:bg-accent-400'
                       : 'bg-white/50 text-slate-400 cursor-not-allowed'
                   }`}
                 >

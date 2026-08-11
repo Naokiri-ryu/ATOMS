@@ -152,7 +152,7 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#454D7C] to-[#222E6A] text-white px-6 py-4 rounded-t-2xl flex items-center justify-between">
+          <div className="bg-gradient-to-r from-navy-600 to-navy-800 text-white px-6 py-4 rounded-t-2xl flex items-center justify-between">
             <div className="flex items-center gap-3">
               <ArrowRightLeft className="h-6 w-6" />
               <div>
@@ -183,12 +183,12 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
                 return (
                   <div key={label} className="flex items-center">
                     <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                      isActive ? 'bg-[#222E6A] text-white' :
+                      isActive ? 'bg-navy-700 text-white' :
                       isComplete ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
                     }`}>
                       {isComplete ? '✓' : index + 1}
                     </div>
-                    <span className={`ml-2 text-sm ${isActive ? 'text-[#222E6A] font-medium' : 'text-gray-500'}`}>
+                    <span className={`ml-2 text-sm ${isActive ? 'text-navy-700 font-medium' : 'text-gray-500'}`}>
                       {label}
                     </span>
                     {index < 2 && (
@@ -213,7 +213,7 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
 
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="h-10 w-10 text-[#222E6A] animate-spin" />
+                <Loader2 className="h-10 w-10 text-navy-700 animate-spin" />
                 <p className="mt-3 text-gray-500">Memuat data...</p>
               </div>
             ) : (
@@ -239,13 +239,13 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
                             className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
                               shift.has_pending_request
                                 ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
-                                : 'border-gray-200 hover:border-[#222E6A] hover:bg-blue-50'
+                                : 'border-gray-200 hover:border-navy-700 hover:bg-blue-50'
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="bg-[#D8DAED] p-2 rounded-lg">
-                                  <Calendar className="h-5 w-5 text-[#454D7C]" />
+                                <div className="bg-navy-100 p-2 rounded-lg">
+                                  <Calendar className="h-5 w-5 text-navy-600" />
                                 </div>
                                 <div>
                                   <p className="font-medium text-gray-900">{formatDate(shift.work_date)}</p>
@@ -287,7 +287,7 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
                         placeholder="Cari nama partner..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#222E6A] focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-navy-700 focus:border-transparent"
                       />
                     </div>
 
@@ -301,8 +301,8 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
                         {filteredPartners.map((partner) => (
                           <div key={partner.employee_id} className="border border-gray-200 rounded-xl overflow-hidden">
                             <div className="bg-gray-50 px-4 py-3 flex items-center gap-3">
-                              <div className="bg-[#D8DAED] p-2 rounded-full">
-                                <User className="h-5 w-5 text-[#454D7C]" />
+                              <div className="bg-navy-100 p-2 rounded-full">
+                                <User className="h-5 w-5 text-navy-600" />
                               </div>
                               <div>
                                 <p className="font-medium text-gray-900">{partner.employee_name}</p>
@@ -320,7 +320,7 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
                                   className={`w-full p-3 rounded-lg text-left text-sm transition-all ${
                                     shift.has_pending_request
                                       ? 'bg-gray-50 opacity-60 cursor-not-allowed'
-                                      : 'bg-white border border-gray-200 hover:border-[#222E6A] hover:bg-blue-50'
+                                      : 'bg-white border border-gray-200 hover:border-navy-700 hover:bg-blue-50'
                                   }`}
                                 >
                                   <div className="flex items-center justify-between">
@@ -328,7 +328,7 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
                                       <Calendar className="h-4 w-4 text-gray-400" />
                                       <span>{formatDate(shift.work_date)}</span>
                                     </div>
-                                    <span className="text-[#222E6A] font-medium">{shift.shift_name}</span>
+                                    <span className="text-navy-700 font-medium">{shift.shift_name}</span>
                                   </div>
                                 </button>
                               ))}
@@ -340,7 +340,7 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
 
                     <button
                       onClick={() => setStep('select-my-shift')}
-                      className="mt-4 text-sm text-[#222E6A] hover:underline"
+                      className="mt-4 text-sm text-navy-700 hover:underline"
                     >
                       ← Kembali pilih shift
                     </button>
@@ -358,14 +358,14 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
                         <div className="bg-white rounded-lg p-3 border border-gray-200">
                           <p className="text-xs text-gray-500 mb-2">Shift Anda (akan ditukar)</p>
                           <p className="font-medium text-gray-900 text-sm">{formatDate(selectedMyShift.work_date)}</p>
-                          <p className="text-[#222E6A] font-medium text-sm mt-1">{selectedMyShift.shift_name}</p>
+                          <p className="text-navy-700 font-medium text-sm mt-1">{selectedMyShift.shift_name}</p>
                         </div>
                         
                         {/* Partner Shift */}
                         <div className="bg-white rounded-lg p-3 border border-gray-200">
                           <p className="text-xs text-gray-500 mb-2">Shift Tujuan (akan didapat)</p>
                           <p className="font-medium text-gray-900 text-sm">{formatDate(selectedPartnerShift.work_date)}</p>
-                          <p className="text-[#222E6A] font-medium text-sm mt-1">{selectedPartnerShift.shift_name}</p>
+                          <p className="text-navy-700 font-medium text-sm mt-1">{selectedPartnerShift.shift_name}</p>
                         </div>
                       </div>
 
@@ -389,7 +389,7 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
                         onChange={(e) => setReason(e.target.value)}
                         rows={3}
                         placeholder="Masukkan alasan tukar shift..."
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#222E6A] focus:border-transparent resize-none"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-navy-700 focus:border-transparent resize-none"
                       />
                     </div>
 
@@ -402,7 +402,7 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
 
                     <button
                       onClick={() => setStep('select-partner')}
-                      className="text-sm text-[#222E6A] hover:underline"
+                      className="text-sm text-navy-700 hover:underline"
                     >
                       ← Kembali pilih partner
                     </button>
@@ -425,7 +425,7 @@ const CreateSwapRequestModal: React.FC<CreateSwapRequestModalProps> = ({
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="px-6 py-2 bg-[#222E6A] text-white text-sm font-medium rounded-lg hover:bg-[#1a2550] transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-6 py-2 bg-navy-700 text-white text-sm font-medium rounded-lg hover:bg-navy-800 transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 Kirim Permintaan

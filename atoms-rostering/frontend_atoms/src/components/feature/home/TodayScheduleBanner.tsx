@@ -7,7 +7,7 @@ const TodayScheduleBanner: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-gradient-to-r from-[#454D7C] to-[#222E6A] rounded-2xl p-8 text-white relative overflow-hidden mb-8">
+    <div className="bg-gradient-to-r from-navy-600 to-navy-800 rounded-2xl p-8 text-white relative overflow-hidden mb-8">
       {/* Animated Background Pattern */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-0 left-0 w-full h-full">
@@ -117,7 +117,7 @@ const TodayScheduleBanner: React.FC = () => {
               onClick={() => navigate('/roster')}
               variant="outline"
               leftIcon={<Calendar />}
-              className="bg-white text-[#222E6A] border-white hover:bg-gray-100 font-semibold"
+              className="bg-white text-navy-700 border-white hover:bg-gray-100 font-semibold"
             >
               View Full Roster
             </Button>

@@ -80,7 +80,7 @@ const ShiftEditorToolbar: React.FC<ShiftEditorToolbarProps> = ({
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <div className="bg-white rounded-lg shadow-2xl border-2 border-[#222E6A] p-4 min-w-[320px] max-w-[400px]">
+      <div className="bg-white rounded-lg shadow-2xl border-2 border-navy-700 p-4 min-w-[320px] max-w-[400px]">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="text-sm font-semibold text-gray-800">
@@ -112,7 +112,7 @@ const ShiftEditorToolbar: React.FC<ShiftEditorToolbarProps> = ({
                   type="checkbox"
                   checked={autoFillPattern}
                   onChange={(e) => onAutoFillPatternChange(e.target.checked)}
-                  className="w-4 h-4 text-[#222E6A] border-gray-300 rounded focus:ring-[#222E6A] focus:ring-2"
+                  className="w-4 h-4 text-navy-700 border-gray-300 rounded focus:ring-navy-700 focus:ring-2"
                 />
                 <span className="ml-2 text-xs font-medium text-gray-700">
                   Isi Otomatis Pattern (S→P→M→L→L)
@@ -131,7 +131,7 @@ const ShiftEditorToolbar: React.FC<ShiftEditorToolbarProps> = ({
                   type="checkbox"
                   checked={applyToGroup}
                   onChange={(e) => onApplyToGroupChange(e.target.checked)}
-                  className="w-4 h-4 text-[#222E6A] border-gray-300 rounded focus:ring-[#222E6A] focus:ring-2"
+                  className="w-4 h-4 text-navy-700 border-gray-300 rounded focus:ring-navy-700 focus:ring-2"
                 />
                 <span className="ml-2 text-xs font-medium text-gray-700">
                   Terapkan ke Semua Grup
@@ -157,7 +157,7 @@ const ShiftEditorToolbar: React.FC<ShiftEditorToolbarProps> = ({
             <button
               key={option.value}
               onClick={() => handleShiftClick(option.value)}
-              className="px-3 py-2 text-xs font-medium bg-gray-100 hover:bg-[#222E6A] hover:text-white rounded transition-colors text-center"
+              className="px-3 py-2 text-xs font-medium bg-gray-100 hover:bg-navy-700 hover:text-white rounded transition-colors text-center"
             >
               {option.label}
             </button>
@@ -177,12 +177,12 @@ const ShiftEditorToolbar: React.FC<ShiftEditorToolbarProps> = ({
               }
             }}
             placeholder={selectedCount > 1 ? "Custom text untuk semua cell..." : "Ketik custom (CT, CS, DL, OH, dll)..."}
-            className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:border-[#222E6A] mb-2"
+            className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:border-navy-700 mb-2"
           />
           {customText.trim() && (
             <button
               onClick={handleCustomSubmit}
-              className="w-full px-3 py-2 text-xs font-medium bg-[#222E6A] text-white rounded hover:bg-[#1a2350] transition-colors"
+              className="w-full px-3 py-2 text-xs font-medium bg-navy-700 text-white rounded hover:bg-navy-800 transition-colors"
             >
               {selectedCount > 1 ? `Terapkan ke ${selectedCount} cell` : 'Simpan'}
             </button>

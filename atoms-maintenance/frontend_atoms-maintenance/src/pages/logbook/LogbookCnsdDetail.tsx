@@ -841,9 +841,21 @@ export const LogbookCnsdDetail: React.FC = () => {
   };
 
   const shiftManagers: Record<ShiftKey, { name: string; user_id: number } | null> = {
-    pagi:  record.personnel_on_duty?.pagi?.manager ?? null,
-    siang: record.personnel_on_duty?.siang?.manager ?? null,
-    malam: record.personnel_on_duty?.malam?.manager ?? null,
+    pagi:  record.personnel_on_duty?.pagi?.manager ?? 
+          (record.manager_signatures.pagi?.signed_by_name ? { 
+            name: record.manager_signatures.pagi.signed_by_name, 
+            user_id: record.manager_signatures.pagi.signed_by_user_id ?? 0 
+          } : null),
+    siang: record.personnel_on_duty?.siang?.manager ?? 
+          (record.manager_signatures.siang?.signed_by_name ? { 
+            name: record.manager_signatures.siang.signed_by_name, 
+            user_id: record.manager_signatures.siang.signed_by_user_id ?? 0 
+          } : null),
+    malam: record.personnel_on_duty?.malam?.manager ?? 
+          (record.manager_signatures.malam?.signed_by_name ? { 
+            name: record.manager_signatures.malam.signed_by_name, 
+            user_id: record.manager_signatures.malam.signed_by_user_id ?? 0 
+          } : null),
   };
 
   const SHIFT_LABEL: Record<ShiftKey, string> = { pagi: 'Pagi', siang: 'Siang', malam: 'Malam' };
@@ -1201,7 +1213,7 @@ export const LogbookCnsdDetail: React.FC = () => {
                   signatureImage={sig?.signature ?? null}
                   role={`Manager Teknik — ${SHIFT_LABEL[shift]}`}
                   isPending={!isSigned && !!assignedMgr}
-                  isNotRequired={!assignedMgr}
+                  isNotRequired={!assignedMgr && !sig?.signature}
                 />
 
                 {!isSigned && isCurrentUser && (
@@ -1217,10 +1229,10 @@ export const LogbookCnsdDetail: React.FC = () => {
                   </div>
                 )}
 
-                {!isSigned && !assignedMgr && (
-                  <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-700">
-                    <Lock size={12} className="mt-0.5 shrink-0" />
-                    <span>Manager Teknik shift ini belum ditugaskan di roster.</span>
+                {isSigned && sig?.signed_by_name && assignedMgr && !namesMatch(sig.signed_by_name, assignedMgr.name) && (
+                  <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-2 text-xs text-blue-700">
+                    <CheckCircle2 size={12} className="mt-0.5 shrink-0" />
+                    <span>Ditandatangani sebelumnya oleh <span className="font-semibold">{sig.signed_by_name}</span> (Sesuai roster saat itu).</span>
                   </div>
                 )}
               </div>

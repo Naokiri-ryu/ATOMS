@@ -60,7 +60,7 @@ const MenuGrid: React.FC<MenuGridProps> = ({ isInitialized = true }) => {
 
   return (
     <div className="mb-12">
-      <h2 className="text-3xl font-bold text-[#222E6A] mb-8">
+      <h2 className="text-3xl font-bold text-navy-700 mb-8">
         Menu
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8">
@@ -72,7 +72,7 @@ const MenuGrid: React.FC<MenuGridProps> = ({ isInitialized = true }) => {
               if (item.title === 'Maintenance') {
                 redirectToMaintenance();
               } else if (item.title === 'Inventory') {
-                redirectToSakti();
+                redirectToSakti(true);
               } else {
                 navigate(item.route);
               }
@@ -87,7 +87,7 @@ const MenuGrid: React.FC<MenuGridProps> = ({ isInitialized = true }) => {
                 isInitialized ? '' : 'pointer-events-none'
               }`}>
                 {/* Fixed Size Square Card with Primary Border */}
-                <div className="bg-white rounded-xl shadow-sm group-hover:shadow-lg border-2 border-[#222E6A] border-b-[6px] border-b-[#222E6A] group-hover:border-b-[3px] group-active:border-b-[1px] transition-all duration-200 w-[170px]">
+                <div className="bg-white rounded-xl shadow-sm group-hover:shadow-lg border-2 border-navy-700 border-b-[6px] border-b-navy-700 group-hover:border-b-[3px] group-active:border-b-[1px] transition-all duration-200 w-[170px]">
                   <div className="flex flex-col items-center justify-center p-5 h-[170px]">
                     <div className="w-24 h-24 flex items-center justify-center mb-3">
                       <img 
@@ -100,7 +100,7 @@ const MenuGrid: React.FC<MenuGridProps> = ({ isInitialized = true }) => {
                         decoding="async"
                       />
                     </div>
-                    <h3 className="text-sm font-semibold text-[#222E6A] text-center leading-tight">
+                    <h3 className="text-sm font-semibold text-navy-700 text-center leading-tight">
                       {item.title}
                     </h3>
                   </div>

@@ -70,7 +70,7 @@ const InitialLoadingPage: React.FC<InitialLoadingPageProps> = ({
         }
         
         .ldio-spinner > div:nth-child(2) {
-          border-color: transparent #454d7c transparent #454d7c
+          border-color: transparent #333e73 transparent #333e73
         }
         
         .ldio-spinner > div:nth-child(3) { border-color: transparent }
@@ -120,15 +120,15 @@ const InitialLoadingPage: React.FC<InitialLoadingPageProps> = ({
           height: 8px;
           top: -8px;
           left: 42px;
-          background: #454d7c;
+          background: #333e73;
           border-radius: 50%;
-          box-shadow: 0 100px 0 0 #454d7c;
+          box-shadow: 0 100px 0 0 #333e73;
         }
         
         .ldio-spinner > div:nth-child(4) div:after {
           left: -8px;
           top: 42px;
-          box-shadow: 100px 0 0 0 #454d7c;
+          box-shadow: 100px 0 0 0 #333e73;
         }
         
         .loadingio-spinner-double-ring {

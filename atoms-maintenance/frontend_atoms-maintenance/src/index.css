@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Self-hosted fonts (works offline on deploy intranet) ─── */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/fonts/plus-jakarta-sans-latin-w400-800.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-latin-w400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-latin-w600.woff2') format('woff2');
+}
+
 /* ─── Light Mode Variables ─────────────────────────────────── */
 :root {
   --bg-page:        #EEF1F8;

@@ -175,13 +175,13 @@ const SupportTicketsAdminPage: React.FC = () => {
             placeholder="Search tickets..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#454D7C] focus:border-transparent outline-none"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-navy-600 focus:border-transparent outline-none"
           />
         </form>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#454D7C] focus:border-transparent outline-none bg-white"
+          className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-navy-600 focus:border-transparent outline-none bg-white"
         >
           <option value="">All Status</option>
           <option value="open">Open</option>
@@ -192,7 +192,7 @@ const SupportTicketsAdminPage: React.FC = () => {
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#454D7C] focus:border-transparent outline-none bg-white"
+          className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-navy-600 focus:border-transparent outline-none bg-white"
         >
           <option value="">All Categories</option>
           <option value="bug_report">Bug Report</option>
@@ -203,7 +203,7 @@ const SupportTicketsAdminPage: React.FC = () => {
       {/* Tickets Table */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 text-[#454D7C] animate-spin" />
+          <Loader2 className="h-8 w-8 text-navy-600 animate-spin" />
         </div>
       ) : tickets.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
@@ -268,7 +268,7 @@ const SupportTicketsAdminPage: React.FC = () => {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => navigate(`/support/${ticket.id}`)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#454D7C] hover:bg-[#454D7C]/5 rounded-lg transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-navy-600 hover:bg-navy-700/5 rounded-lg transition-colors"
                       >
                         <Eye className="h-4 w-4" />
                         View

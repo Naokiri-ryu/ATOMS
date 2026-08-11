@@ -491,7 +491,7 @@ const ShiftSwapRequestsTable: React.FC<ShiftSwapRequestsTableProps> = ({
     <div>
       {/* Title */}
       <div className="mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-[#222E6A]">Permintaan Tukar Shift</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-navy-700">Permintaan Tukar Shift</h2>
         <p className="text-sm text-gray-600 mt-1">Kelola permintaan tukar shift pada periode roster aktif</p>
       </div>
 
@@ -501,7 +501,7 @@ const ShiftSwapRequestsTable: React.FC<ShiftSwapRequestsTableProps> = ({
           {onRequestNew && (
             <button 
               onClick={onRequestNew}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-br from-[#222E6A] via-[#2a3a7f] to-[#1a235c] hover:from-[#1a235c] hover:via-[#222E6A] hover:to-[#2a3a7f] rounded-xl transition-colors font-semibold text-white text-xs sm:text-sm shadow-md border border-gray-200"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-br from-navy-700 via-navy-600 to-navy-800 hover:from-navy-800 hover:via-navy-700 hover:to-navy-600 rounded-xl transition-colors font-semibold text-white text-xs sm:text-sm shadow-md border border-gray-200"
             >
               <span className="text-lg sm:text-xl">+</span>
               <span>Ajukan Tukar Shift</span>
@@ -533,7 +533,7 @@ const ShiftSwapRequestsTable: React.FC<ShiftSwapRequestsTableProps> = ({
         </div>
 
         {/* Filter and Search */}
-        <div className="rounded-t-xl p-3 sm:p-6 bg-[#222E6A]">
+        <div className="rounded-t-xl p-3 sm:p-6 bg-navy-700">
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-between">
             <div className="flex items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2">
@@ -586,13 +586,13 @@ const ShiftSwapRequestsTable: React.FC<ShiftSwapRequestsTableProps> = ({
         <div className="relative">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 text-[#222E6A] animate-spin" />
+              <Loader2 className="h-8 w-8 text-navy-700 animate-spin" />
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-[#454D7C]">
+                  <tr className="bg-navy-700">
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-white font-semibold text-xs sm:text-sm whitespace-nowrap">
                       Pemohon
                     </th>
@@ -689,7 +689,7 @@ const ShiftSwapRequestsTable: React.FC<ShiftSwapRequestsTableProps> = ({
                               <button
                                 onClick={() => handleApproveManager(request.id)}
                                 disabled={actionLoading === request.id}
-                                className="px-2 py-1 bg-[#222E6A] text-white text-xs rounded-lg hover:bg-[#1a2550] transition-colors"
+                                className="px-2 py-1 bg-navy-700 text-white text-xs rounded-lg hover:bg-navy-800 transition-colors"
                                 title="Approve Manager"
                               >
                                 {actionLoading === request.id ? (
@@ -757,7 +757,7 @@ const ShiftSwapRequestsTable: React.FC<ShiftSwapRequestsTableProps> = ({
             >
               <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <span className="px-2 sm:px-3 py-1.5 sm:py-2 bg-[#222E6A] text-white rounded-lg font-medium text-xs sm:text-sm">
+            <span className="px-2 sm:px-3 py-1.5 sm:py-2 bg-navy-700 text-white rounded-lg font-medium text-xs sm:text-sm">
               {currentPage}
             </span>
             <button 
@@ -783,7 +783,7 @@ const ShiftSwapRequestsTable: React.FC<ShiftSwapRequestsTableProps> = ({
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Masukkan alasan penolakan (opsional)..."
                 rows={3}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#222E6A] focus:border-transparent resize-none"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-navy-700 focus:border-transparent resize-none"
               />
               <div className="mt-4 flex justify-end gap-2">
                 <button

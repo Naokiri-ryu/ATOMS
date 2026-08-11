@@ -33,7 +33,7 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#EEF1F8]">
       <div className="flex flex-col items-center gap-3">
-        <div className="h-10 w-10 rounded-full border-4 border-[#222E6A]/30 border-t-[#222E6A] animate-spin" />
+        <div className="h-10 w-10 rounded-full border-4 border-brand-primary/30 border-t-brand-primary animate-spin" />
         <p className="text-sm text-slate-500">Mengarahkan ke halaman login…</p>
       </div>
     </div>

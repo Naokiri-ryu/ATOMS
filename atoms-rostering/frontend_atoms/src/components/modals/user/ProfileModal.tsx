@@ -90,7 +90,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title="Profile Settings" size="md">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-          <div className="w-16 h-16 bg-[#222E6A] rounded-full flex items-center justify-center">
+          <div className="w-16 h-16 bg-navy-700 rounded-full flex items-center justify-center">
             <span className="text-white text-2xl font-bold">
               {user?.name?.charAt(0).toUpperCase() || 'U'}
             </span>

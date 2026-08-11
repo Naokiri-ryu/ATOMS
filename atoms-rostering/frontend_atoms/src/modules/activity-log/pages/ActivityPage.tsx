@@ -118,8 +118,8 @@ const ActivityPage: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-6 mb-6 transition-all duration-200 hover:shadow-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#222E6A]/10 border-2 border-[#222E6A]">
-              <Activity className="h-6 w-6 text-[#222E6A]" />
+            <div className="p-2 rounded-lg bg-navy-700/10 border-2 border-navy-700">
+              <Activity className="h-6 w-6 text-navy-700" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">System Activity</h2>
@@ -132,7 +132,7 @@ const ActivityPage: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed select-none px-4 py-2 text-base bg-[#454D7C] text-white group-hover:bg-[#3a4166] border-b-[6px] group-hover:border-b-[3px] group-active:border-b-[1px] border-[#222E6A] transform group-hover:translate-y-[2px] group-active:translate-y-[4px]"
+              className="inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed select-none px-4 py-2 text-base bg-navy-600 text-white group-hover:bg-navy-500 border-b-[6px] group-hover:border-b-[3px] group-active:border-b-[1px] border-navy-700 transform group-hover:translate-y-[2px] group-active:translate-y-[4px]"
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
               Refresh
@@ -154,14 +154,14 @@ const ActivityPage: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search activities..."
-                className="w-full pl-10 pr-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#222E6A] focus:border-[#222E6A] text-sm font-medium transition-all duration-150"
+                className="w-full pl-10 pr-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-600 focus:border-navy-700 text-sm font-medium transition-all duration-150"
               />
             </div>
             {searchTerm && (
               <div className="inline-flex group h-[42px] items-end">
                 <button
                   onClick={handleClearSearch}
-                  className="inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 focus:outline-none select-none px-3 py-2 text-sm border-2 border-b-[6px] group-hover:border-b-[3px] group-active:border-b-[1px] border-[#454D7C] text-[#454D7C] group-hover:bg-gradient-to-b group-hover:from-[#EEF0FF] group-hover:to-[#E3E6FF] bg-white transform group-hover:translate-y-[2px] group-active:translate-y-[4px] whitespace-nowrap"
+                  className="inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 focus:outline-none select-none px-3 py-2 text-sm border-2 border-b-[6px] group-hover:border-b-[3px] group-active:border-b-[1px] border-navy-600 text-navy-600 group-hover:bg-gradient-to-b group-hover:from-navy-100 group-hover:to-navy-200 bg-white transform group-hover:translate-y-[2px] group-active:translate-y-[4px] whitespace-nowrap"
                 >
                   Clear
                 </button>
@@ -180,7 +180,7 @@ const ActivityPage: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="bg-[#222E6A] text-white">
+              <tr className="bg-navy-700 text-white">
                 <th className="px-4 py-3 text-left font-semibold">Aktivitas</th>
                 <th className="px-4 py-3 text-left font-semibold">Modul</th>
                 <th className="px-4 py-3 text-left font-semibold">Aksi</th>

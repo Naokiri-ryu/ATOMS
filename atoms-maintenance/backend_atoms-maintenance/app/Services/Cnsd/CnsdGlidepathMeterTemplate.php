@@ -11,7 +11,7 @@ namespace App\Services\Cnsd;
  *
  *   Section A — PEMBACAAN METER READING
  *     Groups:
- *       1. FRONT PANEL        — single HASIL column
+ *       1. FRONT PANEL        — dual TX1/TX2 columns
  *       2. CL (course Line)   — dual M1/M2 columns
  *       3. DS (Displacement Sensitivity) — dual M1/M2
  *       4. CLR (Clearance)    — dual M1/M2
@@ -61,17 +61,17 @@ class CnsdGlidepathMeterTemplate
     {
         return [
             // ─── 1. FRONT PANEL ────────────────────────────────
-            // Single HASIL column (no TX1/TX2 split)
+            // Dual TX1/TX2 columns (same as Localizer)
             [
                 'number' => 1,
                 'name'   => 'FRONT PANEL',
                 'items'  => [
-                    ['item_name' => 'All Status Indikator', 'nominal' => 'Normal / Alrm', 'hasil_layout' => 'single'],
-                    ['item_name' => 'Main Selected',        'nominal' => '√ / –',         'hasil_layout' => 'single'],
-                    ['item_name' => 'TX On AIR',            'nominal' => '√ / –',         'hasil_layout' => 'single'],
-                    ['item_name' => 'TX Stby',              'nominal' => '√ / –',         'hasil_layout' => 'single'],
-                    ['item_name' => 'Control Status',       'nominal' => 'local / Remote','hasil_layout' => 'single'],
-                    ['item_name' => 'DC Power Supply',      'nominal' => '28 V',          'hasil_layout' => 'single'],
+                    ['item_name' => 'All Status Indikator', 'nominal' => 'Normal / Alrm', 'hasil_layout' => 'dual'],
+                    ['item_name' => 'Main Selected',        'nominal' => '√ / –',         'hasil_layout' => 'dual'],
+                    ['item_name' => 'TX On AIR',            'nominal' => '√ / –',         'hasil_layout' => 'dual'],
+                    ['item_name' => 'TX Stby',              'nominal' => '√ / –',         'hasil_layout' => 'dual'],
+                    ['item_name' => 'Control Status',       'nominal' => 'local / Remote','hasil_layout' => 'dual'],
+                    ['item_name' => 'DC Power Supply',      'nominal' => '28 V',          'hasil_layout' => 'dual'],
                 ],
             ],
 

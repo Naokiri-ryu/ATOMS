@@ -273,8 +273,8 @@ const UsersPage: React.FC = () => {
       header: 'Role',
       render: (user: User) => {
         const roleColors: Record<string, string> = {
-          'Admin': 'bg-[#D8DAED] text-[#222E6A]',
-          'Cns': 'bg-[#D8DAED] text-[#454D7C]',
+          'Admin': 'bg-navy-100 text-navy-700',
+          'Cns': 'bg-navy-100 text-navy-600',
           'Support': 'bg-green-100 text-green-800',
           'Manager Teknik': 'bg-orange-100 text-orange-800',
           'General Manager': 'bg-red-100 text-red-800',
@@ -516,7 +516,7 @@ const UsersPage: React.FC = () => {
             <Button
               variant="primary"
               onClick={() => setIsCreateModalOpen(true)}
-              className="bg-[#222E6A] hover:bg-[#1a2452] w-full lg:w-auto"
+              className="bg-navy-700 hover:bg-navy-800 w-full lg:w-auto"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create User
@@ -582,7 +582,7 @@ const UsersPage: React.FC = () => {
                           onClick={() => handlePageChange(page)}
                           className={`px-2 sm:px-4 py-2 min-w-[32px] sm:min-w-[40px] text-xs sm:text-sm ${
                             page === currentPage 
-                              ? 'bg-[#222E6A] text-white' 
+                              ? 'bg-navy-700 text-white' 
                               : 'hover:bg-gray-50'
                           }`}
                         >

@@ -462,7 +462,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
     return (
       <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-        <p className="text-sm font-semibold text-[#1a2452] mb-1">Approver Cuti</p>
+        <p className="text-sm font-semibold text-navy-800 mb-1">Approver Cuti</p>
 
         {isLoadingApprovalPreview && (
           <p className="text-xs text-blue-700">Mencari manager approver berdasarkan tanggal yang dipilih...</p>
@@ -524,7 +524,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
       onClose={onClose} 
       title="Request Leave" 
       size="xl" 
-      headerClassName="bg-gradient-to-r from-[#222E6A] to-[#1a2452] text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg"
+      headerClassName="bg-gradient-to-r from-navy-700 to-navy-800 text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Field-level validation errors summary */}
@@ -545,11 +545,11 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Column 1 - Applicant Information */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">Applicant Information</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">Applicant Information</h3>
               
               {/* Name - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Name
                 </label>
                 <div className="flex flex-col gap-1">
@@ -565,7 +565,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Role - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Role
                 </label>
                 <div className="flex flex-col gap-1">
@@ -583,7 +583,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Request Date - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Request Date
                 </label>
                 <div className="flex flex-col gap-1">
@@ -599,7 +599,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Request Type */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Request Type
                 </label>
                 <Select
@@ -620,7 +620,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Annual Leave Subtype */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Jenis Cuti Tahunan
                 </label>
                 <Select
@@ -634,13 +634,13 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
             {/* Column 2 - Reason */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">Reason</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">Reason</h3>
               <div>
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   rows={12}
-                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm resize-none"
+                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm resize-none"
                   placeholder="Personal leave for rest and family matters"
                   required
                 />
@@ -649,11 +649,11 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
             {/* Column 3 - Leave Period (NO UPLOAD) */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">{periodLabel}</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">{periodLabel}</h3>
               
               {/* Start Date */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Start Date
                 </label>
                 <input
@@ -662,14 +662,14 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
                   onChange={(e) => handleStartDateChange(e.target.value)}
                   min={effectiveStartDateMin}
                   max={effectiveStartDateMax}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm"
                   required
                 />
               </div>
 
               {/* End Date */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   End Date
                 </label>
                 <input
@@ -678,14 +678,14 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
                   onChange={(e) => handleEndDateChange(e.target.value)}
                   min={startDate || effectiveStartDateMin}
                   max={effectiveStartDateMax}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm"
                   required
                 />
               </div>
 
               {/* Total Days */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Total Days
                 </label>
                 <div className="flex items-center gap-2">
@@ -701,11 +701,11 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Column 1 - Applicant Information */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">Applicant Information</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">Applicant Information</h3>
               
               {/* Name - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Name
                 </label>
                 <div className="flex flex-col gap-1">
@@ -721,7 +721,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Role - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Role
                 </label>
                 <div className="flex flex-col gap-1">
@@ -739,7 +739,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Request Date - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Request Date
                 </label>
                 <div className="flex flex-col gap-1">
@@ -755,7 +755,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Request Type */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Request Type
                 </label>
                 <Select
@@ -777,13 +777,13 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
             {/* Column 2 - Reason */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">Reason</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">Reason</h3>
               <div>
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   rows={12}
-                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm resize-none"
+                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm resize-none"
                   placeholder="Personal leave for rest and family matters"
                   required
                 />
@@ -792,11 +792,11 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
             {/* Column 3 - Leave Period */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">{periodLabel}</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">{periodLabel}</h3>
               
               {/* Start Date */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Start Date
                 </label>
                 <input
@@ -805,14 +805,14 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
                   onChange={(e) => handleStartDateChange(e.target.value)}
                   min={effectiveStartDateMin}
                   max={effectiveStartDateMax}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm"
                   required
                 />
               </div>
 
               {/* End Date */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   End Date
                 </label>
                 <input
@@ -821,14 +821,14 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
                   onChange={(e) => handleEndDateChange(e.target.value)}
                   min={startDate || effectiveStartDateMin}
                   max={effectiveStartDateMax}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm"
                   required
                 />
               </div>
 
               {/* Total Days */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Total Days
                 </label>
                 <div className="flex items-center gap-2">
@@ -840,7 +840,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Upload File */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Upload File
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 bg-gray-50">
@@ -867,11 +867,11 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Column 1 - Applicant Information */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">Applicant Information</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">Applicant Information</h3>
               
               {/* Name - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Name
                 </label>
                 <div className="flex flex-col gap-1">
@@ -887,7 +887,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Role - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Role
                 </label>
                 <div className="flex flex-col gap-1">
@@ -905,7 +905,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Request Date - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Request Date
                 </label>
                 <div className="flex flex-col gap-1">
@@ -921,7 +921,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Request Type */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Request Type
                 </label>
                 <Select
@@ -943,11 +943,11 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
             {/* Column 2 - Duty Period */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">{periodLabel}</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">{periodLabel}</h3>
               
               {/* Start Date */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Start Date
                 </label>
                 <input
@@ -956,14 +956,14 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
                   onChange={(e) => handleStartDateChange(e.target.value)}
                   min={effectiveStartDateMin}
                   max={effectiveStartDateMax}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm"
                   required
                 />
               </div>
 
               {/* End Date */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   End Date
                 </label>
                 <input
@@ -972,14 +972,14 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
                   onChange={(e) => handleEndDateChange(e.target.value)}
                   min={startDate || effectiveStartDateMin}
                   max={effectiveStartDateMax}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm"
                   required
                 />
               </div>
 
               {/* Total Days */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Total Days
                 </label>
                 <div className="flex items-center gap-2">
@@ -991,7 +991,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* TPO City */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Kota TPO
                 </label>
                 <Select
@@ -1007,7 +1007,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Upload File */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Upload File
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
@@ -1034,11 +1034,11 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Column 1 - Applicant Information */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">Applicant Information</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">Applicant Information</h3>
               
               {/* Name - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Name
                 </label>
                 <div className="flex flex-col gap-1">
@@ -1054,7 +1054,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Role - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Role
                 </label>
                 <div className="flex flex-col gap-1">
@@ -1072,7 +1072,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Request Date - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Request Date
                 </label>
                 <div className="flex flex-col gap-1">
@@ -1088,7 +1088,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Request Type */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Request Type
                 </label>
                 <Select
@@ -1110,11 +1110,11 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
             {/* Column 2 - Education Type & Duty Period */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">Education Type</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">Education Type</h3>
               
               {/* Education Type Dropdown */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Education Type
                 </label>
                 <Select
@@ -1134,14 +1134,14 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Program / Course */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Program / Course
                 </label>
                 <textarea
                   value={programCourse}
                   onChange={(e) => setProgramCourse(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm resize-none"
                   placeholder="CNS Equipment Preventive Maintenance Training"
                   required
                 />
@@ -1149,24 +1149,24 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Institution / Assignment Location */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Institution / Assignment Location
                 </label>
                 <input
                   type="text"
                   value={institution}
                   onChange={(e) => setInstitution(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm"
                   placeholder="AirNav Indonesia - Sumenep Branch"
                   required
                 />
               </div>
 
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A] pt-2">{periodLabel}</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700 pt-2">{periodLabel}</h3>
               
               {/* Start Date */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Start Date
                 </label>
                 <input
@@ -1175,14 +1175,14 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
                   onChange={(e) => handleStartDateChange(e.target.value)}
                   min={effectiveStartDateMin}
                   max={effectiveStartDateMax}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm"
                   required
                 />
               </div>
 
               {/* End Date */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   End Date
                 </label>
                 <input
@@ -1191,14 +1191,14 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
                   onChange={(e) => handleEndDateChange(e.target.value)}
                   min={startDate || effectiveStartDateMin}
                   max={effectiveStartDateMax}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#222E6A] text-xs sm:text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-700 text-xs sm:text-sm"
                   required
                 />
               </div>
 
               {/* Total Days */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Total Days
                 </label>
                 <div className="flex items-center gap-2">
@@ -1210,7 +1210,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Official Letter / Assignment Letter */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Official Letter / Assignment Letter
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
@@ -1237,11 +1237,11 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Left Column - Applicant Information */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">Applicant Information</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">Applicant Information</h3>
               
               {/* Name - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Name
                 </label>
                 <div className="flex flex-col gap-1">
@@ -1257,7 +1257,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Role - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Role
                 </label>
                 <div className="flex flex-col gap-1">
@@ -1275,7 +1275,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Request Date - Auto-filled */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Request Date
                 </label>
                 <div className="flex flex-col gap-1">
@@ -1291,7 +1291,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
               {/* Request Type */}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-[#222E6A] mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-navy-700 mb-2">
                   Request Type
                 </label>
                 <Select
@@ -1313,7 +1313,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
 
             {/* Right Column - Period Information */}
             <div className="space-y-4">
-              <h3 className="text-sm sm:text-base font-bold text-[#222E6A]">Period Information</h3>
+              <h3 className="text-sm sm:text-base font-bold text-navy-700">Period Information</h3>
               <p className="text-sm text-gray-600">Please select a request type to continue</p>
             </div>
           </div>
@@ -1327,7 +1327,7 @@ const LeaveRequestModal: React.FC<LeaveRequestModalProps> = ({ isOpen, onClose, 
             type="submit"
             variant="primary"
             isLoading={isLoading}
-            className="w-full sm:ml-auto sm:w-auto px-6 bg-[#222E6A] hover:bg-[#1a2452]"
+            className="w-full sm:ml-auto sm:w-auto px-6 bg-navy-700 hover:bg-navy-800"
             disabled={isAllOffRange}
           >
             <span className="text-xs sm:text-sm">Submit</span>

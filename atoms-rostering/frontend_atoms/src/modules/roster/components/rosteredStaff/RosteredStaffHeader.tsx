@@ -49,7 +49,7 @@ const RosteredStaffHeader: React.FC<RosteredStaffHeaderProps> = ({
       {showFullMonth ? (
         <button
           onClick={onPrint}
-          className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-[#222E6A] hover:bg-[#1a2352] transition-colors flex-shrink-0"
+          className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-navy-700 hover:bg-navy-800 transition-colors flex-shrink-0"
           title="Print roster"
         >
           Print
@@ -69,7 +69,7 @@ const RosteredStaffHeader: React.FC<RosteredStaffHeaderProps> = ({
           </button>
           <button
             onClick={onPrint}
-            className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-[#222E6A] hover:bg-[#1a2352] transition-colors flex-shrink-0"
+            className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-navy-700 hover:bg-navy-800 transition-colors flex-shrink-0"
             title="Print roster"
           >
             Print

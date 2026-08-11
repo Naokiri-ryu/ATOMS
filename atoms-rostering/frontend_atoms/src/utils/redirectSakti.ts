@@ -1,6 +1,6 @@
 import { getStoredToken } from "../modules/auth/core/authStorage";
 
-export function redirectToSakti(): void {
+export function redirectToSakti(openInNewTab = false): void {
   const token = getStoredToken();
   const userStr = localStorage.getItem("user");
   const userObject = userStr ? JSON.parse(userStr) : null;
@@ -22,5 +22,9 @@ export function redirectToSakti(): void {
     ? `${baseUrl}/sso?token=${encodeURIComponent(token)}&tokenfix=${encodeURIComponent(tokenfix)}&role=${encodeURIComponent(userObject?.role || '')}&name=${encodeURIComponent(userObject?.name || '')}&email=${encodeURIComponent(userObject?.email || '')}`
     : `${baseUrl}/login`;
 
-  window.location.href = url;
+  if (openInNewTab) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } else {
+    window.location.href = url;
+  }
 }

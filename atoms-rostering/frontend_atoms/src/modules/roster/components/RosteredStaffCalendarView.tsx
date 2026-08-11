@@ -175,7 +175,7 @@ const RosteredStaffCalendarView: React.FC<RosteredStaffCalendarViewProps> = ({
             onClick={() => setCurrentWeek(index)}
             className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full text-xs sm:text-lg font-medium transition-all ${
               index === currentWeek
-                ? 'bg-[#222E6A] text-white scale-110'
+                ? 'bg-navy-700 text-white scale-110'
                 : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
             }`}
           >
@@ -218,7 +218,7 @@ const RosteredStaffCalendarView: React.FC<RosteredStaffCalendarViewProps> = ({
                 <tr key={shift.id} className="hover:bg-gray-50 transition-colors">
                   <td 
                     className={`text-white px-2 sm:px-4 py-3 sm:py-4 align-top ${isLastShift ? 'rounded-bl-xl' : ''}`} 
-                    style={{ backgroundColor: '#454D7C' }}
+                    style={{ backgroundColor: '#222E6A' }}
                   >
                     <div className="text-left">
                       <div className="text-[10px] sm:text-xs lg:text-sm font-semibold whitespace-nowrap">{shift.name}</div>

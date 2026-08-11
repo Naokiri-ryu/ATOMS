@@ -139,9 +139,9 @@ class RosteringIntegrationService
     /**
      * Get the Manager Teknik assigned to a specific shift on a given date.
      *
-     * The MT is stored in `shift_assignments` with `employees.employee_type = 'Manager Teknik'`.
-     * The legacy `manager_duties` table is unused in current data, so this method
-     * resolves MT from the same shift_assignments path as regular personnel.
+     * Prefer explicit manager duties when available, because the assigned
+     * manager may later change role/employee_type while the historical shift
+     * assignment should still be preserved.
      *
      * @param  string  $shiftType  'pagi' | 'siang' | 'malam'
      * @param  string  $date       'Y-m-d'
@@ -150,6 +150,36 @@ class RosteringIntegrationService
     public function getShiftManager(string $shiftType, string $date): ?object
     {
         try {
+            $manager = DB::connection('rostering')
+                ->table('manager_duties as md')
+                ->join('roster_days as rd', 'rd.id', '=', 'md.roster_day_id')
+                ->join('roster_periods as rp', 'rp.id', '=', 'rd.roster_period_id')
+                ->join('employees as e', 'e.id', '=', 'md.employee_id')
+                ->join('users as u', 'u.id', '=', 'e.user_id')
+                ->join('shifts as s', 's.id', '=', 'md.shift_id')
+                ->where('rd.work_date', $date)
+                ->where('rp.status', 'published')
+                ->where('s.name', strtolower($shiftType))
+                ->where('md.duty_type', 'Manager Teknik')
+                ->whereNull('md.deleted_at')
+                ->whereNull('rd.deleted_at')
+                ->whereNull('e.deleted_at')
+                ->whereNull('u.deleted_at')
+                ->where('u.is_active', true)
+                ->select(
+                    'u.id as user_id',
+                    'u.name',
+                    'u.role',
+                    'e.employee_type',
+                    'e.group_number'
+                )
+                ->orderBy('u.name')
+                ->first();
+
+            if ($manager) {
+                return $manager;
+            }
+
             return DB::connection('rostering')
                 ->table('shift_assignments as sa')
                 ->join('roster_days as rd', 'rd.id', '=', 'sa.roster_day_id')
@@ -205,6 +235,45 @@ class RosteringIntegrationService
         }
 
         try {
+            $dutyRows = DB::connection('rostering')
+                ->table('manager_duties as md')
+                ->join('roster_days as rd', 'rd.id', '=', 'md.roster_day_id')
+                ->join('roster_periods as rp', 'rp.id', '=', 'rd.roster_period_id')
+                ->join('employees as e', 'e.id', '=', 'md.employee_id')
+                ->join('users as u', 'u.id', '=', 'e.user_id')
+                ->join('shifts as s', 's.id', '=', 'md.shift_id')
+                ->whereIn('rd.work_date', $dates)
+                ->where('rp.status', 'published')
+                ->whereIn('s.name', ['pagi', 'siang', 'malam'])
+                ->where('md.duty_type', 'Manager Teknik')
+                ->whereNull('md.deleted_at')
+                ->whereNull('rd.deleted_at')
+                ->whereNull('e.deleted_at')
+                ->whereNull('u.deleted_at')
+                ->where('u.is_active', true)
+                ->select(
+                    'rd.work_date',
+                    's.name as shift',
+                    'u.id as user_id',
+                    'u.name'
+                )
+                ->orderBy('u.name')
+                ->get();
+
+            foreach ($dutyRows as $row) {
+                $dateKey = Carbon::parse($row->work_date)->format('Y-m-d');
+                $shift   = strtolower((string) $row->shift);
+                if (!isset($result[$dateKey]) || !in_array($shift, ['pagi', 'siang', 'malam'], true)) {
+                    continue;
+                }
+                if ($result[$dateKey][$shift] === null) {
+                    $result[$dateKey][$shift] = (object) [
+                        'user_id' => (int) $row->user_id,
+                        'name'    => $row->name,
+                    ];
+                }
+            }
+
             $rows = DB::connection('rostering')
                 ->table('shift_assignments as sa')
                 ->join('roster_days as rd', 'rd.id', '=', 'sa.roster_day_id')
@@ -236,7 +305,6 @@ class RosteringIntegrationService
                 if (!isset($result[$dateKey]) || !in_array($shift, ['pagi', 'siang', 'malam'], true)) {
                     continue;
                 }
-                // Keep only the first manager per (date, shift) — matches single-result behavior of getShiftManager
                 if ($result[$dateKey][$shift] === null) {
                     $result[$dateKey][$shift] = (object) [
                         'user_id' => (int) $row->user_id,

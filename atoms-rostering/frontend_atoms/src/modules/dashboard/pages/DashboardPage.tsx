@@ -162,7 +162,7 @@ const DashboardPage: React.FC = () => {
             </h3>
             <button
               onClick={() => navigate('/activity-log')}
-              className="text-sm text-[#454D7C] hover:text-[#222E6A] font-medium flex items-center gap-1 transition-colors"
+              className="text-sm text-navy-600 hover:text-navy-700 font-medium flex items-center gap-1 transition-colors"
             >
               View all
               <ChevronRight className="h-4 w-4" />
@@ -189,8 +189,8 @@ const DashboardPage: React.FC = () => {
               recentActivities.slice(0, 8).map((activity) => (
                 <div key={activity.id} className="px-6 py-3 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-[#D8DAED] flex items-center justify-center flex-shrink-0">
-                      <Activity className="h-3.5 w-3.5 text-[#454D7C]" />
+                    <div className="h-8 w-8 rounded-full bg-navy-100 flex items-center justify-center flex-shrink-0">
+                      <Activity className="h-3.5 w-3.5 text-navy-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-700 truncate">
@@ -249,7 +249,7 @@ const DashboardPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wide">Role</p>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#D8DAED] text-[#222E6A]">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-navy-100 text-navy-700">
                   {user?.role}
                 </span>
               </div>

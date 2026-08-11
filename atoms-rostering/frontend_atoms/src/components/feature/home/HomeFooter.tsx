@@ -17,7 +17,7 @@ const HomeFooter: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <footer className="bg-gradient-to-r from-[#454D7C] to-[#222E6A] text-white relative overflow-hidden">
+    <footer className="bg-gradient-to-r from-navy-600 to-navy-800 text-white relative overflow-hidden">
       <div className="absolute inset-0 opacity-10">
         <picture>
           <source

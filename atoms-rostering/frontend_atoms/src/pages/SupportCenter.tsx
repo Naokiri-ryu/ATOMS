@@ -197,7 +197,7 @@ const SupportCenter: React.FC = () => {
             onClick={() => setActiveTab('submit')}
             className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'submit'
-                ? 'border-[#454D7C] text-[#454D7C]'
+                ? 'border-navy-600 text-navy-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -210,7 +210,7 @@ const SupportCenter: React.FC = () => {
             onClick={() => setActiveTab('my-tickets')}
             className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'my-tickets'
-                ? 'border-[#454D7C] text-[#454D7C]'
+                ? 'border-navy-600 text-navy-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -218,7 +218,7 @@ const SupportCenter: React.FC = () => {
               <Inbox className="h-4 w-4" />
               My Tickets
               {totalTickets > 0 && (
-                <span className="bg-[#454D7C] text-white text-xs px-2 py-0.5 rounded-full">
+                <span className="bg-navy-700 text-white text-xs px-2 py-0.5 rounded-full">
                   {totalTickets}
                 </span>
               )}
@@ -318,7 +318,7 @@ const SupportCenter: React.FC = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Brief summary of your issue or request"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#454D7C] focus:border-transparent outline-none transition-all"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-navy-600 focus:border-transparent outline-none transition-all"
                 maxLength={255}
               />
             </div>
@@ -334,7 +334,7 @@ const SupportCenter: React.FC = () => {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Provide detailed information about your bug report or feature request..."
                 rows={6}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#454D7C] focus:border-transparent outline-none transition-all resize-none"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-navy-600 focus:border-transparent outline-none transition-all resize-none"
                 maxLength={5000}
               />
               <p className="mt-1 text-xs text-gray-500 text-right">{description.length}/5000</p>
@@ -352,7 +352,7 @@ const SupportCenter: React.FC = () => {
                 onDrop={handleDrop}
                 className={`border-2 border-dashed rounded-xl p-6 text-center transition-all ${
                   dragActive
-                    ? 'border-[#454D7C] bg-[#454D7C]/5'
+                    ? 'border-navy-600 bg-navy-600/5'
                     : attachment
                     ? 'border-green-300 bg-green-50'
                     : 'border-gray-300 hover:border-gray-400'
@@ -379,7 +379,7 @@ const SupportCenter: React.FC = () => {
                   <div>
                     <Upload className="h-10 w-10 text-gray-400 mx-auto mb-3" />
                     <p className="text-sm text-gray-600">
-                      <span className="font-medium text-[#454D7C]">Click to upload</span> or drag
+                      <span className="font-medium text-navy-600">Click to upload</span> or drag
                       and drop
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
@@ -432,13 +432,13 @@ const SupportCenter: React.FC = () => {
                 placeholder="Search tickets..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#454D7C] focus:border-transparent outline-none"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-navy-600 focus:border-transparent outline-none"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#454D7C] focus:border-transparent outline-none bg-white"
+              className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-navy-600 focus:border-transparent outline-none bg-white"
             >
               <option value="">All Status</option>
               <option value="open">Open</option>
@@ -451,7 +451,7 @@ const SupportCenter: React.FC = () => {
           {/* Tickets List */}
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 text-[#454D7C] animate-spin" />
+              <Loader2 className="h-8 w-8 text-navy-600 animate-spin" />
             </div>
           ) : tickets.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-xl border border-gray-200">

@@ -150,7 +150,7 @@ export const WelcomeModal: React.FC = () => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label="Selamat Datang">
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl animate-fade-in">
         {/* Header — navy gradient */}
-        <div className="bg-gradient-to-br from-[#1a2555] to-[#2d3a7a] px-6 py-5 text-white">
+        <div className="bg-gradient-to-br from-brand-800 to-brand-600 px-6 py-5 text-white">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-lg font-bold">
               {user.name.charAt(0)}
@@ -317,7 +317,7 @@ export const WelcomeModal: React.FC = () => {
               setIsOpen(false);
               navigate(ctaRoute);
             }}
-            className="flex-1 h-10 rounded-xl bg-[#222E6A] text-sm font-medium text-white hover:bg-[#1a2555] transition-colors"
+            className="flex-1 h-10 rounded-xl bg-brand-primary text-sm font-medium text-white hover:bg-brand-700 transition-colors"
           >
             {allDone ? 'Ke Dashboard →' : 'Mulai Pengecekan →'}
           </button>

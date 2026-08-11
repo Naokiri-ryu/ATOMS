@@ -89,7 +89,7 @@ const RosterWeekView: React.FC<RosterWeekViewProps> = ({
               onClick={() => onDateSelect(day)}
               className={`flex flex-col items-center justify-center py-1 px-1 sm:py-2 sm:px-2 rounded-lg transition-all text-center ${
                 isSelected
-                  ? 'bg-[#222E6A] text-white shadow-lg'
+                  ? 'bg-navy-700 text-white shadow-lg'
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               } ${isToday && !isSelected ? 'ring-2 ring-blue-400' : ''}`}
             >

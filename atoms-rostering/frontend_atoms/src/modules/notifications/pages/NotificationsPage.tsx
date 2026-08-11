@@ -2543,7 +2543,7 @@ const NotificationsPage: React.FC = () => {
               <Button
                 variant="primary"
                 onClick={handleOpenCompose}
-                className="w-full h-9 sm:h-auto sm:w-auto justify-center bg-[#222E6A] hover:bg-[#1a2452] text-xs px-2 py-1.5 sm:text-base sm:px-4 sm:py-2"
+                className="w-full h-9 sm:h-auto sm:w-auto justify-center bg-navy-700 hover:bg-navy-800 text-xs px-2 py-1.5 sm:text-base sm:px-4 sm:py-2"
               >
                 <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="ml-1 sm:ml-2">Compose</span>
@@ -2553,7 +2553,7 @@ const NotificationsPage: React.FC = () => {
               <Button
                 variant="primary"
                 onClick={handleOpenRosterTaskModal}
-                className="w-full h-9 sm:h-auto sm:w-auto justify-center bg-[#222E6A] hover:bg-[#1a2452] text-xs px-2 py-1.5 sm:text-base sm:px-4 sm:py-2"
+                className="w-full h-9 sm:h-auto sm:w-auto justify-center bg-navy-700 hover:bg-navy-800 text-xs px-2 py-1.5 sm:text-base sm:px-4 sm:py-2"
               >
                 <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="ml-1 sm:ml-2 hidden sm:inline">Add Roster Task</span>
@@ -3066,7 +3066,7 @@ const NotificationsPage: React.FC = () => {
                             variant="primary"
                             effect3d={false}
                             onClick={() => handleSendDraft(notification)}
-                            className="text-xs sm:text-sm bg-[#222E6A] hover:bg-[#1a2452]"
+                            className="text-xs sm:text-sm bg-navy-700 hover:bg-navy-800"
                           >
                             Send Now
                           </Button>
@@ -3141,7 +3141,7 @@ const NotificationsPage: React.FC = () => {
               type="text"
               value={rosterTaskForm.title}
               onChange={(e) => setRosterTaskForm(prev => ({ ...prev, title: e.target.value }))}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-[#222E6A] focus:ring-2 focus:ring-[#222E6A]/20" 
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-navy-700 focus:ring-2 focus:ring-navy-700/20" 
             />
           </div>
           <div>
@@ -3150,7 +3150,7 @@ const NotificationsPage: React.FC = () => {
               value={rosterTaskForm.description}
               onChange={(e) => setRosterTaskForm(prev => ({ ...prev, description: e.target.value }))}
               rows={3}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-[#222E6A] focus:ring-2 focus:ring-[#222E6A]/20"
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-navy-700 focus:ring-2 focus:ring-navy-700/20"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -3160,7 +3160,7 @@ const NotificationsPage: React.FC = () => {
                 type="date"
                 value={rosterTaskForm.date}
                 onChange={(e) => setRosterTaskForm(prev => ({ ...prev, date: e.target.value }))}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-[#222E6A] focus:ring-2 focus:ring-[#222E6A]/20" 
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-navy-700 focus:ring-2 focus:ring-navy-700/20" 
               />
             </div>
             <div>
@@ -3168,7 +3168,7 @@ const NotificationsPage: React.FC = () => {
               <select
                 value={rosterTaskForm.shift_key}
                 onChange={(e) => setRosterTaskForm(prev => ({ ...prev, shift_key: e.target.value as ShiftKey }))}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-[#222E6A] focus:ring-2 focus:ring-[#222E6A]/20"
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-navy-700 focus:ring-2 focus:ring-navy-700/20"
               >
                 <option value="07-13">Pagi</option>
                 <option value="13-19">Siang</option>
@@ -3180,7 +3180,7 @@ const NotificationsPage: React.FC = () => {
               <select
                 value={rosterTaskForm.priority}
                 onChange={(e) => setRosterTaskForm(prev => ({ ...prev, priority: e.target.value as 'low' | 'medium' | 'high' }))}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-[#222E6A] focus:ring-2 focus:ring-[#222E6A]/20"
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-navy-700 focus:ring-2 focus:ring-navy-700/20"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -3196,7 +3196,7 @@ const NotificationsPage: React.FC = () => {
               value={rosterTaskUserSearchQuery}
               onChange={(e) => setRosterTaskUserSearchQuery(e.target.value)}
               placeholder="Cari semua karyawan atau manager..."
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-[#222E6A] focus:ring-2 focus:ring-[#222E6A]/20"
+              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 shadow-sm focus:border-navy-700 focus:ring-2 focus:ring-navy-700/20"
             />
             <p className="mt-1 text-xs text-gray-500">
               Digunakan untuk mencari seluruh karyawan atau manager yang akan di-assign.
@@ -3226,13 +3226,13 @@ const NotificationsPage: React.FC = () => {
                           }}
                           className={`text-left px-2 py-2 border rounded-md transition-colors ${
                             isSelected
-                              ? 'border-[#222E6A] bg-[#eef2ff]'
+                              ? 'border-navy-700 bg-navy-100'
                               : 'border-gray-200 bg-white hover:bg-gray-50'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-sm font-semibold text-gray-900 break-words whitespace-normal leading-snug">{u.name}</span>
-                            {isSelected && <Check className="h-4 w-4 text-[#222E6A]" />}
+                            {isSelected && <Check className="h-4 w-4 text-navy-700" />}
                           </div>
                           <p className="text-xs text-gray-500 break-words whitespace-normal">{u.role}</p>
                         </button>
@@ -3272,13 +3272,13 @@ const NotificationsPage: React.FC = () => {
                         }}
                         className={`text-left px-2 py-2 border rounded-md transition-colors ${
                           isSelected
-                            ? 'border-[#222E6A] bg-[#eef2ff]'
+                            ? 'border-navy-700 bg-navy-100'
                             : 'border-gray-200 bg-white hover:bg-gray-50'
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-semibold text-gray-900 break-words whitespace-normal leading-snug">{u.name}</span>
-                          {isSelected && <Check className="h-4 w-4 text-[#222E6A]" />}
+                          {isSelected && <Check className="h-4 w-4 text-navy-700" />}
                         </div>
                         <p className="text-xs text-gray-500 break-words whitespace-normal">{u.role}</p>
                       </button>
@@ -3302,7 +3302,7 @@ const NotificationsPage: React.FC = () => {
                   value="now"
                   checked={rosterTaskSendMode === 'now'}
                   onChange={() => setRosterTaskSendMode('now')}
-                  className="h-4 w-4 text-[#222E6A] border-gray-300 focus:ring-[#222E6A]"
+                  className="h-4 w-4 text-navy-700 border-gray-300 focus:ring-navy-700"
                 />
                 <label htmlFor="roster_send_now" className="text-sm text-gray-700">Send Now</label>
               </div>
@@ -3314,7 +3314,7 @@ const NotificationsPage: React.FC = () => {
                   value="draft"
                   checked={rosterTaskSendMode === 'draft'}
                   onChange={() => setRosterTaskSendMode('draft')}
-                  className="h-4 w-4 text-[#222E6A] border-gray-300 focus:ring-[#222E6A]"
+                  className="h-4 w-4 text-navy-700 border-gray-300 focus:ring-navy-700"
                 />
                 <label htmlFor="roster_save_draft" className="text-sm text-gray-700">Save as Draft</label>
               </div>
@@ -3326,7 +3326,7 @@ const NotificationsPage: React.FC = () => {
                   value="schedule"
                   checked={rosterTaskSendMode === 'schedule'}
                   onChange={() => setRosterTaskSendMode('schedule')}
-                  className="h-4 w-4 text-[#222E6A] border-gray-300 focus:ring-[#222E6A]"
+                  className="h-4 w-4 text-navy-700 border-gray-300 focus:ring-navy-700"
                 />
                 <label htmlFor="roster_schedule_send" className="text-sm text-gray-700">Schedule Send</label>
               </div>
@@ -3470,7 +3470,7 @@ const NotificationsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="px-3 py-1.5 text-xs font-medium rounded-full bg-[#222E6A] text-white hover:bg-[#1a2452] transition-colors"
+                className="px-3 py-1.5 text-xs font-medium rounded-full bg-navy-700 text-white hover:bg-navy-800 transition-colors"
               >
                 Select All
               </button>
@@ -3519,7 +3519,7 @@ const NotificationsPage: React.FC = () => {
                 {selectedUsers.map((user: User) => (
                   <span
                     key={user.id}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-[#222E6A] text-white rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-navy-700 text-white rounded-full text-sm"
                   >
                     {user.name}
                     <button
@@ -3547,7 +3547,7 @@ const NotificationsPage: React.FC = () => {
                 }}
                 onFocus={() => setIsUserDropdownOpen(true)}
                 placeholder="Search users by name, email, or role..."
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#222E6A] focus:border-transparent"
+                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-700 focus:border-transparent"
               />
               {/* Close button for dropdown */}
               {isUserDropdownOpen && (
@@ -3584,7 +3584,7 @@ const NotificationsPage: React.FC = () => {
                           </span>
                         </div>
                         {isSelected && (
-                          <Check className="h-5 w-5 text-[#222E6A]" />
+                          <Check className="h-5 w-5 text-navy-700" />
                         )}
                       </button>
                     );
@@ -3609,7 +3609,7 @@ const NotificationsPage: React.FC = () => {
               value={composeForm.title}
               onChange={(e) => setComposeForm(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Enter notification title"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#222E6A] focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-700 focus:border-transparent"
             />
           </div>
 
@@ -3624,7 +3624,7 @@ const NotificationsPage: React.FC = () => {
               onChange={(e) => setComposeForm(prev => ({ ...prev, message: e.target.value }))}
               placeholder="Enter notification description"
               rows={5}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#222E6A] focus:border-transparent resize-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-700 focus:border-transparent resize-none"
             />
           </div>
 
@@ -3635,7 +3635,7 @@ const NotificationsPage: React.FC = () => {
               id="send_email"
               checked={composeForm.send_email}
               onChange={(e) => setComposeForm(prev => ({ ...prev, send_email: e.target.checked }))}
-              className="h-4 w-4 text-[#222E6A] border-gray-300 rounded focus:ring-[#222E6A]"
+              className="h-4 w-4 text-navy-700 border-gray-300 rounded focus:ring-navy-700"
             />
             <label htmlFor="send_email" className="text-sm text-gray-700">
               Also send email notification
@@ -3656,7 +3656,7 @@ const NotificationsPage: React.FC = () => {
                   value="now"
                   checked={sendMode === 'now'}
                   onChange={(e) => setSendMode(e.target.value as 'now' | 'draft' | 'schedule')}
-                  className="h-4 w-4 text-[#222E6A] border-gray-300 focus:ring-[#222E6A]"
+                  className="h-4 w-4 text-navy-700 border-gray-300 focus:ring-navy-700"
                 />
                 <label htmlFor="send_now" className="text-sm text-gray-700">
                   Send Now
@@ -3670,7 +3670,7 @@ const NotificationsPage: React.FC = () => {
                   value="draft"
                   checked={sendMode === 'draft'}
                   onChange={(e) => setSendMode(e.target.value as 'now' | 'draft' | 'schedule')}
-                  className="h-4 w-4 text-[#222E6A] border-gray-300 focus:ring-[#222E6A]"
+                  className="h-4 w-4 text-navy-700 border-gray-300 focus:ring-navy-700"
                 />
                 <label htmlFor="save_draft" className="text-sm text-gray-700">
                   Save as Draft
@@ -3684,7 +3684,7 @@ const NotificationsPage: React.FC = () => {
                   value="schedule"
                   checked={sendMode === 'schedule'}
                   onChange={(e) => setSendMode(e.target.value as 'now' | 'draft' | 'schedule')}
-                  className="h-4 w-4 text-[#222E6A] border-gray-300 focus:ring-[#222E6A]"
+                  className="h-4 w-4 text-navy-700 border-gray-300 focus:ring-navy-700"
                 />
                 <label htmlFor="schedule_send" className="text-sm text-gray-700">
                   Schedule Send
@@ -3708,7 +3708,7 @@ const NotificationsPage: React.FC = () => {
                     setScheduledDateTime(`${e.target.value}T${time}`);
                   }}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#222E6A] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-700 focus:border-transparent"
                 />
               </div>
               <div>
@@ -3722,7 +3722,7 @@ const NotificationsPage: React.FC = () => {
                     const date = scheduledDateTime.split('T')[0] || new Date().toISOString().split('T')[0];
                     setScheduledDateTime(`${date}T${e.target.value}`);
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#222E6A] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-700 focus:border-transparent"
                 />
               </div>
             </div>
@@ -3741,7 +3741,7 @@ const NotificationsPage: React.FC = () => {
               variant="primary"
               onClick={sendMode === 'draft' ? handleSaveDraft : sendMode === 'schedule' ? handleScheduleNotification : handleSendNotification}
               disabled={isSending || (sendMode === 'schedule' && !scheduledDateTime)}
-              className="bg-[#222E6A] hover:bg-[#1a2452]"
+              className="bg-navy-700 hover:bg-navy-800"
             >
               {isSending ? (
                 <>

@@ -107,11 +107,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create User" size="lg" headerClassName="bg-[#222E6A] text-white flex items-center justify-between px-6 py-4 rounded-t-lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Create User" size="lg" headerClassName="bg-navy-700 text-white flex items-center justify-between px-6 py-4 rounded-t-lg">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information Section */}
         <div>
-          <h3 className="text-sm font-semibold text-[#222E6A] mb-4">Basic Information</h3>
+          <h3 className="text-sm font-semibold text-navy-700 mb-4">Basic Information</h3>
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Full Name"
@@ -208,14 +208,14 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
 
         {/* Account Setup Section */}
         <div>
-          <h3 className="text-sm font-semibold text-[#222E6A] mb-3">Account Setup</h3>
+          <h3 className="text-sm font-semibold text-navy-700 mb-3">Account Setup</h3>
           <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
             <input
               type="checkbox"
               id="sendActivationEmail"
               checked={sendActivationEmail}
               onChange={(e) => setSendActivationEmail(e.target.checked)}
-              className="mt-1 w-4 h-4 text-[#222E6A] border-gray-300 rounded focus:ring-[#222E6A]"
+              className="mt-1 w-4 h-4 text-navy-700 border-gray-300 rounded focus:ring-navy-700"
             />
             <label htmlFor="sendActivationEmail" className="flex-1 cursor-pointer">
               <div className="text-sm font-medium text-gray-700">Send activation email</div>
@@ -241,7 +241,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
             type="submit" 
             variant="primary" 
             isLoading={isLoading} 
-            className="flex-1 bg-[#222E6A] hover:bg-[#1a2452]"
+            className="flex-1 bg-navy-700 hover:bg-navy-800"
           >
             Create User
           </Button>

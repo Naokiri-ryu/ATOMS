@@ -151,8 +151,8 @@ const ShiftRequestCard: React.FC<ShiftRequestCardProps> = ({
         <div className="p-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-[#D8DAED] p-2 rounded-lg">
-                <ArrowRightLeft className="h-5 w-5 text-[#454D7C]" />
+              <div className="bg-navy-100 p-2 rounded-lg">
+                <ArrowRightLeft className="h-5 w-5 text-navy-600" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -219,7 +219,7 @@ const ShiftRequestCard: React.FC<ShiftRequestCardProps> = ({
           {/* Expand button */}
           <button
             onClick={() => setExpanded(!expanded)}
-            className="mt-3 flex items-center gap-1 text-sm text-[#222E6A] hover:underline"
+            className="mt-3 flex items-center gap-1 text-sm text-navy-700 hover:underline"
           >
             {expanded ? (
               <>
@@ -297,7 +297,7 @@ const ShiftRequestCard: React.FC<ShiftRequestCardProps> = ({
               <button
                 onClick={() => handleAction(() => onApproveManager(request.id))}
                 disabled={loading}
-                className="px-4 py-1.5 bg-[#222E6A] text-white text-sm rounded-lg hover:bg-[#1a2550] transition-colors flex items-center gap-1"
+                className="px-4 py-1.5 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-800 transition-colors flex items-center gap-1"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 Approve (Manager)
@@ -319,7 +319,7 @@ const ShiftRequestCard: React.FC<ShiftRequestCardProps> = ({
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Masukkan alasan penolakan (opsional)..."
                 rows={3}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#222E6A] focus:border-transparent resize-none"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-navy-700 focus:border-transparent resize-none"
               />
               <div className="mt-4 flex justify-end gap-2">
                 <button

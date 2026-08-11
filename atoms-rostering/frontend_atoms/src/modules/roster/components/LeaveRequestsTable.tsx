@@ -230,7 +230,7 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   return (
     <>
       <div className="mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-[#222E6A]">Pengajuan Cuti</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-navy-700">Pengajuan Cuti</h2>
         <p className="text-sm text-gray-600 mt-1">Kelola permintaan cuti karyawan pada periode roster aktif</p>
       </div>
 
@@ -264,7 +264,7 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
           </div>
         </div>
 
-        <div className="rounded-t-xl p-3 sm:p-6 bg-[#222E6A]">
+        <div className="rounded-t-xl p-3 sm:p-6 bg-navy-700">
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-between">
             <div className="flex items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2">
@@ -316,13 +316,13 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
         <div className="relative">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#222E6A]"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy-700"></div>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-[#454D7C]">
+                  <tr className="bg-navy-700">
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-white font-semibold text-xs sm:text-sm whitespace-nowrap">Karyawan</th>
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-white font-semibold text-xs sm:text-sm whitespace-nowrap">Jenis Cuti</th>
                     <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-white font-semibold text-xs sm:text-sm whitespace-nowrap">Periode</th>
@@ -364,7 +364,7 @@ const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => handleViewDetail(request)}
-                              className="px-2 py-1 bg-[#222E6A] text-white text-xs rounded-lg hover:bg-[#1a2550] transition-colors"
+                              className="px-2 py-1 bg-navy-700 text-white text-xs rounded-lg hover:bg-navy-800 transition-colors"
                             >
                               {request.status === 'pending' ? 'Proses' : 'Detail'}
                             </button>

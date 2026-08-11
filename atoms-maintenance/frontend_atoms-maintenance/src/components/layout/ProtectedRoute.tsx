@@ -50,7 +50,7 @@ export const ProtectedRoute: React.FC = () => {
           </div>
           <button
             onClick={() => retryServerConnection()}
-            className="px-5 py-2 rounded-lg bg-[#222E6A] hover:bg-[#1a2550] text-white text-sm font-medium transition-colors shadow-md hover:shadow-lg"
+            className="px-5 py-2 rounded-lg bg-brand-primary hover:bg-brand-700 text-white text-sm font-medium transition-colors shadow-md hover:shadow-lg"
           >
             Coba Lagi
           </button>

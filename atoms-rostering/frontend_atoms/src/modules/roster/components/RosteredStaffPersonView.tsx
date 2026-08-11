@@ -1,4 +1,4 @@
-﻿/**
+/**
  * RosteredStaffPersonView Component
  * 
  * Shows roster in a person-by-person format
@@ -262,6 +262,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
   const specialStatusOptions = [
     { label: 'Cuti Tahunan', note: 'Cuti Tahunan' },
     { label: 'Cuti Sakit', note: 'Cuti Sakit' },
+    { label: 'Cuti Alasan Penting', note: 'Cuti Alasan Penting' },
     { label: 'TPO Malang', note: 'TPO Malang' },
     { label: 'TPO Dhoho', note: 'TPO Dhoho' },
     { label: 'TPO Sumenep', note: 'TPO Sumenep' },
@@ -2334,16 +2335,16 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
       />
 
       <div className="flex items-center justify-center mb-4 sm:mb-6">
-        <div className="w-full max-w-none rounded-2xl border border-[#222E6A]/20 bg-gradient-to-r from-[#f8f9ff] via-white to-[#f8f9ff] px-4 py-3 sm:px-5 sm:py-4 shadow-sm">
+        <div className="w-full max-w-none rounded-2xl border border-navy-700/20 bg-gradient-to-r from-navy-50 via-white to-navy-50 px-4 py-3 sm:px-5 sm:py-4 shadow-sm">
           <label className="flex items-center justify-between gap-4 cursor-pointer">
             <div className="min-w-0">
-              <p className="text-sm sm:text-base font-semibold text-[#222E6A]">Mode Tampilan Bulanan</p>
+              <p className="text-sm sm:text-base font-semibold text-navy-700">Mode Tampilan Bulanan</p>
               <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">
                 Aktifkan untuk menampilkan tanggal 1 sampai akhir bulan tanpa pagination.
               </p>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <span className={`text-[10px] sm:text-xs font-semibold ${showFullMonth ? 'text-[#222E6A]' : 'text-gray-500'}`}>
+              <span className={`text-[10px] sm:text-xs font-semibold ${showFullMonth ? 'text-navy-700' : 'text-gray-500'}`}>
                 {showFullMonth ? 'Sebulan Penuh' : 'Mingguan'}
               </span>
               <span className="relative inline-flex h-7 w-12 sm:h-8 sm:w-14 items-center">
@@ -2353,7 +2354,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                   onChange={(e) => setShowFullMonth(e.target.checked)}
                   className="peer sr-only"
                 />
-                <span className="absolute inset-0 rounded-full bg-gray-300 peer-checked:bg-[#222E6A] transition-colors"></span>
+                <span className="absolute inset-0 rounded-full bg-gray-300 peer-checked:bg-navy-700 transition-colors"></span>
                 <span className="absolute left-1 h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5 sm:peer-checked:translate-x-6"></span>
               </span>
             </div>
@@ -2372,7 +2373,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
               onClick={() => setCurrentWeek(index)}
               className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-medium transition-all ${
                 index === currentWeek
-                  ? 'bg-[#222E6A] text-white scale-110'
+                  ? 'bg-navy-700 text-white scale-110'
                   : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
               }`}
             >
@@ -2527,7 +2528,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                   <tr className="print-type-header">
                     <td 
                       colSpan={3}
-                      className="px-3 sm:px-4 py-3 text-sm sm:text-base font-bold text-white border-y-2 border-[#1a235c] sticky left-0 z-30"
+                      className="px-3 sm:px-4 py-3 text-sm sm:text-base font-bold text-white border-y-2 border-navy-800 sticky left-0 z-30"
                       style={{
                         backgroundColor: '#222E6A',
                         width: `${stickySectionWidth}px`,
@@ -2541,7 +2542,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                     </td>
                     <td
                       colSpan={displayedDays.length + 1}
-                      className="px-0 py-3 border-y-2 border-[#1a235c]"
+                      className="px-0 py-3 border-y-2 border-navy-800"
                       style={{ backgroundColor: '#222E6A' }}
                     ></td>
                   </tr>
@@ -2631,7 +2632,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                                             }}
                                             className={`px-3 py-1.5 text-[10px] font-semibold rounded transition-colors text-left ${
                                               row.employee.group_number === groupNum
-                                                ? 'bg-[#222E6A] text-white'
+                                                ? 'bg-navy-700 text-white'
                                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                           >
@@ -2809,7 +2810,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                                                     e.stopPropagation();
                                                     handleShiftChange(row.employee.id, day, option.value);
                                                   }}
-                                                  className="px-3 py-2 text-xs font-medium bg-gray-100 hover:bg-[#222E6A] hover:text-white rounded transition-colors text-center"
+                                                  className="px-3 py-2 text-xs font-medium bg-gray-100 hover:bg-navy-700 hover:text-white rounded transition-colors text-center"
                                                 >
                                                   {option.label}
                                                 </button>
@@ -2843,7 +2844,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                                                 }}
                                                 onClick={(e) => e.stopPropagation()}
                                                 placeholder="Ketik custom..."
-                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:border-[#222E6A] mb-1"
+                                                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:border-navy-700 mb-1"
                                               />
                                               {customText.trim() && (
                                                 <button
@@ -2851,7 +2852,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                                                     e.stopPropagation();
                                                     handleShiftChange(row.employee.id, day, shiftOptions[0].value, customText.trim());
                                                   }}
-                                                  className="w-full px-2 py-1.5 text-xs font-medium bg-[#222E6A] text-white rounded hover:bg-[#1a2350] transition-colors mb-1"
+                                                  className="w-full px-2 py-1.5 text-xs font-medium bg-navy-700 text-white rounded hover:bg-navy-800 transition-colors mb-1"
                                                 >
                                                   Simpan
                                                 </button>
@@ -2881,7 +2882,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                                       }}
                                       onMouseEnter={() => handleCellMouseEnter(row.employee.id, day, colSpan)}
                                       onDoubleClick={(e) => handleCellDoubleClick(row.employee.id, day, e)}
-                                      className={`${showFullMonth ? 'h-7 text-[9px]' : 'h-8 sm:h-10 text-[9px] sm:text-xs'} w-full rounded-lg flex items-center justify-center font-semibold transition-all ${cellClasses} ${canEditRoster && !isEditing ? 'cursor-pointer hover:ring-2 hover:ring-[#222E6A] hover:ring-offset-1' : ''} relative group select-none`}
+                                      className={`${showFullMonth ? 'h-7 text-[9px]' : 'h-8 sm:h-10 text-[9px] sm:text-xs'} w-full rounded-lg flex items-center justify-center font-semibold transition-all ${cellClasses} ${canEditRoster && !isEditing ? 'cursor-pointer hover:ring-2 hover:ring-navy-700 hover:ring-offset-1' : ''} relative group select-none`}
                                       title={tooltipText}
                                     >
                                       {displayText}
@@ -2977,7 +2978,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
             left: `${toolbarPosition.left}px`
           }}
         >
-            <div className="bg-white rounded-lg shadow-2xl border-2 border-[#222E6A] p-4 min-w-[320px] max-w-[400px]">
+            <div className="bg-white rounded-lg shadow-2xl border-2 border-navy-700 p-4 min-w-[320px] max-w-[400px]">
               <div className="flex items-center justify-between mb-3">
                 <div className="text-sm font-semibold text-gray-800">
                   {selectedCells.length} cell dipilih
@@ -2999,7 +3000,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                         type="checkbox"
                         checked={autoFillPattern}
                         onChange={(e) => setAutoFillPattern(e.target.checked)}
-                        className="w-4 h-4 text-[#222E6A] border-gray-300 rounded focus:ring-[#222E6A] focus:ring-2"
+                        className="w-4 h-4 text-navy-700 border-gray-300 rounded focus:ring-navy-700 focus:ring-2"
                       />
                       <span className="ml-2 text-xs font-medium text-gray-700">
                         Isi Otomatis Pattern (S - P - M - L - L)
@@ -3018,7 +3019,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                         type="checkbox"
                         checked={applyToGroup}
                         onChange={(e) => setApplyToGroup(e.target.checked)}
-                        className="w-4 h-4 text-[#222E6A] border-gray-300 rounded focus:ring-[#222E6A] focus:ring-2"
+                        className="w-4 h-4 text-navy-700 border-gray-300 rounded focus:ring-navy-700 focus:ring-2"
                       />
                       <span className="ml-2 text-xs font-medium text-gray-700">
                         Terapkan ke Grup Terkait
@@ -3052,7 +3053,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                   <button
                     key={option.value}
                     onClick={() => handleMultiShiftChange(option.value)}
-                    className="px-3 py-2 text-xs font-medium bg-gray-100 hover:bg-[#222E6A] hover:text-white rounded transition-colors text-center"
+                    className="px-3 py-2 text-xs font-medium bg-gray-100 hover:bg-navy-700 hover:text-white rounded transition-colors text-center"
                   >
                     {option.label}
                   </button>
@@ -3086,7 +3087,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                     }
                   }}
                   placeholder="Custom text untuk semua cell..."
-                  className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:border-[#222E6A] mb-2"
+                  className="w-full px-3 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:border-navy-700 mb-2"
                 />
                 {customText.trim() && (
                   <button
@@ -3094,7 +3095,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                       handleMultiShiftChange(shiftOptions[0].value, customText.trim());
                       setCustomText('');
                     }}
-                    className="w-full px-3 py-2 text-xs font-medium bg-[#222E6A] text-white rounded hover:bg-[#1a2350] transition-colors"
+                    className="w-full px-3 py-2 text-xs font-medium bg-navy-700 text-white rounded hover:bg-navy-800 transition-colors"
                   >
                     Terapkan ke {selectedCells.length} cell
                   </button>
@@ -3128,7 +3129,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                 value={addGroupSearch}
                 onChange={(e) => setAddGroupSearch(e.target.value)}
                 placeholder="Cari nama / level / tipe karyawan..."
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#222E6A]"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-navy-700"
               />
               <p className="mt-1 text-xs text-gray-500">
                 Menampilkan {filteredDialogCandidates.length} kandidat

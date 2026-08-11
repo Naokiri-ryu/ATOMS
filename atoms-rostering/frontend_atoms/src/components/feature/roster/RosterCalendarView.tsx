@@ -209,7 +209,7 @@ const RosterCalendarView: React.FC<RosterCalendarViewProps> = ({
               {weeks.map((week, weekIndex) => (
                 <tr key={`week-${weekIndex}`}>
                   <td className="text-center py-2 px-1 sm:py-5 sm:px-3">
-                    <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg font-bold text-white text-xs sm:text-sm" style={{ backgroundColor: '#454D7C' }}>
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg font-bold text-white text-xs sm:text-sm" style={{ backgroundColor: '#222E6A' }}>
                       {weekIndex + 1}
                     </div>
                   </td>

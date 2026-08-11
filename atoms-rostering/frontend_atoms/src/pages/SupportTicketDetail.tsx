@@ -89,7 +89,7 @@ const SupportTicketDetail: React.FC = () => {
         breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Support Center', href: '/support' }, { label: 'Detail' }]}
       >
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 text-[#454D7C] animate-spin" />
+          <Loader2 className="h-8 w-8 text-navy-600 animate-spin" />
         </div>
       </PageHeader>
     );
@@ -282,7 +282,7 @@ const AdminActions: React.FC<{ ticket: SupportTicket; onUpdate: () => void }> = 
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as any)}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#454D7C] focus:border-transparent outline-none text-sm"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-600 focus:border-transparent outline-none text-sm"
           >
             <option value="open">Open</option>
             <option value="in_progress">In Progress</option>
@@ -309,7 +309,7 @@ const AdminActions: React.FC<{ ticket: SupportTicket; onUpdate: () => void }> = 
           onChange={(e) => setResponse(e.target.value)}
           placeholder="Type your response to the user..."
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#454D7C] focus:border-transparent outline-none resize-none text-sm"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-600 focus:border-transparent outline-none resize-none text-sm"
           maxLength={5000}
         />
         <div className="mt-2 flex justify-end">

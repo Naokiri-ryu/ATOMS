@@ -168,7 +168,7 @@ const RosterWeekView: React.FC<{
                 isDisabled 
                   ? 'bg-gray-100 text-gray-300 cursor-not-allowed opacity-40' 
                   : isSelected 
-                    ? 'bg-[#222E6A] text-white shadow-lg' 
+                    ? 'bg-navy-700 text-white shadow-lg' 
                     : 'bg-gray-50 text-gray-600 hover:bg-gray-100 cursor-pointer'
               } ${isToday && !isSelected && !isDisabled ? 'ring-2 ring-blue-400' : ''}`}
             >
@@ -357,7 +357,7 @@ const RosterDetailPage: React.FC = () => {
         <div className="min-h-screen bg-gray-50 py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#222E6A]"></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-navy-700"></div>
             </div>
           </div>
         </div>
@@ -411,7 +411,7 @@ const RosterDetailPage: React.FC = () => {
           <div className="flex items-center justify-center mb-6 sm:mb-8 -mx-4 sm:mx-0">
             <div className="relative flex items-center p-1 bg-white rounded-2xl shadow-lg border border-gray-200 w-full sm:max-w-5xl overflow-hidden">
               <div
-                className="absolute top-1 bottom-1 left-1 bg-[#222E6A] rounded-xl shadow-sm transition-transform duration-300 ease-out"
+                className="absolute top-1 bottom-1 left-1 bg-navy-700 rounded-xl shadow-sm transition-transform duration-300 ease-out"
                 style={{
                   width: `calc((100% - 0.5rem) / ${visibleTabs.length})`,
                   transform: `translateX(${activeTabIndex * 100}%)`,
@@ -459,7 +459,7 @@ const RosterDetailPage: React.FC = () => {
                       onClick={() => setStaffView('person')}
                       className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${
                         staffView === 'person'
-                          ? 'bg-gradient-to-r from-[#454D7C] to-[#5A6299] text-white'
+                          ? 'bg-gradient-to-r from-navy-600 to-navy-500 text-white'
                           : 'text-gray-700 hover:text-gray-900'
                       }`}
                     >
@@ -469,7 +469,7 @@ const RosterDetailPage: React.FC = () => {
                       onClick={() => setStaffView('week')}
                       className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${
                         staffView === 'week'
-                          ? 'bg-gradient-to-r from-[#454D7C] to-[#5A6299] text-white'
+                          ? 'bg-gradient-to-r from-navy-600 to-navy-500 text-white'
                           : 'text-gray-700 hover:text-gray-900'
                       }`}
                     >
@@ -479,7 +479,7 @@ const RosterDetailPage: React.FC = () => {
                       onClick={() => setStaffView('calendar')}
                       className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${
                         staffView === 'calendar'
-                          ? 'bg-gradient-to-r from-[#454D7C] to-[#5A6299] text-white'
+                          ? 'bg-gradient-to-r from-navy-600 to-navy-500 text-white'
                           : 'text-gray-700 hover:text-gray-900'
                       }`}
                     >

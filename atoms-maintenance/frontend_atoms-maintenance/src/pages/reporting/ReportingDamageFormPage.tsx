@@ -832,7 +832,7 @@ const FormSection: React.FC<{
   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-transparent">
       <div className="flex items-baseline gap-3">
-        <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#222E6A] text-white text-xs font-bold shrink-0">
+        <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-brand-primary text-white text-xs font-bold shrink-0">
           {number}
         </span>
         <div>

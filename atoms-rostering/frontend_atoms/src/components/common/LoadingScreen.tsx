@@ -43,7 +43,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
             
             {/* Center icon container */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-14 h-14 bg-gradient-to-br from-[#222E6A] to-navy-600 rounded-2xl flex items-center justify-center shadow-xl"
+              <div className="w-14 h-14 bg-gradient-to-br from-navy-700 to-navy-600 rounded-2xl flex items-center justify-center shadow-xl"
                    style={{ animation: 'pulse 2s ease-in-out infinite' }}>
                 {Icon ? (
                   <Icon className="h-7 w-7 text-white" />
@@ -164,7 +164,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
             
             {/* Center */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#222E6A] to-navy-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-navy-700 to-navy-600 rounded-xl flex items-center justify-center shadow-lg">
                 {Icon ? (
                   <Icon className="h-6 w-6 text-white" />
                 ) : (

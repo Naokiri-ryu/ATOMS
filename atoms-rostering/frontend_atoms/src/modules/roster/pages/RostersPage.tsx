@@ -53,11 +53,11 @@ const CreateRosterModal: React.FC<{
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create New Roster Template" size="md" headerClassName="bg-[#222E6A] text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Create New Roster Template" size="md" headerClassName="bg-navy-700 text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg">
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Information */}
-        <div className="bg-[#D8DAED] border border-[#454D7C] rounded-lg p-3">
-          <p className="text-xs sm:text-sm text-[#222E6A]">
+        <div className="bg-navy-100 border border-navy-600 rounded-lg p-3">
+          <p className="text-xs sm:text-sm text-navy-700">
             This will create a roster template with all days for the selected month. 
             You can assign managers and shift employees later.
           </p>
@@ -65,7 +65,7 @@ const CreateRosterModal: React.FC<{
 
         {/* Period Selection */}
         <div>
-          <h3 className="text-xs sm:text-sm font-semibold text-[#222E6A] mb-3 sm:mb-4">Period Selection</h3>
+          <h3 className="text-xs sm:text-sm font-semibold text-navy-700 mb-3 sm:mb-4">Period Selection</h3>
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <Select
               label="Month"
@@ -106,7 +106,7 @@ const CreateRosterModal: React.FC<{
             type="submit"
             variant="primary"
             isLoading={isLoading}
-            className="w-full sm:flex-1 bg-[#222E6A] hover:bg-[#1a2452] text-sm whitespace-normal leading-tight py-2.5 sm:py-2"
+            className="w-full sm:flex-1 bg-navy-700 hover:bg-navy-800 text-sm whitespace-normal leading-tight py-2.5 sm:py-2"
           >
             <span className="hidden sm:inline">Create Roster Template</span>
             <span className="sm:hidden">Create Template</span>
@@ -178,8 +178,8 @@ const EditRosterModal: React.FC<{
           </div>
           
           <div className="sm:flex sm:items-start">
-            <div className="mx-auto flex-shrink-0 flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-[#D8DAED] sm:mx-0">
-              <Edit2 className="h-5 w-5 sm:h-6 sm:w-6 text-[#454D7C]" />
+            <div className="mx-auto flex-shrink-0 flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-navy-100 sm:mx-0">
+              <Edit2 className="h-5 w-5 sm:h-6 sm:w-6 text-navy-600" />
             </div>
             <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
               <h3 className="text-base sm:text-lg leading-6 font-medium text-gray-900">
@@ -240,7 +240,7 @@ const EditRosterModal: React.FC<{
                       disabled={isLoading}
                       variant="primary"
                       isLoading={isLoading}
-                      className="w-full sm:flex-1 bg-[#222E6A] hover:bg-[#1a2452] text-sm"
+                      className="w-full sm:flex-1 bg-navy-700 hover:bg-navy-800 text-sm"
                     >
                       {isLoading ? 'Saving...' : 'Save Changes'}
                     </Button>
@@ -452,12 +452,12 @@ const ImportRosterModal: React.FC<{
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Import Roster" size="md" headerClassName="bg-gradient-to-r from-[#454D7C] to-[#222E6A] text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Import Roster" size="md" headerClassName="bg-gradient-to-r from-navy-600 to-navy-800 text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg">
       <div>
         <div className="space-y-4 sm:space-y-6">
           {/* Information */}
-          <div className="bg-[#D8DAED] border border-[#454D7C] rounded-lg p-3">
-            <p className="text-xs sm:text-sm text-[#222E6A]">
+          <div className="bg-navy-100 border border-navy-600 rounded-lg p-3">
+            <p className="text-xs sm:text-sm text-navy-700">
               Import roster from Excel file or Google Spreadsheet URL. Use AI parser for flexible format support.
             </p>
           </div>
@@ -470,7 +470,7 @@ const ImportRosterModal: React.FC<{
               onClick={() => setImportMode('file')}
               className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors flex-1 justify-center sm:flex-initial sm:justify-start ${
                 importMode === 'file'
-                  ? 'border-[#454D7C] text-[#454D7C]'
+                  ? 'border-navy-600 text-navy-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -483,7 +483,7 @@ const ImportRosterModal: React.FC<{
               onClick={() => setImportMode('url')}
               className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors flex-1 justify-center sm:flex-initial sm:justify-start ${
                 importMode === 'url'
-                  ? 'border-[#454D7C] text-[#454D7C]'
+                  ? 'border-navy-600 text-navy-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -494,7 +494,7 @@ const ImportRosterModal: React.FC<{
           </div>
 
           {/* AI Mode Toggle */}
-          <div className="mb-4 p-3 bg-[#D8DAED] rounded-lg border border-[#454D7C]">
+          <div className="mb-4 p-3 bg-navy-100 rounded-lg border border-navy-600">
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="checkbox"
@@ -502,10 +502,10 @@ const ImportRosterModal: React.FC<{
                       onChange={(e) => setUseAI(e.target.checked)}
                       className="sr-only peer"
                     />
-                    <div className="relative w-10 h-5 sm:w-11 sm:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#454D7C]/30 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-[#454D7C]"></div>
+                    <div className="relative w-10 h-5 sm:w-11 sm:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-navy-600/30 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-navy-700"></div>
                     <div className="ms-2 sm:ms-3 flex items-center gap-1 sm:gap-2">
-                      <Sparkles className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${useAI ? 'text-[#454D7C]' : 'text-gray-400'}`} />
-                      <span className={`text-xs sm:text-sm font-medium ${useAI ? 'text-[#222E6A]' : 'text-gray-600'}`}>
+                      <Sparkles className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${useAI ? 'text-navy-600' : 'text-gray-400'}`} />
+                      <span className={`text-xs sm:text-sm font-medium ${useAI ? 'text-navy-700' : 'text-gray-600'}`}>
                         Smart AI Parser
                       </span>
                     </div>
@@ -522,8 +522,8 @@ const ImportRosterModal: React.FC<{
             <div
               className={`border-2 border-dashed rounded-lg p-4 sm:p-6 text-center cursor-pointer transition-colors ${
                 selectedFile 
-                  ? 'border-[#454D7C] bg-[#D8DAED]' 
-                  : 'border-gray-300 hover:border-[#454D7C] bg-gray-50'
+                  ? 'border-navy-600 bg-navy-100' 
+                  : 'border-gray-300 hover:border-navy-600 bg-gray-50'
               }`}
                     onClick={() => fileInputRef.current?.click()}
                     onDrop={handleDrop}
@@ -539,7 +539,7 @@ const ImportRosterModal: React.FC<{
                     
               {selectedFile ? (
                 <div className="flex items-center justify-center gap-2 sm:gap-3">
-                  <FileSpreadsheet className="h-6 w-6 sm:h-8 sm:w-8 text-[#454D7C] flex-shrink-0" />
+                  <FileSpreadsheet className="h-6 w-6 sm:h-8 sm:w-8 text-navy-600 flex-shrink-0" />
                         <div className="text-left flex-1 min-w-0">
                           <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{selectedFile.name}</p>
                           <p className="text-xs text-gray-500">
@@ -562,7 +562,7 @@ const ImportRosterModal: React.FC<{
                 <>
                   <FileSpreadsheet className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400 mx-auto mb-2" />
                   <p className="text-xs sm:text-sm text-gray-600">
-                    <span className="text-[#454D7C] font-medium">Click to upload</span> <span className="hidden sm:inline">or drag and drop</span>
+                    <span className="text-navy-600 font-medium">Click to upload</span> <span className="hidden sm:inline">or drag and drop</span>
                   </p>
                         <p className="text-xs text-gray-500 mt-1">
                           Excel files only (.xlsx, .xls)
@@ -587,17 +587,17 @@ const ImportRosterModal: React.FC<{
                           setImportResult(null);
                         }}
                         placeholder="https://docs.google.com/spreadsheets/d/..."
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#454D7C] text-xs sm:text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-600 text-xs sm:text-sm"
                       />
                       <p className="mt-1 text-xs text-gray-500">
                         Make sure the spreadsheet is set to "Anyone with the link can view"
                       </p>
                     </div>
-                    <div className="p-3 bg-[#D8DAED] rounded-lg border border-[#454D7C]">
-                      <p className="text-xs text-[#222E6A] font-medium">
+                    <div className="p-3 bg-navy-100 rounded-lg border border-navy-600">
+                      <p className="text-xs text-navy-700 font-medium">
                         <strong>Supported formats:</strong>
                       </p>
-                      <ul className="text-xs text-[#454D7C] mt-1 space-y-0.5 break-all">
+                      <ul className="text-xs text-navy-600 mt-1 space-y-0.5 break-all">
                         <li className="break-all">• https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit</li>
                         <li className="break-all">• https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/view</li>
                       </ul>
@@ -664,7 +664,7 @@ const ImportRosterModal: React.FC<{
             variant="primary"
             isLoading={isLoading}
             leftIcon={!isLoading ? <Upload className="h-4 w-4" /> : undefined}
-            className="w-full sm:flex-1 bg-[#222E6A] hover:bg-[#1a2452] text-sm"
+            className="w-full sm:flex-1 bg-navy-700 hover:bg-navy-800 text-sm"
           >
             {isLoading ? 'Importing...' : 'Import Roster'}
           </Button>
@@ -894,7 +894,7 @@ const RostersPage: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 lg:p-6 mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Calendar className="h-7 w-7 sm:h-8 sm:w-8 text-[#222E6A] flex-shrink-0" />
+            <Calendar className="h-7 w-7 sm:h-8 sm:w-8 text-navy-700 flex-shrink-0" />
             <div>
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Manage Rosters</h2>
               <p className="text-gray-600 text-xs sm:text-sm">{rosters.length} roster{rosters.length !== 1 ? 's' : ''} available</p>
@@ -982,7 +982,7 @@ const RostersPage: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as 'all' | 'draft' | 'published')}
-              className="border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#222E6A] w-full sm:w-auto"
+              className="border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-navy-600 w-full sm:w-auto"
             >
               <option value="all">All Status</option>
               <option value="published">Published</option>
@@ -995,7 +995,7 @@ const RostersPage: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               type="text"
               placeholder="Search month or year..."
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#222E6A]"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-navy-600"
             />
           </div>
         </div>
@@ -1005,20 +1005,20 @@ const RostersPage: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 lg:p-6">
         {loadingStates.rosters ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#454D7C] mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading rosters...</p>
           </div>
         ) : filteredRosters.length === 0 ? (
           <div className="text-center py-12">
-            <div className="bg-[#D8DAED] w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Calendar className="h-10 w-10 text-[#454D7C]" />
+            <div className="bg-navy-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Calendar className="h-10 w-10 text-navy-600" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Rosters Found</h3>
             <p className="text-gray-600 mb-6">Try adjusting filters or create a new roster.</p>
             {canManageRoster && (
               <button
                 onClick={openCreateModal}
-                className="bg-[#222E6A] hover:bg-[#1a2550] text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-md hover:shadow-lg inline-flex items-center"
+                className="bg-navy-700 hover:bg-navy-800 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-md hover:shadow-lg inline-flex items-center"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Create Roster
@@ -1082,7 +1082,7 @@ const RostersPage: React.FC = () => {
                           handlePushToSpreadsheet(roster);
                         }}
                         disabled={pushingRosterId === roster.id}
-                        className="w-full text-xs sm:text-sm border border-[#454D7C] rounded px-2 py-1.5 sm:py-2 text-[#454D7C] hover:bg-[#D8DAED] inline-flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+                        className="w-full text-xs sm:text-sm border border-navy-600 rounded px-2 py-1.5 sm:py-2 text-navy-600 hover:bg-navy-100 inline-flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
                       >
                         <ArrowUpToLine className={`h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0 ${pushingRosterId === roster.id ? 'animate-pulse' : ''}`} />
                         <span className="truncate">{pushingRosterId === roster.id ? 'Pushing...' : 'Push to Spreadsheet'}</span>
@@ -1140,7 +1140,7 @@ const RostersPage: React.FC = () => {
                             openEditModal(roster);
                           }}
                           type="button"
-                          className="w-full min-w-0 h-10 sm:h-11 text-xs sm:text-sm border border-[#24367A] rounded-lg px-2 text-[#24367A] hover:bg-[#EEF2FF] inline-flex items-center justify-center gap-1.5 font-medium leading-none transition-colors"
+                          className="w-full min-w-0 h-10 sm:h-11 text-xs sm:text-sm border border-[#24367A] rounded-lg px-2 text-[#24367A] hover:bg-navy-100 inline-flex items-center justify-center gap-1.5 font-medium leading-none transition-colors"
                         >
                           <Edit2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                           <span className="hidden sm:inline">Edit Period</span>
@@ -1252,7 +1252,7 @@ const RostersPage: React.FC = () => {
         onClose={closePublishModal}
         title="Publish Roster"
         size="md"
-        headerClassName="bg-[#222E6A] text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg"
+        headerClassName="bg-navy-700 text-white flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg"
       >
         <div className="space-y-4">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -1294,7 +1294,7 @@ const RostersPage: React.FC = () => {
               variant="primary"
               onClick={handlePublishRoster}
               isLoading={publishingRosterId !== null}
-              className="flex-1 bg-[#222E6A] hover:bg-[#1a2452]"
+              className="flex-1 bg-navy-700 hover:bg-navy-800"
             >
               <CheckCircle className="h-4 w-4 mr-2" />
               Publish Roster
