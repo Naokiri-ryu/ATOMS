@@ -452,7 +452,7 @@ export const LogbookCnsd: React.FC = () => {
                 ? `Tidak ditemukan karyawan dengan nama "${employeeSearch}"`
                 : 'Tidak ada logbook yang sesuai filter'}
             </p>
-            <button onClick={resetFilters} className="mt-2 text-sm text-blue-600 underline hover:no-underline">
+            <button onClick={resetFilters} className="mt-2 text-sm text-brand-primary underline hover:no-underline">
               Reset semua filter
             </button>
           </div>

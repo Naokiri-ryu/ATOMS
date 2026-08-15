@@ -42,7 +42,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
       <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={onClose} aria-hidden="true" />
       
       {/* Modal */}
-      <div className={cn('relative w-full bg-white rounded-2xl overflow-hidden shadow-xl animate-fade-scale-up max-h-[90vh] flex flex-col border border-gray-200', sizes[size], className)}>
+      <div className={cn('relative w-full bg-white rounded-2xl overflow-hidden shadow-modal animate-fade-scale-up max-h-[90vh] flex flex-col border border-gray-200', sizes[size], className)}>
         {/* Header */}
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">

@@ -235,7 +235,7 @@ export const Topbar: React.FC = () => {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowNotif(false)} aria-hidden="true" />
                 <div
-                  className="absolute right-0 top-full mt-2 w-[320px] max-w-[calc(100vw-1rem)] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden"
+                  className="absolute right-0 top-full mt-2 w-[320px] max-w-[calc(100vw-1rem)] bg-white rounded-xl shadow-modal border border-gray-200 z-50 overflow-hidden"
                   role="menu"
                   aria-label="Daftar notifikasi"
                 >
@@ -319,7 +319,7 @@ export const Topbar: React.FC = () => {
 
             {showAccountMenu && (
               <div
-                className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden"
+                className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-modal border border-gray-200 z-50 overflow-hidden"
                 role="menu"
                 aria-label="Menu akun"
               >

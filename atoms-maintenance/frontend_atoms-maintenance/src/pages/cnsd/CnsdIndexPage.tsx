@@ -103,7 +103,7 @@ export const CnsdIndexPage: React.FC = () => {
                   navigate(route);
                 }
               }}
-              className="text-left rounded-2xl border-2 border-maintenance-cnsd/30 bg-white p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-maintenance-cnsd focus-visible:ring-offset-2"
+              className="text-left rounded-2xl border-2 border-maintenance-cnsd/30 bg-white p-5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-maintenance-cnsd focus-visible:ring-offset-2"
             >
               <div className="flex items-start justify-between">
                 <div className="space-y-1.5 flex-1">

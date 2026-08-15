@@ -445,7 +445,7 @@ export const CnsdReadinessListPage: React.FC = () => {
             <p className="text-base font-semibold text-slate-700">Tidak ada Form yang sesuai filter</p>
             <button
               onClick={resetFilters}
-              className="mt-2 text-sm text-blue-600 underline hover:no-underline"
+              className="mt-2 text-sm text-brand-primary underline hover:no-underline"
             >
               Reset semua filter
             </button>

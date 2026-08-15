@@ -425,7 +425,7 @@ export const TfpGensetRadarListPage: React.FC = () => {
             </p>
             <button
               onClick={resetFilters}
-              className="mt-2 text-sm text-blue-600 underline hover:no-underline"
+              className="mt-2 text-sm text-brand-primary underline hover:no-underline"
             >
               Reset semua filter
             </button>

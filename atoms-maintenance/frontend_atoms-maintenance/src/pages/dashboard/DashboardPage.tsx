@@ -465,7 +465,9 @@ export const DashboardPage: React.FC = () => {
                 onClick={() => navigate(item.path)}
                 className={`flex flex-col sm:flex-row items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-4 sm:px-4 sm:py-3 ${item.hoverColor} transition-all duration-200 shadow-sm hover:shadow group min-h-[80px] sm:min-h-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2`}
               >
-                <item.icon size={20} className={item.color} aria-hidden="true" />
+                <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${item.bgColor} shrink-0`}>
+                  <item.icon size={18} className={item.color} aria-hidden="true" />
+                </span>
                 <span className="text-xs sm:text-sm font-semibold text-slate-700 text-center sm:text-left">{item.label}</span>
               </button>
             ))}
@@ -476,7 +478,7 @@ export const DashboardPage: React.FC = () => {
       {/* ─── Row: Shift Aktif + Checklist ─────────────────── */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Shift Aktif */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-card">
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -603,7 +605,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Pengingat Pengecekan Harian */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-card">
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -823,7 +825,7 @@ export const DashboardPage: React.FC = () => {
       {/* ─── Row: Active WO + Trouble Equipment ─────────── */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Work Order Aktif */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-card">
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -891,7 +893,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Laporan Kerusakan Terbaru */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-card">
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -963,7 +965,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* ─── Ringkasan Logbook (Combined CNSD + TFP timeline) ──────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-card">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BookOpen size={20} className="text-brand-primary" />
@@ -1071,7 +1073,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* ─── Recent Notifications (Vertical Timeline) ────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-card">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bell size={20} className="text-brand-primary" />

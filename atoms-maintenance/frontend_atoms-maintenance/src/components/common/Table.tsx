@@ -20,12 +20,12 @@ export const TableBody: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> 
 
 // Table Row
 export const TableRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ className, ...props }) => (
-  <tr className={cn('border-b border-gray-100 transition-colors hover:bg-gray-50/50', className)} {...props} />
+  <tr className={cn('border-b border-[var(--table-border)] transition-colors hover:bg-gray-50/50', className)} {...props} />
 );
 
 // Table Head Cell
 export const TableHead: React.FC<React.ThHTMLAttributes<HTMLTableCellElement>> = ({ className, ...props }) => (
-  <th className={cn('h-10 px-3 text-left align-middle font-medium text-slate-500 text-xs uppercase tracking-wider bg-gray-50/80', className)} {...props} />
+  <th className={cn('h-10 px-3 text-left align-middle font-medium text-slate-500 text-xs uppercase tracking-wider bg-[var(--table-header-bg)]', className)} {...props} />
 );
 
 // Table Cell

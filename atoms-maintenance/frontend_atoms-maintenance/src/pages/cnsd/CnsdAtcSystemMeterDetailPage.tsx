@@ -555,21 +555,36 @@ const ItemRow: React.FC<RowProps> = ({ item, rowNumber, layout, isReadOnly, getV
     }
 
     // ─── C/E/F/G/H/I — CPU STATUS ───────────────────────────────────
-    case 'cpu_status':
+    case 'cpu_status': {
+      const toggleOpts = parseToggleOptions(item.nominal);
       return (
         <tr className="hover:bg-slate-50/60">
           {noCell}
           {nameCell}
           {nominalCell}
           {td(
-            <input type="number" min="0" value={getValue(item, 'value_1')} onChange={(e) => onChange(item.id, 'value_1', e.target.value)} disabled={isReadOnly}
-              className="w-20 h-7 px-2 rounded border border-slate-300 text-xs text-center focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-slate-50 disabled:text-slate-500" />,
+            toggleOpts ? (
+              <SelectToggle
+                options={toggleOpts}
+                value={getValue(item, 'value_1')}
+                onChange={(v) => onChange(item.id, 'value_1', v)}
+                disabled={isReadOnly}
+                variant="okno"
+              />
+            ) : isNumericNominal(item.nominal) ? (
+              <input type="number" min="0" value={getValue(item, 'value_1')} onChange={(e) => onChange(item.id, 'value_1', e.target.value)} disabled={isReadOnly}
+                className="w-20 h-7 px-2 rounded border border-slate-300 text-xs text-center focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-slate-50 disabled:text-slate-500" />
+            ) : (
+              <input type="text" value={getValue(item, 'value_1')} onChange={(e) => onChange(item.id, 'value_1', e.target.value)} disabled={isReadOnly}
+                placeholder="—" className="w-full h-7 px-2 rounded border border-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-slate-50 disabled:text-slate-500" />
+            ),
             'text-center'
           )}
           {td(<CpuStatusMultiSelect value={item.status_flags} editedValue={getValue(item, 'status_flags')} onChange={(v) => onChange(item.id, 'status_flags', v)} disabled={isReadOnly} />)}
           {keteranganCell}
         </tr>
       );
+    }
 
     // ─── D. NETWORK — Switch Status + All Port OK ───────────────────
     case 'network_status': {
@@ -669,7 +684,29 @@ const AdaptiveReadingCell: React.FC<AdaptiveCellProps> = ({ item, field, nominal
           className="h-7 px-2 rounded border border-slate-300 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-slate-50 disabled:text-slate-500" />
         {!isReadOnly && (
           <button type="button" title="Isi waktu sekarang"
-            onClick={() => onChange(item.id, field, new Date().toTimeString().slice(0, 8))}
+            onClick={() => {
+              if (value && value.trim() !== '') return;
+              const minus7Labels = new Set([
+                'GPS Time',
+                'Last message update (on FDD message log)',
+                'System Time',
+                'SUR_02_TMA ASD 2 (EAST)',
+                'SUR_03_TMA ASD 1 (WEST)',
+                'SUR_03_APP ASD (APP)',
+                'SUR_04_APP SUP',
+                'SUR_05_TWR ASD',
+                'SUR_06_TWR SUP',
+                'SUR_07_MILITARY',
+                'System Track Surabaya',
+                'Local Radar Surabaya A',
+                'Local Radar Surabaya B',
+              ]);
+              const isMaintenanceClockSubItem = minus7Labels.has(item.sub_item_label ?? '');
+              const timeNow = isMaintenanceClockSubItem
+                ? new Date(Date.now() - 7 * 3600 * 1000)
+                : new Date();
+              onChange(item.id, field, timeNow.toTimeString().slice(0, 8));
+            }}
             className="h-7 w-7 rounded border border-slate-300 text-slate-500 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-300 transition-colors flex items-center justify-center">
             <Timer size={13} />
           </button>

@@ -156,7 +156,7 @@ export const WelcomeModal: React.FC = () => {
               {user.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-white/80">Selamat datang kembali 👋</p>
+              <p className="text-sm text-white/80">Selamat datang kembali</p>
               <p className="text-lg font-bold leading-tight truncate">{user.name}</p>
               <p className="text-sm text-white/70">{user.role}</p>
             </div>

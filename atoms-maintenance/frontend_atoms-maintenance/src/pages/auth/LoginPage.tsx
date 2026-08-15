@@ -31,10 +31,18 @@ export const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#EEF1F8]">
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-10 w-10 rounded-full border-4 border-brand-primary/30 border-t-brand-primary animate-spin" />
-        <p className="text-sm text-slate-500">Mengarahkan ke halaman login…</p>
+    <div className="min-h-screen flex items-center justify-center bg-[#EEF1F8] px-4">
+      <div className="w-full max-w-sm">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-card">
+          <div className="bg-gradient-to-br from-brand-800 to-brand-600 px-6 py-5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/60">AirNav Indonesia</p>
+            <h1 className="mt-1 text-lg font-bold text-white">ATOMS Maintenance</h1>
+          </div>
+          <div className="flex flex-col items-center gap-3 px-6 py-8">
+            <div className="h-10 w-10 rounded-full border-4 border-brand-primary/30 border-t-brand-primary animate-spin" />
+            <p className="text-sm text-slate-500">Mengarahkan ke halaman login…</p>
+          </div>
+        </div>
       </div>
     </div>
   );
