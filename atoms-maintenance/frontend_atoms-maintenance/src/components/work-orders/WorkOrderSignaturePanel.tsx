@@ -51,6 +51,35 @@ const resolveValidationMessage = (data: unknown) => {
   return firstError ?? null;
 };
 
+// Small, fast deterministic RNG (mulberry32) and seeded shuffle helper.
+const mulberry32 = (a: number) => {
+  return () => {
+    let t = (a += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const seededShuffle = <T,>(arr: T[] = [], seedStr: string): T[] => {
+  if (!arr || arr.length <= 1) return arr.slice();
+  // FNV-1a 32-bit hash for string -> number
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    h ^= seedStr.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  const rng = mulberry32(h >>> 0);
+  const out = arr.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = out[i];
+    out[i] = out[j];
+    out[j] = tmp;
+  }
+  return out;
+};
+
 export const WorkOrderSignaturePanel: React.FC<WorkOrderSignaturePanelProps> = ({
   workOrder,
   onWorkOrderUpdated,
@@ -62,7 +91,13 @@ export const WorkOrderSignaturePanel: React.FC<WorkOrderSignaturePanelProps> = (
 
   const pendingSignatures = workOrder.pending_signatures ?? [];
 
-  const columns = useMemo<SignatureColumn[]>(() => [
+const columns = useMemo<SignatureColumn[]>(() => {
+  const personnel = workOrder.personnel ?? [];
+  const seed = `${workOrder.shift_date ?? workOrder.created_at ?? ''}-${workOrder.shift_type ?? ''}`;
+  const shuffled = seededShuffle(personnel, seed);
+  const technicianFallback = shuffled[0]?.name ?? 'Teknisi';
+
+  return [
     {
       role: 'mt',
       label: roleLabels.mt,
@@ -79,10 +114,11 @@ export const WorkOrderSignaturePanel: React.FC<WorkOrderSignaturePanelProps> = (
     {
       role: 'technician',
       label: roleLabels.technician,
-      signerName: workOrder.signatures?.technician?.name ?? workOrder.technician_name ?? workOrder.personnel[0]?.name ?? 'Teknisi',
+      signerName: workOrder.signatures?.technician?.name ?? workOrder.technician_name ?? technicianFallback,
       info: workOrder.signatures?.technician,
     },
-  ], [workOrder]);
+  ];
+}, [workOrder]);
 
   /**
    * The current user is the authorized signer for `column` only when:

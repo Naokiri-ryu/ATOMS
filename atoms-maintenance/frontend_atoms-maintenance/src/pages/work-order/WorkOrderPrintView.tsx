@@ -92,6 +92,35 @@ const CheckboxInline: React.FC<CheckboxInlineProps> = ({ checked, label }) => (
   </span>
 );
 
+// Small, fast deterministic RNG (mulberry32) and seeded shuffle helper.
+const mulberry32 = (a: number) => {
+  return () => {
+    let t = (a += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const seededShuffle = <T,>(arr: T[] = [], seedStr: string): T[] => {
+  if (!arr || arr.length <= 1) return arr.slice();
+  // FNV-1a 32-bit hash for string -> number
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    h ^= seedStr.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  const rng = mulberry32(h >>> 0);
+  const out = arr.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = out[i];
+    out[i] = out[j];
+    out[j] = tmp;
+  }
+  return out;
+};
+
 export const WorkOrderPrintView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -115,44 +144,41 @@ export const WorkOrderPrintView: React.FC = () => {
 
   const signatures = useMemo(() => workOrder?.signatures ?? {}, [workOrder]);
 
-  const signatureColumns = useMemo<
-    Array<{
-      role: WorkOrderSignatureRole;
-      label: string;
-      signerName: string;
-      isNotRequired?: boolean;
-    }>
-  >(() => {
-    if (!workOrder) return [];
+  const signatureColumns = useMemo(() => {
+  if (!workOrder) return [];
 
-    return [
-      {
-        role: 'technician',
-        label: 'PELAKSANA',
-        signerName:
-          signatures.technician?.name ??
-          workOrder.technician_name ??
-          workOrder.personnel[0]?.name ??
-          'Teknisi',
-      },
-      {
-        role: 'supervisor',
-        label: 'SUPERVISOR',
-        signerName:
-          signatures.supervisor?.name ??
-          workOrder.supervisor_name ??
-          workOrder.supervisor_name_snapshot ??
-          'Supervisor',
-        isNotRequired: workOrder.has_supervisor === false,
-      },
-      {
-        role: 'mt',
-        label: 'MANAGER TEKNIK',
-        signerName:
-          signatures.mt?.name ?? workOrder.mt_name ?? workOrder.manager_name_snapshot ?? 'Manager Teknik',
-      },
-    ];
-  }, [signatures, workOrder]);
+  const personnel = workOrder.personnel ?? [];
+  const seed = `${workOrder.shift_date ?? workOrder.created_at ?? ''}-${workOrder.shift_type ?? ''}`;
+  const shuffled = seededShuffle(personnel, seed);
+  const technicianFallback = shuffled[0]?.name ?? 'Teknisi';
+
+  return [
+    {
+      role: 'technician',
+      label: 'PELAKSANA',
+      signerName:
+        signatures.technician?.name ??
+        workOrder.technician_name ??
+        technicianFallback,
+    },
+    {
+      role: 'supervisor',
+      label: 'SUPERVISOR',
+      signerName:
+        signatures.supervisor?.name ??
+        workOrder.supervisor_name ??
+        workOrder.supervisor_name_snapshot ??
+        'Supervisor',
+      isNotRequired: workOrder.has_supervisor === false,
+    },
+    {
+      role: 'mt',
+      label: 'MANAGER TEKNIK',
+      signerName:
+        signatures.mt?.name ?? workOrder.mt_name ?? workOrder.manager_name_snapshot ?? 'Manager Teknik',
+    },
+  ];
+}, [signatures, workOrder]);
 
   const personnelRows = useMemo(() => {
     const rows = workOrder?.personnel?.slice(0, 6) ?? [];
