@@ -227,7 +227,7 @@ class CnsdTransmitterMeterService
 
     /**
      * Format: TRANSMITTER-{YYMMDD}-{SEQ} (FORM C-1) or ER-{YYMMDD}-{SEQ}
-     * for the ER Bali & ER P.Bun module.
+     * for the CNSD-017 "VHF ER Gedung Radar" module.
      * Example: TRANSMITTER-260519-001 / ER-260825-001
      */
     public function generateFormNumber(string $date, string $formType = 'TRANSMITTER-METER'): string
