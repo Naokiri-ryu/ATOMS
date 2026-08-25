@@ -10,6 +10,7 @@ use App\Models\WorkOrder\WorkOrderPersonnel;
 use App\Services\LocalUserResolver;
 use InvalidArgumentException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -723,7 +724,13 @@ class WorkOrderService
     }
 
     /**
-     * Select the technician snapshot for a new work order using shift round-robin.
+     * Select the technician snapshot for a new work order.
+     *
+     * The candidate pool is the actual roster personnel for that shift, then
+     * deterministically shuffled with a seed of {shift_date}-{shift_type}-{division}
+     * so each date/shift/division gets its own stable "random" pick instead of
+     * always selecting the alphabetically-first technician. Round-robin modulo
+     * is kept after the shuffle to distribute multiple personal WOs in one shift.
      */
     private function selectTechnicianForShift(array $data): ?LocalUser
     {
@@ -756,6 +763,14 @@ class WorkOrderService
         if ($technicians->isEmpty()) {
             return null;
         }
+
+        $seed = sprintf(
+            '%s-%s-%s',
+            (string) ($data['shift_date'] ?? ''),
+            (string) ($data['shift_type'] ?? ''),
+            (string) ($division ?? '')
+        );
+        $technicians = $this->seededShuffle($technicians, $seed);
 
         $countQuery = WorkOrder::query()
             ->where('division', $data['division'])
@@ -921,5 +936,64 @@ class WorkOrderService
                 'output_other' => ($type === 'other') ? $outputOther : null,
             ]);
         }
+    }
+
+    /**
+     * Deterministic seeded shuffle (Fisher-Yates) mirroring the frontend
+     * WorkOrderSignaturePanel seededShuffle: FNV-1a 32-bit hash of the seed
+     * string feeds a mulberry32 PRNG. The same seed always yields the same
+     * permutation, so every user sees the same pick for a given shift while
+     * the order changes across dates/shifts/divisions.
+     */
+    private function seededShuffle(Collection $items, string $seed): Collection
+    {
+        $count = $items->count();
+        if ($count <= 1) {
+            return $items->values();
+        }
+
+        $hash = 2166136261;
+        $length = strlen($seed);
+        for ($i = 0; $i < $length; $i++) {
+            $hash ^= ord($seed[$i]);
+            $hash = ($hash * 16777619) & 0xFFFFFFFF;
+        }
+
+        $state = $hash;
+        $nextRandom = static function () use (&$state): float {
+            $state = ($state + 0x6D2B79F5) & 0xFFFFFFFF;
+            $t = $state;
+            $t = self::int32Mul($t ^ ($t >> 15), $t | 1);
+            $t = $t ^ (($t + self::int32Mul($t ^ ($t >> 7), $t | 61)) & 0xFFFFFFFF);
+
+            return ($t ^ ($t >> 14)) / 4294967296;
+        };
+
+        $values = $items->values();
+        for ($i = $count - 1; $i > 0; $i--) {
+            $j = (int) floor($nextRandom() * ($i + 1));
+            [$values[$i], $values[$j]] = [$values[$j], $values[$i]];
+        }
+
+        return $values;
+    }
+
+    /**
+     * Emulate JavaScript Math.imul: low 32 bits of the product, as unsigned.
+     * Operands must already be masked to the uint32 range. Uses 16-bit halves
+     * because a full uint32 x uint32 product can exceed PHP_INT_MAX and lose
+     * precision via float conversion.
+     */
+    private static function int32Mul(int $a, int $b): int
+    {
+        $aLo = $a & 0xFFFF;
+        $aHi = $a >> 16;
+        $bLo = $b & 0xFFFF;
+        $bHi = $b >> 16;
+
+        $low = $aLo * $bLo;
+        $mid = ($aHi * $bLo + $aLo * $bHi) & 0xFFFF;
+
+        return (($mid << 16) + $low) & 0xFFFFFFFF;
     }
 }

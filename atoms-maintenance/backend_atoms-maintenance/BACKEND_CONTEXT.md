@@ -287,6 +287,22 @@ FormRequest `WorkOrderCreateRequest` **tidak** memakai rule `exists:local_users,
 
 `MockUserSeeder` dan `WorkOrderSeeder` **deprecated** dan **tidak dipanggil** dari `DatabaseSeeder`. Jika dipanggil manual via `db:seed --class=...`, mereka mengeluarkan warning. Jangan kembalikan ke pipeline default.
 
+## Work Order Technician Selection — Seeded Shuffle (2026-08-25)
+
+`WorkOrderService::selectTechnicianForShift()` tidak lagi memilih teknisi
+berdasar urutan abjad/id. Kandidat (personel roster shift aktual per divisi)
+diacak deterministik dengan seed `{shift_date}-{shift_type}-{division}`
+(`WorkOrderService::seededShuffle()`: FNV-1a + mulberry32 + Fisher-Yates —
+port identik dari `seededShuffle` di frontend `WorkOrderSignaturePanel.tsx`,
+sudah diverifikasi paritas PHP ↔ JS).
+
+- Pool kandidat tetap: hanya teknisi divisi tsb yang benar-benar dinas pada
+  tanggal + shift WO (roster published). CNSD dan TFP mengacak pool masing-masing.
+- Seed sama → urutan sama untuk semua user; ganti hari/shift/divisi → pola lain.
+  Round-robin modulo dipertahankan SETELAH shuffle (untuk multiple personal WO).
+- WO Personal / GM Directive / WO lama tidak terpengaruh. Slot TTD, otorisasi
+  tanda tangan, dan daftar personel ("Teknisi 1..N") tidak berubah.
+
 ## Signature Authorization
 
 Sign endpoint `POST /api/v1/work-orders/{id}/sign` enforce nama+role:

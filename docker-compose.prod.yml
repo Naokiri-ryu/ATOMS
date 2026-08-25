@@ -1,4 +1,5 @@
 services:
+  # ─────────────── PROXY (CADDY) ───────────────
   proxy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -7,8 +8,11 @@ services:
       - "${HTTPS_PORT:-443}:443"
     environment:
       ACME_EMAIL: ${ACME_EMAIL:-admin@example.com}
-      ATOMS_DOMAIN: ${ATOMS_DOMAIN:-atoms.localhost}
-      SAKTI_DOMAIN: ${SAKTI_DOMAIN:-sakti.localhost}
+      # MAIN_* = Rostering (halaman utama / entry "ATOMS")
+      MAIN_DOMAIN: ${MAIN_DOMAIN:-atoms.example.com}
+      # MAINTENANCE_* = Maintenance (alias ATOMS_* untuk backward-compat)
+      MAINTENANCE_DOMAIN: ${MAINTENANCE_DOMAIN:-${ATOMS_DOMAIN:-atoms-maintenance.example.com}}
+      SAKTI_DOMAIN: ${SAKTI_DOMAIN:-sakti.example.com}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -16,18 +20,30 @@ services:
     depends_on:
       - atoms-frontend
       - atoms-backend
+      - rostering-frontend
+      - rostering-backend
       - sakti
     networks:
       - teknik_prod
 
+  # ─────────────── ATOMS MAINTENANCE ───────────────
   atoms-frontend:
     build:
-      context: ./atoms/frontend_atoms
+      context: ./atoms-maintenance/frontend_atoms-maintenance
       dockerfile: Dockerfile.prod
       args:
-        VITE_API_URL: ${ATOMS_PUBLIC_API_URL:-/api}
-        VITE_SAKTI_URL: ${SAKTI_PUBLIC_URL:-https://sakti.localhost}
+        # VITE_API_URL = dipakai saat akses dari localhost (code detect localhost → pakai ini)
+        VITE_API_URL: ${MAINTENANCE_LOCAL_API_URL:-http://localhost:5657/api}
+        # VITE_API_URL_PROD = dipakai saat akses dari IP/network
+        VITE_API_URL_PROD: ${MAINTENANCE_PUBLIC_API_URL:-http://172.19.38.157:5657/api}
+        VITE_ROSTERING_FRONTEND_URL: ${MAIN_LOCAL_URL:-http://localhost:5658}
+        VITE_ROSTERING_URL_PROD: ${MAIN_PUBLIC_URL:-http://172.19.38.157:5658}
+        VITE_SAKTI_URL: ${SAKTI_LOCAL_URL:-http://localhost:5660}
+        VITE_SAKTI_URL_PROD: ${SAKTI_PUBLIC_URL:-http://172.19.38.157:5660}
+        VITE_DEV_MOCK_AUTH: "false"
     restart: unless-stopped
+    ports:
+      - "${MAINTENANCE_FRONTEND_PORT:-5656}:80"
     depends_on:
       - atoms-backend
     networks:
@@ -35,28 +51,38 @@ services:
 
   atoms-backend:
     build:
-      context: ./atoms/backend_atoms
+      context: ./atoms-maintenance/backend_atoms-maintenance
       dockerfile: Dockerfile.prod
     restart: unless-stopped
+    ports:
+      - "${MAINTENANCE_BACKEND_PORT:-5657}:80"
     environment:
       APP_NAME: ATOMS
       APP_ENV: production
-      APP_KEY: ${ATOMS_APP_KEY}
+      APP_KEY: ${MAINTENANCE_APP_KEY:-${ATOMS_APP_KEY}}
       APP_DEBUG: "false"
-      APP_URL: ${ATOMS_PUBLIC_URL:-https://atoms.localhost}
-      APP_FRONTEND_URL: ${ATOMS_PUBLIC_URL:-https://atoms.localhost}
-      CORS_ALLOWED_ORIGINS: ${ATOMS_CORS_ALLOWED_ORIGINS:-https://atoms.localhost}
+      APP_URL: ${MAINTENANCE_PUBLIC_URL:-${ATOMS_PUBLIC_URL:-https://atoms-maintenance.example.com}}
+      APP_FRONTEND_URL: ${MAINTENANCE_PUBLIC_URL:-${ATOMS_PUBLIC_URL:-https://atoms-maintenance.example.com}}
+      CORS_ALLOWED_ORIGINS: ${MAINTENANCE_CORS_ALLOWED_ORIGINS:-${ATOMS_CORS_ALLOWED_ORIGINS:-https://atoms-maintenance.example.com}}
+      DEV_MOCK_AUTH: "false"
       DB_CONNECTION: pgsql
       DB_HOST: atoms-db
       DB_PORT: 5432
-      DB_DATABASE: ${ATOMS_DB_DATABASE:-atoms}
-      DB_USERNAME: ${ATOMS_DB_USERNAME:-atoms}
-      DB_PASSWORD: ${ATOMS_DB_PASSWORD}
+      DB_DATABASE: ${MAINTENANCE_DB_DATABASE:-${ATOMS_DB_DATABASE:-atoms}}
+      DB_USERNAME: ${MAINTENANCE_DB_USERNAME:-${ATOMS_DB_USERNAME:-atoms}}
+      DB_PASSWORD: ${MAINTENANCE_DB_PASSWORD:-${ATOMS_DB_PASSWORD}}
       SESSION_DRIVER: database
       CACHE_STORE: database
       QUEUE_CONNECTION: database
       MAIL_MAILER: log
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ROSTERING_API_URL: http://rostering-backend:80
+      ROSTERING_FRONTEND_URL: ${MAIN_PUBLIC_URL:-https://atoms.example.com}
+      ROSTERING_DB_HOST: rostering-db
+      ROSTERING_DB_PORT: 5432
+      ROSTERING_DB_DATABASE: ${ROSTERING_DB_DATABASE:-rostering}
+      ROSTERING_DB_USERNAME: ${ROSTERING_DB_USERNAME:-rostering}
+      ROSTERING_DB_PASSWORD: ${ROSTERING_DB_PASSWORD}
     volumes:
       - atoms_storage_data:/var/www/html/storage/app/public
       - atoms_logs_data:/var/www/html/storage/logs
@@ -70,31 +96,109 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${ATOMS_DB_DATABASE:-atoms}
-      POSTGRES_USER: ${ATOMS_DB_USERNAME:-atoms}
-      POSTGRES_PASSWORD: ${ATOMS_DB_PASSWORD}
+      POSTGRES_DB: ${MAINTENANCE_DB_DATABASE:-${ATOMS_DB_DATABASE:-atoms}}
+      POSTGRES_USER: ${MAINTENANCE_DB_USERNAME:-${ATOMS_DB_USERNAME:-atoms}}
+      POSTGRES_PASSWORD: ${MAINTENANCE_DB_PASSWORD:-${ATOMS_DB_PASSWORD}}
     volumes:
       - atoms_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${ATOMS_DB_USERNAME:-atoms} -d ${ATOMS_DB_DATABASE:-atoms}"]
+      test: ["CMD-SHELL", "pg_isready -U ${MAINTENANCE_DB_USERNAME:-${ATOMS_DB_USERNAME:-atoms}} -d ${MAINTENANCE_DB_DATABASE:-${ATOMS_DB_DATABASE:-atoms}}"]
       interval: 10s
       timeout: 5s
       retries: 20
     networks:
       - teknik_prod
 
+  # ─────────────── ATOMS ROSTERING (HALAMAN UTAMA) ───────────────
+  rostering-frontend:
+    build:
+      context: ./atoms-rostering/frontend_atoms
+      dockerfile: Dockerfile.prod
+      args:
+        # VITE_API_URL = dipakai saat akses dari localhost (code detect localhost → pakai ini)
+        VITE_API_URL: ${MAIN_LOCAL_API_URL:-http://localhost:5659/api}
+        # VITE_API_URL_PROD = dipakai saat akses dari IP/network
+        VITE_API_URL_PROD: ${MAIN_PUBLIC_API_URL:-http://172.19.38.157:5659/api}
+        VITE_MAINTENANCE_URL: ${MAINTENANCE_LOCAL_URL:-http://localhost:5656}
+        VITE_MAINTENANCE_URL_PROD: ${MAINTENANCE_PUBLIC_URL:-http://172.19.38.157:5656}
+        VITE_SAKTI_URL: ${SAKTI_LOCAL_URL:-http://localhost:5660}
+        VITE_SAKTI_URL_PROD: ${SAKTI_PUBLIC_URL:-http://172.19.38.157:5660}
+        VITE_BACKEND_URL: ${MAIN_LOCAL_URL:-http://localhost:5658}
+    restart: unless-stopped
+    ports:
+      - "${MAIN_FRONTEND_PORT:-5658}:80"
+    depends_on:
+      - rostering-backend
+    networks:
+      - teknik_prod
+
+  rostering-backend:
+    build:
+      context: ./atoms-rostering/backend_atoms
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    ports:
+      - "${MAIN_BACKEND_PORT:-5659}:80"
+    environment:
+      APP_NAME: ATOMS-Rostering
+      APP_ENV: production
+      APP_KEY: ${ROSTERING_APP_KEY}
+      APP_DEBUG: "false"
+      APP_URL: ${MAIN_PUBLIC_URL:-https://atoms.example.com}
+      APP_FRONTEND_URL: ${MAIN_PUBLIC_URL:-https://atoms.example.com}
+      CORS_ALLOWED_ORIGINS: ${MAIN_CORS_ALLOWED_ORIGINS:-${MAIN_PUBLIC_URL:-https://atoms.example.com},${MAINTENANCE_PUBLIC_URL:-https://atoms-maintenance.example.com},${SAKTI_PUBLIC_URL:-https://sakti.example.com}}
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-${MAIN_DOMAIN:-atoms.example.com},${MAINTENANCE_DOMAIN:-${ATOMS_DOMAIN:-atoms-maintenance.example.com}}}
+      DB_CONNECTION: pgsql
+      DB_HOST: rostering-db
+      DB_PORT: 5432
+      DB_DATABASE: ${ROSTERING_DB_DATABASE:-rostering}
+      DB_USERNAME: ${ROSTERING_DB_USERNAME:-rostering}
+      DB_PASSWORD: ${ROSTERING_DB_PASSWORD}
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      MAIL_MAILER: log
+    volumes:
+      - rostering_storage_data:/var/www/html/storage/app/public
+      - rostering_logs_data:/var/www/html/storage/logs
+    depends_on:
+      rostering-db:
+        condition: service_healthy
+    networks:
+      - teknik_prod
+
+  rostering-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${ROSTERING_DB_DATABASE:-rostering}
+      POSTGRES_USER: ${ROSTERING_DB_USERNAME:-rostering}
+      POSTGRES_PASSWORD: ${ROSTERING_DB_PASSWORD}
+    volumes:
+      - rostering_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ROSTERING_DB_USERNAME:-rostering} -d ${ROSTERING_DB_DATABASE:-rostering}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks:
+      - teknik_prod
+
+  # ─────────────── SAKTI ───────────────
   sakti:
     build:
       context: ./sakti
       dockerfile: Dockerfile
       target: app
     restart: unless-stopped
+    ports:
+      - "${SAKTI_PORT:-5660}:80"
     environment:
       APP_NAME: SAKTI
       APP_ENV: production
       APP_KEY: ${SAKTI_APP_KEY}
       APP_DEBUG: "false"
-      APP_URL: ${SAKTI_PUBLIC_URL:-https://sakti.localhost}
+      APP_URL: ${SAKTI_PUBLIC_URL:-https://sakti.example.com}
       DB_CONNECTION: pgsql
       DB_HOST: sakti-db
       DB_PORT: 5432
@@ -105,6 +209,7 @@ services:
       CACHE_STORE: database
       QUEUE_CONNECTION: database
       FILESYSTEM_DISK: local
+      ROSTERING_FRONTEND_URL: ${MAIN_PUBLIC_URL:-https://atoms.example.com}
     volumes:
       - sakti_storage_data:/var/www/html/storage/app/public
       - sakti_logs_data:/var/www/html/storage/logs
@@ -137,6 +242,9 @@ volumes:
   atoms_db_data:
   atoms_storage_data:
   atoms_logs_data:
+  rostering_db_data:
+  rostering_storage_data:
+  rostering_logs_data:
   sakti_db_data:
   sakti_storage_data:
   sakti_logs_data:

@@ -7,7 +7,6 @@ import { USER_ROLES, USER_ROLE_LABELS } from '../../../types';
 import Modal from '../../common/Modal';
 import Button from '../../ui/Button';
 import Input from '../../common/Input';
-import Select from '../../common/Select';
 
 interface ProfileModalProps {
   isOpen: boolean;

@@ -2,6 +2,31 @@
 
 Three independent web apps for AirNav Indonesia (intranet deployment). No root `package.json`, no shared build. Work inside the subfolder of the app you change.
 
+## Dev environment & sync setup (READ FIRST — affects how you run every command below)
+
+This project is edited in a **split client-server setup**:
+
+- **Client (where opencode/VSCode run, where you edit files)**: Windows machine, local folder `C:\dev\teknik2026`
+- **Server (where Docker, Postgres, and the actual running apps live)**: WSL Ubuntu at `172.19.38.157`, user `airnav`, project path `/home/airnav/teknik2026`
+- **Sync**: Mutagen two-way sync keeps `C:\dev\teknik2026` (beta) and `airnav@172.19.38.157:/home/airnav/teknik2026` (alpha) in sync automatically, in real time, while the Mutagen daemon is running.
+- **Excluded from sync**: `node_modules` and `.git` — each side has its own independent copy/state for these.
+
+**Rules for running commands from this file:**
+
+1. **Editing source files** — do this directly on the client (local files). Mutagen propagates changes to the server automatically within seconds.
+2. **Any `npm install`, `composer install`, `docker compose`, `artisan`, `composer dev`, `composer test`, or `git` command** — these must run **on the server**, not on the client, since `node_modules`, vendor deps, Docker, and Postgres only exist there. Run them via SSH:
+   ```
+   ssh airnav@172.19.38.157 "cd /home/airnav/teknik2026/<app-dir> && <command>"
+   ```
+   e.g.:
+   ```
+   ssh airnav@172.19.38.157 "cd /home/airnav/teknik2026 && docker compose -f docker-compose.local.yml up -d --build"
+   ssh airnav@172.19.38.157 "cd /home/airnav/teknik2026/atoms-maintenance/frontend_atoms-maintenance && npm install"
+   ssh airnav@172.19.38.157 "cd /home/airnav/teknik2026/sakti && composer test"
+   ```
+3. **Before assuming an edit is live**, note that sync depends on the Mutagen daemon being active — if a command run on the server doesn't reflect a just-made edit, that's a sync issue to flag to the user, not a code issue.
+4. **Network note**: the client sits behind office SSL inspection (Fortinet). If an outbound request (package registry, external API) fails with a certificate error, report it — don't try to silently disable SSL verification in app code as a workaround.
+
 ## Layout & per-app guidance
 
 | App | Purpose | Frontend | Backend | Own AGENTS.md |
@@ -13,6 +38,8 @@ Three independent web apps for AirNav Indonesia (intranet deployment). No root `
 Read an app's own `AGENTS.md` / context files (`BACKEND_CONTEXT.md`, `FRONTEND_CONTEXT.md`) before working inside it.
 
 ## Running locally
+
+> Remember: all commands in this section run **on the server** (via SSH — see setup section above), not on the Windows client.
 
 - **Full stack (fastest):** `docker compose -f docker-compose.local.yml up -d --build` (reads root `.env`). Ports: atoms frontend `5656`, atoms backend `5657`, rostering frontend `5658`, rostering backend `5659`, sakti `5660`.
   - ⚠️ `docker-compose.yml` and `docker-compose.prod.yml` are stale — they build `./atoms/...` which no longer exists. Use `docker-compose.local.yml` for local dev; prod uses `.env.prod` + `docker-compose.prod.yml` after fixing that path.

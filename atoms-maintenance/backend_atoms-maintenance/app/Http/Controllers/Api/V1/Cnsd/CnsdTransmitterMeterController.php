@@ -50,13 +50,14 @@ class CnsdTransmitterMeterController extends Controller
     /**
      * GET /api/v1/cnsd/transmitter-meter/template
      */
-    public function template(): JsonResponse
+    public function template(Request $request): JsonResponse
     {
+        $erOnly = $request->input('form_type') === 'TRANSMITTER-ER';
         return $this->success([
-            'form_type'    => 'TRANSMITTER-METER',
+            'form_type'    => $erOnly ? 'TRANSMITTER-ER' : 'TRANSMITTER-METER',
             'facility'     => 'TRANSMITTER',
             'form_code'    => 'FORM C-1',
-            'sections'     => CnsdTransmitterMeterTemplate::sections(),
+            'sections'     => CnsdTransmitterMeterTemplate::sections($erOnly),
         ], 'Transmitter Meter template retrieved successfully');
     }
 
@@ -85,7 +86,8 @@ class CnsdTransmitterMeterController extends Controller
         }
 
         try {
-            $this->activityLogger->logMeterReadingCreated($record, 'TRANSMITTER', '/cnsd/transmitter-meter', $user);
+            $modulePath = $record->form_type === 'TRANSMITTER-ER' ? '/cnsd/transmitter-er-meter' : '/cnsd/transmitter-meter';
+            $this->activityLogger->logMeterReadingCreated($record, 'TRANSMITTER', $modulePath, $user);
         } catch (\Throwable) { /* non-fatal */ }
 
         return $this->success($this->detailRecord($record), 'CNSD Transmitter Meter record created successfully', 201);
@@ -189,10 +191,11 @@ class CnsdTransmitterMeterController extends Controller
     /**
      * GET /api/v1/cnsd/transmitter-meter/years
      */
-    public function years(): JsonResponse
+    public function years(Request $request): JsonResponse
     {
         $years = CnsdTransmitterMeterRecord::selectRaw('EXTRACT(YEAR FROM date)::int AS y')
             ->whereNotNull('date')
+            ->when($request->input('form_type'), fn ($query, $formType) => $query->where('form_type', $formType))
             ->groupBy('y')
             ->orderByDesc('y')
             ->pluck('y')
@@ -289,7 +292,7 @@ class CnsdTransmitterMeterController extends Controller
                 'block_reason'    => $it->block_reason,
                 'sort_order'      => $it->sort_order,
             ])->values()->toArray(),
-            'sections_meta' => CnsdTransmitterMeterTemplate::sectionMeta(),
+            'sections_meta' => CnsdTransmitterMeterTemplate::sectionMeta($r->form_type === 'TRANSMITTER-ER'),
             'created_by'    => $r->created_by_id ? ['id' => $r->created_by_id, 'name' => $r->created_by_name] : null,
             'created_at'    => $r->created_at?->toISOString(),
             'updated_at'    => $r->updated_at?->toISOString(),

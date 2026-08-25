@@ -35,7 +35,7 @@ export const supportTicketService = {
   },
 
   async getMyTickets(params: GetTicketsParams = {}): Promise<PaginatedResponse<SupportTicket>> {
-    const response = await apiClient.get<PaginatedResponse<SupportTicket>>('/support-tickets/my-tickets', { params });
+    const response = await apiClient.get<{data: PaginatedResponse<SupportTicket>}>('/support-tickets/my-tickets', { params });
     return response.data.data;
   },
 
@@ -45,7 +45,7 @@ export const supportTicketService = {
   },
 
   async getAllTickets(params: GetTicketsParams = {}): Promise<PaginatedResponse<SupportTicket>> {
-    const response = await apiClient.get<PaginatedResponse<SupportTicket>>('/support-tickets', { params });
+    const response = await apiClient.get<{data: PaginatedResponse<SupportTicket>}>('/support-tickets', { params });
     return response.data.data;
   },
 

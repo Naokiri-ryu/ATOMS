@@ -1,0 +1,78 @@
+# =============================================================
+# Stage 1: Composer install (dependency cache layer)
+# =============================================================
+FROM php:8.4-cli-alpine AS composer
+
+RUN apk add --no-cache \
+        libpq-dev \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+        libwebp-dev \
+        libzip-dev \
+        libxml2-dev \
+        oniguruma-dev \
+        icu-dev \
+        autoconf g++ make linux-headers \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j$(nproc) \
+        pdo pdo_pgsql pgsql mbstring xml zip intl bcmath gd exif pcntl opcache
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# =============================================================
+# Stage 2: Production PHP-FPM image
+# =============================================================
+FROM php:8.4-fpm-alpine
+
+# Install system dependencies + PHP extensions
+RUN apk add --no-cache \
+        libpq-dev \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+        libwebp-dev \
+        libzip-dev \
+        libxml2-dev \
+        oniguruma-dev \
+        icu-dev \
+        supervisor \
+        nginx \
+        curl \
+        $PHPIZE_DEPS \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j$(nproc) \
+        pdo pdo_pgsql pgsql mbstring xml zip intl bcmath gd exif pcntl opcache
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# Copy composer dependencies from stage 1
+COPY --from=composer /var/www/html/vendor vendor
+
+# Copy application source
+COPY . .
+
+# Set correct permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage \
+    && chmod -R 755 /var/www/html/bootstrap/cache
+
+# Copy config files
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 80
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

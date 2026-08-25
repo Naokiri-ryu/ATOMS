@@ -1,12 +1,33 @@
 {
-	email {$ACME_EMAIL}
+	# No ACME — all certs are internal/self-signed for intranet
 }
 
-{$ATOMS_DOMAIN} {
+# ─────── ROSTERING (HALAMAN UTAMA) ───────
+{$MAIN_DOMAIN} {
+	tls internal
 	encode zstd gzip
 
 	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	handle /api/* {
+		reverse_proxy rostering-backend:80
+	}
+
+	handle {
+		reverse_proxy rostering-frontend:80
+	}
+}
+
+# ─────── MAINTENANCE ───────
+{$MAINTENANCE_DOMAIN} {
+	tls internal
+	encode zstd gzip
+
+	header {
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "SAMEORIGIN"
 		Referrer-Policy "strict-origin-when-cross-origin"
@@ -21,15 +42,29 @@
 	}
 }
 
+# ─────── SAKTI ───────
 {$SAKTI_DOMAIN} {
+	tls internal
 	encode zstd gzip
 
 	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "SAMEORIGIN"
 		Referrer-Policy "strict-origin-when-cross-origin"
 	}
 
 	reverse_proxy sakti:80
+}
+
+# ─────── FALLBACK (IP ACCESS → ROSTERING) ───────
+http:// {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	reverse_proxy rostering-frontend:80
 }

@@ -96,6 +96,7 @@ class CnsdTransmitterMeterService
         $formType  = $data['form_type']  ?? 'TRANSMITTER-METER';
         $facility  = $data['facility']   ?? 'TRANSMITTER';
         $formCode  = $data['form_code']  ?? 'FORM C-1';
+        $erOnly    = $formType === 'TRANSMITTER-ER';
         $date      = $data['date'];
         $shiftType = $data['shift_type'];
         $location  = $data['location']   ?? 'Kantor Cabang Surabaya';
@@ -118,7 +119,7 @@ class CnsdTransmitterMeterService
         }
 
         return DB::transaction(function () use (
-            $formType, $facility, $formCode, $date, $shiftType, $location, $creator, $rosterContext
+            $erOnly, $formType, $facility, $formCode, $date, $shiftType, $location, $creator, $rosterContext
         ) {
             $manager    = $rosterContext['manager'];
             $supervisor = $rosterContext['supervisor'];
@@ -128,7 +129,7 @@ class CnsdTransmitterMeterService
             $dayName  = $dayNames[(int) now()->format('w')];
 
             $record = CnsdTransmitterMeterRecord::create([
-                'form_number'     => $this->generateFormNumber($date),
+                'form_number'     => $this->generateFormNumber($date, $formType),
                 'form_type'       => $formType,
                 'facility'        => $facility,
                 'form_code'       => $formCode,
@@ -158,7 +159,7 @@ class CnsdTransmitterMeterService
             }
 
             // Seed items from Transmitter template
-            $itemRows = CnsdTransmitterMeterTemplate::buildItemRows($record->id);
+            $itemRows = CnsdTransmitterMeterTemplate::buildItemRows($record->id, $erOnly);
             if (!empty($itemRows)) {
                 CnsdTransmitterMeterItem::insert($itemRows);
             }
@@ -225,13 +226,15 @@ class CnsdTransmitterMeterService
     // ─── Form Number ───────────────────────────────────────────
 
     /**
-     * Format: TRANSMITTER-{YYMMDD}-{SEQ}
-     * Example: TRANSMITTER-260519-001
+     * Format: TRANSMITTER-{YYMMDD}-{SEQ} (FORM C-1) or ER-{YYMMDD}-{SEQ}
+     * for the ER Bali & ER P.Bun module.
+     * Example: TRANSMITTER-260519-001 / ER-260825-001
      */
-    public function generateFormNumber(string $date): string
+    public function generateFormNumber(string $date, string $formType = 'TRANSMITTER-METER'): string
     {
         $dateYymmdd = date('ymd', strtotime($date));
-        $prefix = 'TRANSMITTER-' . $dateYymmdd;
+        $modulePrefix = $formType === 'TRANSMITTER-ER' ? 'ER' : 'TRANSMITTER';
+        $prefix = $modulePrefix . '-' . $dateYymmdd;
 
         $count = CnsdTransmitterMeterRecord::withTrashed()
             ->where('form_number', 'LIKE', $prefix . '%')

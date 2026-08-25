@@ -1161,8 +1161,39 @@ export const TfpGensetDvorDetailPage: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [record, isCompleted, selectedCells, clipboardCells, itemValues, flatCells, draftItemMeta]);
 
-  const setFacilityField = (facilityId: number, field: 'kondisi' | 'keterangan', val: string) => {
-    setFacilityValues((prev) => ({ ...prev, [facilityId]: { ...prev[facilityId], [field]: val } }));
+    const setFacilityField = (
+    facilityId: number,
+    field: 'kondisi' | 'keterangan',
+    val: string
+  ) => {
+    setFacilityValues((prev) => ({
+      ...prev,
+      [facilityId]: {
+        ...prev[facilityId],
+        [field]: val,
+      },
+    }));
+  };
+
+  // Auto Fill semua kondisi fasilitas
+  const handleAutoFillKondisi = (kondisi: string) => {
+    if (!record || isCompleted) return;
+
+    setFacilityValues((prev) => {
+      const next = { ...prev };
+
+      record.facilities.forEach((facility) => {
+        next[facility.id] = {
+          ...(next[facility.id] ?? {
+            kondisi: '',
+            keterangan: '',
+          }),
+          kondisi,
+        };
+      });
+
+      return next;
+    });
   };
 
   // ─── BARU: Navigasi keyboard (Enter / Arrow Up/Down) ────────────────────
@@ -1791,12 +1822,59 @@ export const TfpGensetDvorDetailPage: React.FC = () => {
 
         {/* ── Kondisi Fasilitas ── */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/60">
-            <CheckSquare size={16} className="text-sky-600" />
-            <h2 className="text-sm font-bold text-slate-800">Kondisi Fasilitas</h2>
-            <span className="ml-auto text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-              {record.facilities.length} fasilitas
-            </span>
+          <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/60">
+            <div className="flex items-center gap-2">
+              <CheckSquare size={16} className="text-sky-600" />
+
+              <h2 className="text-sm font-bold text-slate-800">
+                Kondisi Fasilitas
+              </h2>
+
+              <span className="ml-auto text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+                {record.facilities.length} fasilitas
+              </span>
+            </div>
+
+            {!isCompleted && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mr-1">
+                  Auto Fill:
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => handleAutoFillKondisi('Baik')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg
+                            bg-emerald-50 text-emerald-700 border border-emerald-200
+                            hover:bg-emerald-100 transition-colors"
+                >
+                  <Check size={12} />
+                  Semua — Baik
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleAutoFillKondisi('Rusak')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg
+                            bg-red-50 text-red-700 border border-red-200
+                            hover:bg-red-100 transition-colors"
+                >
+                  <Ban size={12} />
+                  Semua — Rusak
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleAutoFillKondisi('Tidak Ada')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg
+                            bg-slate-100 text-slate-600 border border-slate-300
+                            hover:bg-slate-200 transition-colors"
+                >
+                  <Eraser size={12} />
+                  Semua — Tidak Ada
+                </button>
+              </div>
+            )}
           </div>
           <div className="divide-y divide-slate-100">
             <div className={cn(

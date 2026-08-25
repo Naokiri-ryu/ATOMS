@@ -20,8 +20,18 @@ sakti.zip
 atoms-maintenance.zip
 atoms-rostering.zip
 
+# Backups
+backups/
+*.bckp
+*.bak
+*.backup
+*.backup*
+
 # OS / editor
 *.log
 Thumbs.db
 .idea/
 .vscode/
+# Lokal saja (secret & sampah)
+.env.prod
+err.txt

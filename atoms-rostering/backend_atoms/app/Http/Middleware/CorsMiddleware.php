@@ -16,23 +16,40 @@ class CorsMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        $allowedOrigins = [
+        $envOrigins = getenv('CORS_ALLOWED_ORIGINS') ?: '';
+        $allowedOrigins = $envOrigins ? array_filter(array_map('trim', explode(',', $envOrigins))) : [];
+        $allowedOrigins = array_merge($allowedOrigins, [
+            'http://localhost',
+            'http://localhost:80',
+            'http://localhost:5656',
+            'http://localhost:5658',
+            'http://localhost:5660',
             'http://localhost:5173',
             'http://localhost:5174',
             'http://localhost:3000',
+            'http://127.0.0.1:5656',
+            'http://127.0.0.1:5658',
+            'http://127.0.0.1:5660',
             'http://127.0.0.1:5173',
             'http://127.0.0.1:5174',
             'http://127.0.0.1:3000',
+            'http://172.19.38.157',
+            'http://172.19.38.157:80',
+            'http://172.19.38.157:5656',
+            'http://172.19.38.157:5658',
+            'http://172.19.38.157:5659',
+            'http://172.19.38.157:5660',
             'http://172.19.38.157:5173',
             'http://172.19.38.157:5174',
-            'http://172.19.38.157:8002',    
-	    'http://localhost:5656',
-	    'http://localhost:5658',
-	    'http://127.0.0.1:5656',
-	    'http://127.0.0.1:5658',
-	    'http://172.19.38.157:5656',
-	    'http://172.19.38.157:5658',
-        ];
+            'http://172.19.38.157:8002',
+            'https://atoms.local',
+            'https://atoms-maintenance.local',
+            'https://sakti.local',
+            'http://atoms.local',
+            'http://atoms-maintenance.local',
+            'http://sakti.local',
+        ]);
+        $allowedOrigins = array_values(array_unique($allowedOrigins));
 
         $origin = $request->header('Origin');
 

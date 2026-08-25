@@ -231,4 +231,3 @@ volumes:
 networks:
   teknik_local:
     driver: bridge
-

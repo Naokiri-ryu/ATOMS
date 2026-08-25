@@ -9,10 +9,7 @@ import {
   AlertCircle,
   Inbox,
   Search,
-  ChevronRight,
   Loader2,
-  BarChart3,
-  MessageSquare,
   Eye,
 } from 'lucide-react';
 import { PageHeader } from '../components';

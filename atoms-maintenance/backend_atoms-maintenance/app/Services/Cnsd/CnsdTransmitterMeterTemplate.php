@@ -16,15 +16,35 @@ namespace App\Services\Cnsd;
  *   Section 2 — LINGKUNGAN KERJA
  *     Items: Suhu Ruangan, Air Humidity, Kebersihan Ruangan, UPS
  *     Layout: NO | KEGIATAN | NOMINAL | HASIL | KETERANGAN
+ *
+ * ER-only mode ($erOnly = true, form_type TRANSMITTER-ER = modul CNSD-017
+ * "VHF ER Gedung Radar"): hanya grup ER BALI & ER P.BUN yang disertakan
+ * (dinomori ulang 1 & 2), Section 2 dibuang.
  */
 class CnsdTransmitterMeterTemplate
 {
     /**
      * Full section + group + item structure for the Transmitter Meter Reading form.
      */
-    public static function sections(): array
+    public static function sections(bool $erOnly = false): array
     {
-        return [
+        $transmitterGroups = self::transmitterGroups();
+        if ($erOnly) {
+            // CNSD-017 "VHF ER Gedung Radar" berdiri sebagai form sendiri,
+            // sehingga nomor grup warisan FORM C-1 Transmitter (8 = ER BALI,
+            // 9 = ER P.BUN) dinomori ulang menjadi 1 dan 2.
+            $erGroups = array_values(array_filter(
+                $transmitterGroups,
+                static fn (array $group): bool => in_array($group['number'], [8, 9], true),
+            ));
+            $transmitterGroups = [];
+            foreach ($erGroups as $index => $group) {
+                $group['number'] = $index + 1;
+                $transmitterGroups[] = $group;
+            }
+        }
+
+        $sections = [
             // ───────────────────────────────────────────────────────────
             // SECTION 1 — TRANSMITTER / TX RADIO
             // ───────────────────────────────────────────────────────────
@@ -32,7 +52,7 @@ class CnsdTransmitterMeterTemplate
                 'code' => '1',
                 'name' => 'TRANSMITTER / TX RADIO',
                 'inputs_layout' => 'transmitter',
-                'groups' => self::transmitterGroups(),
+                'groups' => $transmitterGroups,
             ],
 
             // ───────────────────────────────────────────────────────────
@@ -58,6 +78,8 @@ class CnsdTransmitterMeterTemplate
                 ],
             ],
         ];
+
+        return $erOnly ? [$sections[0]] : $sections;
     }
 
     /**
@@ -201,13 +223,13 @@ class CnsdTransmitterMeterTemplate
     /**
      * Flatten the structured template into row inserts for cnsd_transmitter_meter_items.
      */
-    public static function buildItemRows(int $recordId): array
+    public static function buildItemRows(int $recordId, bool $erOnly = false): array
     {
         $rows = [];
         $sortOrder = 0;
         $now = now();
 
-        foreach (self::sections() as $section) {
+        foreach (self::sections($erOnly) as $section) {
             foreach ($section['groups'] as $group) {
                 // Add group header row
                 if ($section['code'] === '1') {
@@ -296,7 +318,7 @@ class CnsdTransmitterMeterTemplate
     /**
      * Section + group metadata for frontend rendering.
      */
-    public static function sectionMeta(): array
+    public static function sectionMeta(bool $erOnly = false): array
     {
         return array_map(static function ($section) {
             return [
@@ -310,6 +332,6 @@ class CnsdTransmitterMeterTemplate
                     ];
                 }, $section['groups']),
             ];
-        }, self::sections());
+        }, self::sections($erOnly));
     }
 }
