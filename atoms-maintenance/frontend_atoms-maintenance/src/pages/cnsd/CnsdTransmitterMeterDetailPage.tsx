@@ -131,6 +131,10 @@ export const CnsdTransmitterMeterDetailPage: React.FC = () => {
       modulasi: "modulasi" in patch ? (patch.modulasi ?? null) : undefined,
       hasil: "hasil" in patch ? (patch.hasil ?? null) : undefined,
       keterangan: "keterangan" in patch ? (patch.keterangan ?? null) : undefined,
+      status_a: "status_a" in patch ? (patch.status_a ?? null) : undefined,
+      status_b: "status_b" in patch ? (patch.status_b ?? null) : undefined,
+      squelch_tx1: "squelch_tx1" in patch ? (patch.squelch_tx1 ?? null) : undefined,
+      squelch_tx2: "squelch_tx2" in patch ? (patch.squelch_tx2 ?? null) : undefined,
     }));
     try {
       const updated = await cnsdTransmitterMeterService.updateRecord(record.id, { items }, config.formType);
@@ -308,6 +312,7 @@ interface TransmitterSectionPanelProps {
 
 const TransmitterSectionPanel: React.FC<TransmitterSectionPanelProps> = ({ sectionMeta, items, isReadOnly, getValue, onChange }) => {
   const isTx = sectionMeta.inputs_layout === "transmitter";
+  const isReceiver = sectionMeta.inputs_layout === "receiver";
 
   // Group items by group_name (skip header rows)
   const groups = useMemo(() => {
@@ -329,7 +334,7 @@ const TransmitterSectionPanel: React.FC<TransmitterSectionPanelProps> = ({ secti
     }));
   }, [items]);
 
-  const colCount = isTx ? 7 : 5;
+  const colCount = isReceiver ? 6 : isTx ? 7 : 5;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -339,7 +344,7 @@ const TransmitterSectionPanel: React.FC<TransmitterSectionPanelProps> = ({ secti
             {sectionMeta.code}. {sectionMeta.name}
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            {isTx ? "Isi STATUS (On Air/STBY/Online/Offline), POWER O/P, MODULASI per TX. Back Up Radio status diblok per form." : "Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan."}
+            {isReceiver ? "Isi kolom STATUS A, STATUS B, SQUELCH TX 1, SQUELCH TX 2 untuk tiap receiver." : isTx ? "Isi STATUS (On Air/STBY/Online/Offline), POWER O/P, MODULASI per TX. Back Up Radio status diblok per form." : "Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan."}
           </p>
         </div>
         <span className="text-xs font-medium text-slate-400">{items.filter((i) => !i.is_header).length} item</span>
@@ -350,8 +355,15 @@ const TransmitterSectionPanel: React.FC<TransmitterSectionPanelProps> = ({ secti
           <thead>
             <tr className="bg-slate-50 text-slate-700">
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-12 text-[11px] uppercase tracking-wider">No</th>
-              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[200px] text-[11px] uppercase tracking-wider">{isTx ? "Frequency" : "Kegiatan"}</th>
-              {isTx ? (
+              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[200px] text-[11px] uppercase tracking-wider">{isReceiver ? "Pemeriksaan" : isTx ? "Frequency" : "Kegiatan"}</th>
+              {isReceiver ? (
+                <>
+                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">Status A</th>
+                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">SQUELCH TX 1</th>
+                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">Status B</th>
+                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">SQUELCH TX 2</th>
+                </>
+              ) : isTx ? (
                 <>
                   <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[80px] text-[11px] uppercase tracking-wider">Merk</th>
                   <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[120px] text-[11px] uppercase tracking-wider">Status</th>
@@ -385,7 +397,7 @@ const TransmitterSectionPanel: React.FC<TransmitterSectionPanelProps> = ({ secti
                       </td>
                     </tr>
                   )}
-                  {isTx ? renderTransmitterGroupRows(group.items, isReadOnly, getValue, onChange) : group.items.map((item) => <EnvItemRow key={item.id} item={item} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} />)}
+                  {isReceiver ? group.items.map((item, idx) => <ReceiverItemRow key={item.id} item={item} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} index={idx + 1} />) : isTx ? renderTransmitterGroupRows(group.items, isReadOnly, getValue, onChange) : group.items.map((item, idx) => <EnvItemRow key={item.id} item={item} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} index={idx + 1} />)}
                 </React.Fragment>
               ))
             )}
@@ -489,18 +501,55 @@ interface EnvItemRowProps {
   isReadOnly: boolean;
   getValue: (item: CnsdTransmitterMeterItem, field: keyof CnsdTransmitterMeterItem) => string;
   onChange: (itemId: number, field: keyof CnsdTransmitterMeterItem, value: string | null) => void;
+  index: number;
 }
 
-const EnvItemRow: React.FC<EnvItemRowProps> = ({ item, isReadOnly, getValue, onChange }) => {
+const EnvItemRow: React.FC<EnvItemRowProps> = ({ item, isReadOnly, getValue, onChange, index }) => {
   const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
-      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{item.group_number ?? ""}</td>
+      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{index}</td>
       <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.frequency_label ?? item.group_name ?? ""}</td>
       <td className={cn("px-2 py-2 align-middle text-center text-slate-600 text-[11px]", !item.nominal && "text-slate-300")}>{item.nominal || "—"}</td>
       <td className="px-2 py-2 align-middle">
         <input type="text" className={inputClass} placeholder="..." value={getValue(item, "hasil")} onChange={(e) => onChange(item.id, "hasil", e.target.value)} disabled={isReadOnly} />
+      </td>
+      <td className="px-2 py-2 align-middle">
+        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={isReadOnly} />
+      </td>
+    </tr>
+  );
+};
+
+// ─── Receiver section row ────────────────────────────────────
+
+interface ReceiverItemRowProps {
+  item: CnsdTransmitterMeterItem;
+  isReadOnly: boolean;
+  getValue: (item: CnsdTransmitterMeterItem, field: keyof CnsdTransmitterMeterItem) => string;
+  onChange: (itemId: number, field: keyof CnsdTransmitterMeterItem, value: string | null) => void;
+  index: number;
+}
+
+const ReceiverItemRow: React.FC<ReceiverItemRowProps> = ({ item, isReadOnly, getValue, onChange, index }) => {
+  const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
+
+  return (
+    <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
+      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{index}</td>
+      <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.frequency_label ?? ""}</td>
+      <td className="px-2 py-2 align-middle">
+        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "status_a")} onChange={(e) => onChange(item.id, "status_a", e.target.value)} disabled={isReadOnly} />
+      </td>
+      <td className="px-2 py-2 align-middle">
+        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "squelch_tx1")} onChange={(e) => onChange(item.id, "squelch_tx1", e.target.value)} disabled={isReadOnly} />
+      </td>
+      <td className="px-2 py-2 align-middle">
+        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "status_b")} onChange={(e) => onChange(item.id, "status_b", e.target.value)} disabled={isReadOnly} />
+      </td>
+      <td className="px-2 py-2 align-middle">
+        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "squelch_tx2")} onChange={(e) => onChange(item.id, "squelch_tx2", e.target.value)} disabled={isReadOnly} />
       </td>
       <td className="px-2 py-2 align-middle">
         <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={isReadOnly} />

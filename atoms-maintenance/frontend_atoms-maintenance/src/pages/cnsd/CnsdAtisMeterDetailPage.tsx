@@ -97,7 +97,7 @@ export const CnsdAtisMeterDetailPage: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
-  useEffect(() => { void fetchRecord(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [recordId]);
+  useEffect(() => { void fetchRecord(); }, [recordId]);
 
   const itemsBySection = useMemo(() => {
     const map: Record<string, CnsdAtisMeterItem[]> = {};

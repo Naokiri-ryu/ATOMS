@@ -12,6 +12,7 @@ import type { TfpDvorRecordDetail, TfpDvorRoleKey, TfpDvorSignerInfo, TfpDvorTec
 interface Props {
   record: TfpDvorRecordDetail;
   onUpdated: (record: TfpDvorRecordDetail) => void;
+  isDirtyCheck?: () => boolean;
 }
 
 const namesMatch = (a?: string | null, b?: string | null): boolean => {
@@ -36,7 +37,7 @@ interface PendingSign {
   technicianRowId?: number;
 }
 
-export const TfpDvorSignaturePanel: React.FC<Props> = ({ record, onUpdated }) => {
+export const TfpDvorSignaturePanel: React.FC<Props> = ({ record, onUpdated, isDirtyCheck }) => {
   const { user } = useAuth();
   const [pending, setPending] = useState<PendingSign | null>(null);
   const [isSigning, setIsSigning] = useState(false);
@@ -65,6 +66,7 @@ export const TfpDvorSignaturePanel: React.FC<Props> = ({ record, onUpdated }) =>
 
   const handleSign = async (signature: string) => {
     if (!pending) return;
+    if (isDirtyCheck?.() && !window.confirm('Ada perubahan yang belum disimpan. Lanjutkan paraf tanpa menyimpan?')) return;
     setIsSigning(true); setErrorMessage(null);
     try {
       const result = await tfpDvorService.signRecord(record.id, pending.role, signature, pending.technicianRowId);

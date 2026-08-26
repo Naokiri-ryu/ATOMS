@@ -18,7 +18,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { logbookCnsdService } from '@/services/logbookCnsdService';
-import type { LogbookCnsdSummary } from '@/types/logbookCnsd';
+import type { LogbookCnsdSummary, ManagerOnDutyEntry } from '@/types/logbookCnsd';
 
 // ─── Shift accent palette ─────────────────────────────────
 const SHIFT_BADGE: Record<'pagi' | 'siang' | 'malam', string> = {
@@ -499,9 +499,9 @@ export const LogbookCnsd: React.FC = () => {
                      <td className="px-6 py-4">
                       {(() => {
                         // 1. Buat Map dari managers_on_duty (data roster saat ini)
-                        const managerMap = new Map();
+                        const managerMap = new Map<string, ManagerOnDutyEntry & { isHistorical: boolean }>();
                         if (lb.managers_on_duty && lb.managers_on_duty.length > 0) {
-                          lb.managers_on_duty.forEach((mgr: any) => {
+                          lb.managers_on_duty.forEach((mgr: ManagerOnDutyEntry) => {
                             managerMap.set(mgr.shift, { ...mgr, isHistorical: false });
                           });
                         }
@@ -510,12 +510,12 @@ export const LogbookCnsd: React.FC = () => {
                         // tambahkan sebagai data historis agar nama tidak hilang
                         if (lb.manager_signatures) {
                           (['pagi', 'siang', 'malam'] as const).forEach((shift) => {
-                            const sig = lb.manager_signatures[shift];
+                            const sig = lb.manager_signatures?.[shift];
                             if (sig?.signature && !managerMap.has(shift)) {
                               managerMap.set(shift, {
                                 shift,
-                                name: sig.signed_by_name,
-                                user_id: sig.signed_by_user_id || 0,
+                                name: sig.signed_by_name ?? '',
+                                user_id: sig.signed_by_id || 0,
                                 isHistorical: true,
                               });
                             }

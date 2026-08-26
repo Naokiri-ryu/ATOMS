@@ -17,6 +17,7 @@ import type {
 interface Props {
   record: TfpGensetDvorRecordDetail;
   onUpdated: (record: TfpGensetDvorRecordDetail) => void;
+  isDirtyCheck?: () => boolean;
 }
 
 const namesMatch = (a?: string | null, b?: string | null): boolean => {
@@ -54,7 +55,7 @@ interface PendingSign {
  * Backend is the authoritative validator. The button-disabled state is purely a
  * UX hint — backend will return 403 if a wrong user attempts to sign.
  */
-export const TfpGensetDvorSignaturePanel: React.FC<Props> = ({ record, onUpdated }) => {
+export const TfpGensetDvorSignaturePanel: React.FC<Props> = ({ record, onUpdated, isDirtyCheck }) => {
   const { user } = useAuth();
   const [pending, setPending] = useState<PendingSign | null>(null);
   const [isSigning, setIsSigning] = useState(false);
@@ -97,6 +98,7 @@ export const TfpGensetDvorSignaturePanel: React.FC<Props> = ({ record, onUpdated
 
   const handleSign = async (signature: string) => {
     if (!pending) return;
+    if (isDirtyCheck?.() && !window.confirm('Ada perubahan yang belum disimpan. Lanjutkan paraf tanpa menyimpan?')) return;
     setIsSigning(true);
     setErrorMessage(null);
     try {

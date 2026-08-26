@@ -15,10 +15,6 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { reportingDamageReportService } from '@/services/reportingDamageReportService';
 import {
-  DAMAGE_CATEGORY_LABELS,
-  DAMAGE_CATEGORY_ORDER,
-  OBSTACLE_CODE_LABELS,
-  OBSTACLE_CODE_ORDER,
   normalizeDamageCategory,
 } from '@/types/reporting';
 import type {

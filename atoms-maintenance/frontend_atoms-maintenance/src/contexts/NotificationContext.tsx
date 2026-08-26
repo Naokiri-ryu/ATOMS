@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Notification } from '@/types';
 import { notificationService } from '@/services/notificationService';
@@ -45,43 +45,43 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
-  const addNotification = (notification: Notification) => {
+  const addNotification = useCallback((notification: Notification) => {
     setNotifications((prev) => [notification, ...prev]);
-  };
+  }, []);
 
-  const markAsRead = async (id: string | number) => {
-    // Optimistic update first, server call second — bell badge feels instant.
+  const markAsRead = useCallback(async (id: string | number) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
     );
     try {
       await notificationService.markAsRead(id);
     } catch {
-      // Re-fetch on failure to reconcile state with the server.
       void refresh();
     }
-  };
+  }, [refresh]);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     try {
       await notificationService.markAllAsRead();
     } catch {
       void refresh();
     }
-  };
+  }, [refresh]);
+
+  const value = useMemo(() => ({
+    notifications,
+    unreadCount,
+    isLoading,
+    refresh,
+    addNotification,
+    markAsRead,
+    markAllAsRead,
+  }), [notifications, unreadCount, isLoading, refresh, addNotification, markAsRead, markAllAsRead]);
 
   return (
     <NotificationContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        isLoading,
-        refresh,
-        addNotification,
-        markAsRead,
-        markAllAsRead,
-      }}
+      value={value}
     >
       {children}
     </NotificationContext.Provider>

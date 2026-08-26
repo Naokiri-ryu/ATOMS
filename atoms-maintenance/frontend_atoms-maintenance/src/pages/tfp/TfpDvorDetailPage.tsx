@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -313,6 +313,7 @@ const AddPanelModal: React.FC<AddPanelModalProps> = ({ open, onClose, onAdd, exi
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLabel(''); setSubs([{ label: 'Nilai' }]); setError(null);
     }
   }, [open]);
@@ -540,9 +541,12 @@ export const TfpDvorDetailPage: React.FC = () => {
 
   // ─── Data loading ───────────────────────────────────────────────────────
 
+  const savedSnapshotRef = useRef<string>('');
+
   const hydrate = (data: TfpDvorRecordDetail) => {
+    const tf = data.time_filled ?? new Date().toTimeString().slice(0, 5);
     setRecord(data);
-    setTimeFilled(data.time_filled ?? new Date().toTimeString().slice(0, 5));
+    setTimeFilled(tf);
 
     const iv: Record<number, Record<string, string>> = {};
     data.items.forEach((item) => { iv[item.id] = { ...(item.values ?? {}) }; });
@@ -556,7 +560,14 @@ export const TfpDvorDetailPage: React.FC = () => {
 
     setDraftConfig(null);
     setDraftItemMeta({});
+
+    savedSnapshotRef.current = JSON.stringify({ iv, fv, tf });
   };
+
+  const isDirtyCheck = useCallback(() => (
+    savedSnapshotRef.current !== '' &&
+    savedSnapshotRef.current !== JSON.stringify({ iv: itemValues, fv: facilityValues, tf: timeFilled })
+  ), [itemValues, facilityValues, timeFilled]);
 
   const fetchRecord = useCallback(async () => {
     if (!id) return;
@@ -1098,7 +1109,7 @@ export const TfpDvorDetailPage: React.FC = () => {
         }
       });
     }
-  }, [record, flatCells, getItemDisabled, getItemMerge, isModeRow, isSuplaiRow]);
+  }, [record, flatCells, getItemDisabled, getItemMerge]);
 
     const setFacilityField = (
     facilityId: number,
@@ -1655,7 +1666,7 @@ export const TfpDvorDetailPage: React.FC = () => {
         </div>
       )}
 
-      <TfpDvorSignaturePanel record={record} onUpdated={hydrate} />
+      <TfpDvorSignaturePanel record={record} onUpdated={(r) => setRecord(r)} isDirtyCheck={isDirtyCheck} />
 
       <AddPanelModal open={showAddPanel} onClose={() => setShowAddPanel(false)}
         onAdd={handleAddPanel} existingIds={effectiveConfig.map((p) => p.id)} />

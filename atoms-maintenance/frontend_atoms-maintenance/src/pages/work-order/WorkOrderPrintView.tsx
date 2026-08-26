@@ -144,7 +144,7 @@ export const WorkOrderPrintView: React.FC = () => {
 
   const signatures = useMemo(() => workOrder?.signatures ?? {}, [workOrder]);
 
-  const signatureColumns = useMemo(() => {
+  const signatureColumns = useMemo<Array<{ role: WorkOrderSignatureRole; label: string; signerName: string; isNotRequired?: boolean }>>(() => {
   if (!workOrder) return [];
 
   const personnel = workOrder.personnel ?? [];

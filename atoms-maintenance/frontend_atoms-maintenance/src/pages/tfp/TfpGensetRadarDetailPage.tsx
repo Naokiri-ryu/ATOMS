@@ -85,59 +85,6 @@ const slugify = (raw: string): string =>
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 
-// ─── ToggleButtonGroup — 2-state pill toggle (Mode/Suplai cells) ──────────
-
-interface ToggleButtonGroupProps {
-  options: readonly string[];
-  value: string;
-  onChange: (val: string) => void;
-  variant?: 'default' | 'mode' | 'suplai';
-  disabled?: boolean;
-}
-
-const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> = ({
-  options, value, onChange, variant = 'default', disabled,
-}) => {
-  const palette = (val: string, active: boolean) => {
-    if (!active) return 'bg-white text-slate-500 hover:bg-slate-50 border-slate-200';
-    if (variant === 'mode') {
-      return val === 'Auto'
-        ? 'bg-emerald-600 text-white border-emerald-600'
-        : 'bg-amber-500 text-white border-amber-500';
-    }
-    if (variant === 'suplai') {
-      return val === 'PLN' || val === 'PLN 1'
-        ? 'bg-emerald-600 text-white border-emerald-600'
-        : 'bg-sky-600 text-white border-sky-600';
-    }
-    return 'bg-slate-700 text-white border-slate-700';
-  };
-
-  return (
-    <div className="inline-flex rounded-md border border-slate-200 overflow-hidden shadow-sm">
-      {options.map((opt, i) => {
-        const active = value === opt;
-        return (
-          <button
-            key={opt}
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange(active ? '' : opt)}
-            className={cn(
-              'px-2.5 py-1 text-[11px] font-semibold transition-colors border-r border-slate-200 last:border-r-0 disabled:opacity-50 disabled:cursor-not-allowed',
-              palette(opt, active),
-              i === 0 ? 'rounded-l-md' : '',
-              i === options.length - 1 ? 'rounded-r-md' : '',
-            )}
-          >
-            {opt}
-          </button>
-        );
-      })}
-    </div>
-  );
-};
-
 // ─── Cell editor inputs (value entry mode) ─────────────────────────────────
 
 interface CellInputProps {
@@ -379,6 +326,7 @@ const AddPanelModal: React.FC<AddPanelModalProps> = ({ open, onClose, onAdd, exi
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLabel(''); setSubs([{ label: 'Input' }, { label: 'Output' }]); setError(null);
     }
   }, [open]);
@@ -404,7 +352,8 @@ const AddPanelModal: React.FC<AddPanelModalProps> = ({ open, onClose, onAdd, exi
     const finalSubs: { key: string; label: string }[] = [];
     for (const s of cleanSubs) {
       let k = slugify(s.label) || 'col';
-      let base = k, n = 1;
+      const base = k;
+      let n = 1;
       while (subKeysSeen.has(k)) { k = `${base}_${++n}`; }
       subKeysSeen.add(k);
       finalSubs.push({ key: k, label: s.label });
@@ -641,18 +590,27 @@ export const TfpGensetRadarDetailPage: React.FC = () => {
 
   // ─── Data loading ───────────────────────────────────────────────────────
 
-  const hydrate = (data: TfpGensetRadarRecordDetail) => {
-    setRecord(data);
-    setTimeFilled(data.time_filled ?? new Date().toTimeString().slice(0, 5));
+  const savedSnapshotRef = useRef<string>('');
 
-    // Genset-specific fields
-    setCatatan(data.catatan ?? '');
-    setStatusOperasi(data.status_operasi ?? null);
-    setStatusMasterSlave(data.status_master_slave ?? null);
-    setFuelLevel(data.fuel_level ?? null);
-    setEngine(data.engine ?? '');
-    setAlternator(data.alternator ?? '');
-    setKapasitas(data.kapasitas ?? '');
+  const hydrate = (data: TfpGensetRadarRecordDetail) => {
+    const tf = data.time_filled ?? new Date().toTimeString().slice(0, 5);
+    setRecord(data);
+    setTimeFilled(tf);
+
+    const cat = data.catatan ?? '';
+    const so = data.status_operasi ?? null;
+    const ms = data.status_master_slave ?? null;
+    const fl = data.fuel_level ?? null;
+    const eng = data.engine ?? '';
+    const alt = data.alternator ?? '';
+    const kap = data.kapasitas ?? '';
+    setCatatan(cat);
+    setStatusOperasi(so);
+    setStatusMasterSlave(ms);
+    setFuelLevel(fl);
+    setEngine(eng);
+    setAlternator(alt);
+    setKapasitas(kap);
 
     const iv: Record<number, Record<string, string>> = {};
     data.items.forEach((item) => {
@@ -666,10 +624,16 @@ export const TfpGensetRadarDetailPage: React.FC = () => {
     });
     setFacilityValues(fv);
 
-    // Reset structural draft to server state whenever we re-hydrate
     setDraftConfig(null);
     setDraftItemMeta({});
+
+    savedSnapshotRef.current = JSON.stringify({ iv, fv, tf, cat, so, ms, fl, eng, alt, kap });
   };
+
+  const isDirtyCheck = useCallback(() => (
+    savedSnapshotRef.current !== '' &&
+    savedSnapshotRef.current !== JSON.stringify({ iv: itemValues, fv: facilityValues, tf: timeFilled, cat: catatan, so: statusOperasi, ms: statusMasterSlave, fl: fuelLevel, eng: engine, alt: alternator, kap: kapasitas })
+  ), [itemValues, facilityValues, timeFilled, catatan, statusOperasi, statusMasterSlave, fuelLevel, engine, alternator, kapasitas]);
 
   const fetchRecord = useCallback(async () => {
     if (!id) return;
@@ -2011,7 +1975,7 @@ export const TfpGensetRadarDetailPage: React.FC = () => {
         </div>
       )}
 
-      <TfpGensetRadarSignaturePanel record={record} onUpdated={hydrate} />
+      <TfpGensetRadarSignaturePanel record={record} onUpdated={(r) => setRecord(r)} isDirtyCheck={isDirtyCheck} />
 
       <AddPanelModal
         open={showAddPanel}

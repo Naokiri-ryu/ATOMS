@@ -115,7 +115,6 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, workOrderId]);
 
   const loadShiftContext = async (shiftType: ShiftType, date: string) => {
@@ -254,7 +253,6 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
 
         if (import.meta.env.DEV) {
           // Safe payload summary for debugging — never logs token / signature.
-          // eslint-disable-next-line no-console
           console.log('[WO submit] payload summary', {
             wo_type: woType,
             division,

@@ -138,7 +138,7 @@ export const cnsdTransmitterMeterService = {
     return response.data.data;
   },
 
-  async deleteRecord(id: number, _formType = TRANSMITTER_FORM_TYPE): Promise<void> {
+  async deleteRecord(id: number): Promise<void> {
     await axios.delete(`${API_URL}/v1/cnsd/transmitter-meter/${id}`, {
       headers: getAuthHeaders(),
     });

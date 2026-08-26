@@ -29,7 +29,7 @@ export const authService = {
    *
    * Returns the resolved user data on success, throws on failure.
    */
-  async verify(token: string, tokenfix?: any): Promise<{ user: import('@/types').User }> {
+  async verify(token: string, tokenfix?: string): Promise<{ user: import('@/types').User }> {
         const params = tokenfix ? { tokenfix } : undefined;
 
     

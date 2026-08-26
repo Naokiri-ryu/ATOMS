@@ -372,6 +372,7 @@ const RemindersCard: React.FC<{ snapshot: MonitorSnapshot }> = ({ snapshot }) =>
   // is empty (otherwise the slot would flash a useless empty state).
   useEffect(() => {
     if (!hasMonthly) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setView('daily');
       return;
     }

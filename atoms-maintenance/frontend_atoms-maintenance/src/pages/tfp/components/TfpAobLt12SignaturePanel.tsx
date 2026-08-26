@@ -17,6 +17,7 @@ import type {
 interface Props {
   record: TfpAobLt12RecordDetail;
   onUpdated: (record: TfpAobLt12RecordDetail) => void;
+  isDirtyCheck?: () => boolean;
 }
 
 const namesMatch = (a?: string | null, b?: string | null): boolean => {
@@ -41,7 +42,7 @@ interface PendingSign {
   technicianRowId?: number;
 }
 
-export const TfpAobLt12SignaturePanel: React.FC<Props> = ({ record, onUpdated }) => {
+export const TfpAobLt12SignaturePanel: React.FC<Props> = ({ record, onUpdated, isDirtyCheck }) => {
   const { user } = useAuth();
   const [pending, setPending] = useState<PendingSign | null>(null);
   const [isSigning, setIsSigning] = useState(false);
@@ -72,6 +73,7 @@ export const TfpAobLt12SignaturePanel: React.FC<Props> = ({ record, onUpdated })
 
   const handleSign = async (signature: string) => {
     if (!pending) return;
+    if (isDirtyCheck?.() && !window.confirm('Ada perubahan yang belum disimpan. Lanjutkan paraf tanpa menyimpan?')) return;
     setIsSigning(true);
     setErrorMessage(null);
     try {

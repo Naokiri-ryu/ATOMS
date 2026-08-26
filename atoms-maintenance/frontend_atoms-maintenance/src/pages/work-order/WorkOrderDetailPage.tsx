@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer, Clock, Calendar, Users as UsersIcon, Save } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/common/Card';
@@ -69,9 +69,11 @@ export const WorkOrderDetailPage: React.FC = () => {
   const [notesUsulan, setNotesUsulan] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Pre-fill feedback form when WO data loads
+  // Pre-fill feedback form when WO data loads (only on initial mount)
+  const hasPrefilledRef = useRef(false);
   useEffect(() => {
-    if (wo) {
+    if (wo && !hasPrefilledRef.current) {
+      hasPrefilledRef.current = true;
       setCompletionStatus(wo.completion_status || '');
       setNotesKendala(wo.notes_kendala || '');
       setNotesUsulan(wo.notes_usulan || '');
@@ -221,8 +223,6 @@ export const WorkOrderDetailPage: React.FC = () => {
         workOrder={wo}
         onWorkOrderUpdated={(updated) => {
           setWo(updated);
-          // Re-fetch to guarantee canonical state (signatures + signer info).
-          void fetchWorkOrder();
         }}
       />
 

@@ -32,6 +32,7 @@ export interface LogbookCnsdSummary {
   created_by_name: string | null;
   created_at: string;
   managers_on_duty: ManagerOnDutyEntry[];
+  manager_signatures?: Record<ShiftKey, ManagerShiftSignature>;
 }
 
 export interface LogbookCnsdItem {

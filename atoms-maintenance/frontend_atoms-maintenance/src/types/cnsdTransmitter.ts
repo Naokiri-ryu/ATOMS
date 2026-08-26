@@ -44,6 +44,11 @@ export interface CnsdTransmitterMeterItem {
   power_output: string | null;
   modulasi: string | null;
   keterangan: string | null;
+  // Receiver section fields (VHF ER Gedung Radar only)
+  status_a: string | null;
+  status_b: string | null;
+  squelch_tx1: string | null;
+  squelch_tx2: string | null;
   nominal: string | null;
   hasil: string | null;
   is_header: boolean;

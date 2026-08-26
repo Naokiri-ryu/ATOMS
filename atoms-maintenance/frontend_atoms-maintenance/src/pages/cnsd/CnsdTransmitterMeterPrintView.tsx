@@ -33,6 +33,7 @@ interface PrintSectionBlockProps {
 
 const PrintSectionBlock: React.FC<PrintSectionBlockProps> = ({ meta, items }) => {
   const isTx = meta.inputs_layout === "transmitter";
+  const isReceiver = meta.inputs_layout === "receiver";
   const totalCols = 7;
 
   // Group items (skip headers — handled by group bar)
@@ -52,6 +53,44 @@ const PrintSectionBlock: React.FC<PrintSectionBlockProps> = ({ meta, items }) =>
     }
   });
 
+  if (isReceiver) {
+    // Receiver section
+    return (
+      <>
+        <tr>
+          <td className="gc-section-bar text-center" style={{ verticalAlign: "middle" }}>
+            {meta.code}
+          </td>
+          <td colSpan={totalCols - 1} className="gc-section-bar font-bold uppercase">
+            {meta.name}
+          </td>
+        </tr>
+        <tr>
+          <td className="gc-group-bar text-center font-bold">NO</td>
+          <td className="gc-group-bar font-bold">PEMERIKSAAN</td>
+          <td className="gc-group-bar text-center font-bold">STATUS A</td>
+          <td className="gc-group-bar text-center font-bold">SQUELCH TX 1</td>
+          <td className="gc-group-bar text-center font-bold">STATUS B</td>
+          <td className="gc-group-bar text-center font-bold">SQUELCH TX 2</td>
+          <td className="gc-group-bar font-bold">KETERANGAN</td>
+        </tr>
+        {groups.flatMap((g) =>
+          g.items.map((item, idx) => (
+            <tr key={item.id} className="text-[10px]">
+              <td className="text-center">{idx + 1}</td>
+              <td className="pl-1">{text(item.frequency_label)}</td>
+              <td className="text-center">{text(item.status_a)}</td>
+              <td className="text-center">{text(item.squelch_tx1)}</td>
+              <td className="text-center">{text(item.status_b)}</td>
+              <td className="text-center">{text(item.squelch_tx2)}</td>
+              <td>{text(item.keterangan)}</td>
+            </tr>
+          )),
+        )}
+      </>
+    );
+  }
+
   if (!isTx) {
     // Environment section
     return (
@@ -60,16 +99,16 @@ const PrintSectionBlock: React.FC<PrintSectionBlockProps> = ({ meta, items }) =>
           <td className="gc-section-bar text-center" style={{ verticalAlign: "middle" }}>
             {meta.code}
           </td>
-          <td colSpan={totalCols - 1} className="gc-section-bar font-bold uppercase" style={{ backgroundColor: "#f4b400" }}>
+          <td colSpan={totalCols - 1} className="gc-section-bar font-bold uppercase">
             {meta.name}
           </td>
         </tr>
         <tr>
           <td className="gc-group-bar text-center font-bold">NO</td>
           <td colSpan={2} className="gc-group-bar font-bold">
-            KEGIATAN
+            PEMERIKSAAN
           </td>
-          <td className="gc-group-bar text-center font-bold">NOMINAL</td>
+          <td className="gc-group-bar text-center font-bold">STANDART</td>
           <td className="gc-group-bar text-center font-bold">HASIL</td>
           <td colSpan={2} className="gc-group-bar font-bold">
             KETERANGAN
@@ -80,7 +119,7 @@ const PrintSectionBlock: React.FC<PrintSectionBlockProps> = ({ meta, items }) =>
             <tr key={item.id} className="text-[10px]">
               <td className="text-center">{item.group_number ? idx + 1 : ""}</td>
               <td colSpan={2} className="pl-1">
-                {text(item.frequency_label) || text(item.group_name) || ""}
+                - {text(item.frequency_label) || text(item.group_name) || ""}
               </td>
               <td className="text-center">{text(item.nominal)}</td>
               <td className="text-center">{text(item.hasil)}</td>
@@ -327,11 +366,23 @@ export const CnsdTransmitterMeterPrintView: React.FC = () => {
           <thead>
             <tr className="text-center font-bold gc-section-bar">
               <th className="border border-black py-1">NO</th>
-              <th className="border border-black py-1">FREQUENCY</th>
-              <th className="border border-black py-1">MERK</th>
-              <th className="border border-black py-1">STATUS</th>
-              <th className="border border-black py-1">POWER O/P</th>
-              <th className="border border-black py-1">MODULASI</th>
+              {config.formType === "TRANSMITTER-ER" ? (
+                <>
+                  <th className="border border-black py-1">PEMERIKSAAN</th>
+                  <th className="border border-black py-1">STATUS A</th>
+                  <th className="border border-black py-1">SQUELCH TX 1</th>
+                  <th className="border border-black py-1">STATUS B</th>
+                  <th className="border border-black py-1">SQUELCH TX 2</th>
+                </>
+              ) : (
+                <>
+                  <th className="border border-black py-1">FREQUENCY</th>
+                  <th className="border border-black py-1">MERK</th>
+                  <th className="border border-black py-1">STATUS</th>
+                  <th className="border border-black py-1">POWER O/P</th>
+                  <th className="border border-black py-1">MODULASI</th>
+                </>
+              )}
               <th className="border border-black py-1">KETERANGAN</th>
             </tr>
           </thead>

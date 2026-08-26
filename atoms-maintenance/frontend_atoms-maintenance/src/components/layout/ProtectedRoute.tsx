@@ -63,6 +63,7 @@ export const ProtectedRoute: React.FC = () => {
     if (isMockMode) {
       return <Navigate to="/login" replace />;
     }
+    // eslint-disable-next-line react-hooks/immutability
     window.location.href = ROSTERING_LOGIN_URL;
     return null;
   }

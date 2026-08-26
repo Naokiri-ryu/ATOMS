@@ -3,12 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Printer } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { reportingDamageReportService } from '@/services/reportingDamageReportService';
-import {
-  DAMAGE_CATEGORY_LABELS,
-  OBSTACLE_CODE_LABELS,
-  OBSTACLE_CODE_ORDER,
-  normalizeDamageCategory,
-} from '@/types/reporting';
 import type { ReportingDamageReportDetail } from '@/types/reporting';
 
 const formatDate = (v?: string | null): string => {
@@ -40,11 +34,6 @@ const formatDateTime = (v?: string | null): string => {
 };
 
 const val = (v: string | null | undefined): string => (v == null || v === '' ? '-' : v);
-
-const formatDamageCategory = (value?: string | null): string => {
-  const category = normalizeDamageCategory(value);
-  return `${category} - ${DAMAGE_CATEGORY_LABELS[category]}`;
-};
 
 /**
  * ReportingDamagePrintView — Laporan Kerusakan formal print layout.
@@ -344,45 +333,4 @@ const BodyRow: React.FC<{
     <td className="border border-black px-2 py-1 font-medium">{label}</td>
     <td className="border border-black px-2 py-1 leading-snug">{children}</td>
   </tr>
-);
-
-const ObstacleCodeBox: React.FC<{
-  selected: string | null;
-  alasanLain?: string | null;
-}> = ({ selected, alasanLain }) => (
-  <div className="space-y-1">
-    <div className="grid grid-cols-1 gap-x-3 gap-y-0.5">
-      {OBSTACLE_CODE_ORDER.map((code) => {
-        const isSelected = selected === code;
-        const labelExtra = code === 'AL' ? ' (Jelaskan)' : '';
-        return (
-          <div
-            key={code}
-            className={`flex items-start gap-1.5 ${
-              isSelected ? 'font-bold text-black' : 'text-gray-700'
-            }`}
-          >
-            <span
-              className={`inline-flex h-2.5 w-2.5 items-center justify-center border border-black shrink-0 mt-0.5 ${
-                isSelected ? 'bg-black' : 'bg-white'
-              }`}
-              aria-hidden="true"
-            >
-              {isSelected && <span className="text-white text-[8px] leading-none">✓</span>}
-            </span>
-            <span className="text-[8px] leading-tight">
-              <strong>{code}</strong> - {OBSTACLE_CODE_LABELS[code]}
-              {labelExtra}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-    {selected === 'AL' && alasanLain && (
-      <div className="mt-2 border-t border-gray-300 pt-1.5">
-        <div className="text-[9px] font-semibold text-gray-600 uppercase">Alasan Lain:</div>
-        <div className="text-[10px] whitespace-pre-line">{alasanLain}</div>
-      </div>
-    )}
-  </div>
 );

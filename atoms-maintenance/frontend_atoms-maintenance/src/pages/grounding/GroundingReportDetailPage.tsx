@@ -68,7 +68,6 @@ export const GroundingReportDetailPage: React.FC = () => {
 
   const handleRecordUpdate = (updated: GroundingReportDetail) => {
     setRecord(updated);
-    setLocalItems(updated.items);
   };
 
   const isCompleted = record?.status === 'completed';

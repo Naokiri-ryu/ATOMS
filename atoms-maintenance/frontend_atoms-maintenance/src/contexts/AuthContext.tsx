@@ -62,7 +62,6 @@ const SESSION_PENDING_KEY = 'auth_pending_token';
     );
     // Safe debug: presence only, no token contents.
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.log('[SSO] received token from URL, length:', _t.length);
     }
   }
@@ -106,14 +105,15 @@ const tryVerify = async (
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const result = await authService.verify(pendingToken, tokenfix);
+      const result = await authService.verify(pendingToken, tokenfix ?? undefined);
       if (result?.user) {
         return result;
       }
-    } catch (err: any) {
-      const isNetworkError = !err.response || err.code === 'ERR_NETWORK' || err.code === 'ERR_CONNECTION_RESET';
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: unknown; code?: string; message?: string } | undefined;
+      const isNetworkError = !axiosErr?.response || axiosErr?.code === 'ERR_NETWORK' || axiosErr?.code === 'ERR_CONNECTION_RESET';
       if (import.meta.env.DEV) {
-        console.warn(`[SSO] verify attempt ${attempt + 1}/${MAX_RETRIES + 1} failed:`, err.message || err);
+        console.warn(`[SSO] verify attempt ${attempt + 1}/${MAX_RETRIES + 1} failed:`, axiosErr?.message || err);
       }
       if (isNetworkError && attempt < MAX_RETRIES) {
         if (import.meta.env.DEV) {

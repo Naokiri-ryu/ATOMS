@@ -490,7 +490,8 @@ export const CnsdReadinessDetailPage: React.FC = () => {
       const updated = await cnsdReadinessService.deleteItem(record.id, itemId);
       setRecord(updated);
       setEditedItems((prev) => {
-        const { [itemId]: _omit, ...rest } = prev;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [itemId]: _, ...rest } = prev;
         return rest;
       });
     } catch (e) {

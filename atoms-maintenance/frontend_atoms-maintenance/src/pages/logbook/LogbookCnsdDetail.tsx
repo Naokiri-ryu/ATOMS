@@ -358,6 +358,7 @@ const EditEquipmentModal: React.FC<EditEquipmentModalProps> = ({ isOpen, item, o
   const [name, setName] = useState('');
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (item) setName(item.equipment_name);
   }, [item]);
 
@@ -405,6 +406,7 @@ const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({ isOpen, defaultCa
   const [name, setName] = useState('');
   const [category, setCategory] = useState(defaultCategory);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setCategory(defaultCategory); setName(''); }, [defaultCategory, isOpen]);
 
   if (!isOpen) return null;
@@ -844,17 +846,17 @@ export const LogbookCnsdDetail: React.FC = () => {
     pagi:  record.personnel_on_duty?.pagi?.manager ?? 
           (record.manager_signatures.pagi?.signed_by_name ? { 
             name: record.manager_signatures.pagi.signed_by_name, 
-            user_id: record.manager_signatures.pagi.signed_by_user_id ?? 0 
+            user_id: record.manager_signatures.pagi.signed_by_id ?? 0 
           } : null),
     siang: record.personnel_on_duty?.siang?.manager ?? 
           (record.manager_signatures.siang?.signed_by_name ? { 
             name: record.manager_signatures.siang.signed_by_name, 
-            user_id: record.manager_signatures.siang.signed_by_user_id ?? 0 
+            user_id: record.manager_signatures.siang.signed_by_id ?? 0 
           } : null),
     malam: record.personnel_on_duty?.malam?.manager ?? 
           (record.manager_signatures.malam?.signed_by_name ? { 
             name: record.manager_signatures.malam.signed_by_name, 
-            user_id: record.manager_signatures.malam.signed_by_user_id ?? 0 
+            user_id: record.manager_signatures.malam.signed_by_id ?? 0 
           } : null),
   };
 

@@ -4,7 +4,7 @@ import {
   Bell, LogOut, Menu, X, Clock,
   LayoutDashboard, FileText, CheckSquare, Activity,
   Plane, Zap, Users, ClipboardList, BookOpen, Inbox,
-  Monitor as MonitorIcon, ChevronDown, Home,
+  Monitor as MonitorIcon, ChevronDown, Home, BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotification } from '@/hooks/useNotification';
@@ -40,6 +40,7 @@ interface NavItem {
 // Previous nav showed both to both teknisi roles — fixed.
 const navItems: NavItem[] = [
   { name: 'Dashboard',    path: '/dashboard',    icon: LayoutDashboard, roles: ['Admin', 'General Manager', 'Manager Teknik', 'Supervisor CNSD', 'Supervisor TFP', 'Teknisi CNSD', 'Teknisi TFP'] },
+  { name: 'Statistik',    path: '/statistics',   icon: BarChart3,       roles: ['Admin', 'General Manager', 'Manager Teknik', 'Supervisor CNSD', 'Supervisor TFP', 'Teknisi CNSD', 'Teknisi TFP'] },
   { name: 'Work Order',   path: '/work-orders',  icon: FileText,        roles: ['General Manager', 'Manager Teknik', 'Supervisor CNSD', 'Supervisor TFP', 'Teknisi CNSD', 'Teknisi TFP'] },
   { name: 'CNSD',         path: '/cnsd',         icon: CheckSquare,     roles: ['Admin', 'Manager Teknik', 'Supervisor CNSD', 'Supervisor TFP', 'Teknisi CNSD'] },
   { name: 'TFP',          path: '/tfp',          icon: Activity,        roles: ['Admin', 'Manager Teknik', 'Supervisor CNSD', 'Supervisor TFP', 'Teknisi TFP'] },

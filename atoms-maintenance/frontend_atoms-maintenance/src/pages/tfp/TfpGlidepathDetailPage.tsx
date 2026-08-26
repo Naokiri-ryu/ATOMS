@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -119,14 +119,31 @@ interface CellInputProps {
   isCompleted: boolean;
   value: string;
   onChange: (val: string) => void;
+  rowIndex: number;
+  cellKey: string;
+  onNavigate: (e: React.KeyboardEvent<HTMLInputElement>, rowIndex: number, cellKey: string) => void;
 }
 
-const CellInput: React.FC<CellInputProps> = ({ isDisabled, isCompleted, value, onChange }) => {
+const CellInput: React.FC<CellInputProps> = ({
+  isDisabled, isCompleted, value, onChange,
+  rowIndex, cellKey, onNavigate,
+}) => {
   if (isDisabled) return <div className="w-full h-7 rounded" aria-hidden="true" />;
   if (isCompleted) return <span className="text-xs text-slate-700">{value || '—'}</span>;
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Enter') {
+      e.preventDefault();
+      onNavigate(e, rowIndex, cellKey);
+    }
+  };
+
   return (
     <input type="text" inputMode="decimal" value={value}
       onChange={(e) => onChange(e.target.value)}
+      onKeyDown={handleKeyDown}
+      data-row-index={rowIndex}
+      data-cell-key={cellKey}
       className="w-full h-7 px-2 text-center text-xs rounded border border-slate-300 bg-white focus:ring-1 focus:ring-brand-primary focus:outline-none" />
   );
 };
@@ -273,6 +290,7 @@ const AddPanelModal: React.FC<AddPanelModalProps> = ({ open, onClose, onAdd, exi
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLabel(''); setSubs([{ label: 'Nilai' }]); setError(null);
     }
   }, [open]);
@@ -492,9 +510,12 @@ export const TfpGlidepathDetailPage: React.FC = () => {
 
   // ─── Data loading ───────────────────────────────────────────────────────
 
+  const savedSnapshotRef = useRef<string>('');
+
   const hydrate = (data: TfpGlidepathRecordDetail) => {
+    const tf = data.time_filled ?? new Date().toTimeString().slice(0, 5);
     setRecord(data);
-    setTimeFilled(data.time_filled ?? new Date().toTimeString().slice(0, 5));
+    setTimeFilled(tf);
 
     const iv: Record<number, Record<string, string>> = {};
     data.items.forEach((item) => { iv[item.id] = { ...(item.values ?? {}) }; });
@@ -508,7 +529,14 @@ export const TfpGlidepathDetailPage: React.FC = () => {
 
     setDraftConfig(null);
     setDraftItemMeta({});
+
+    savedSnapshotRef.current = JSON.stringify({ iv, fv, tf });
   };
+
+  const isDirtyCheck = useCallback(() => (
+    savedSnapshotRef.current !== '' &&
+    savedSnapshotRef.current !== JSON.stringify({ iv: itemValues, fv: facilityValues, tf: timeFilled })
+  ), [itemValues, facilityValues, timeFilled]);
 
   const fetchRecord = useCallback(async () => {
     if (!id) return;
@@ -548,19 +576,108 @@ export const TfpGlidepathDetailPage: React.FC = () => {
     [effectiveConfig],
   );
 
-  const getItemDisabled = (itemId: number, cellKey: string): boolean => {
+  const getItemDisabled = useCallback((itemId: number, cellKey: string): boolean => {
     const draft = draftItemMeta[itemId];
     if (draft) return draft.is_disabled_map[cellKey] === true;
     const item = record?.items.find((it) => it.id === itemId);
     return item?.is_disabled_map?.[cellKey] === true;
-  };
+  }, [draftItemMeta, record]);
 
-  const getItemMerge = (itemId: number, cellKey: string): number => {
+  const getItemMerge = useCallback((itemId: number, cellKey: string): number => {
     const draft = draftItemMeta[itemId];
     if (draft) return draft.merge_map[cellKey] ?? 1;
     const item = record?.items.find((it) => it.id === itemId);
     return item?.merge_map?.[cellKey] ?? 1;
-  };
+  }, [draftItemMeta, record]);
+
+  // ─── Navigasi keyboard antar sel input (↑ ↓ ← → Enter) ──────────────────
+  const handleCellKeyDown = useCallback((
+    e: React.KeyboardEvent<HTMLInputElement>,
+    currentRowIndex: number,
+    currentCellKey: string,
+  ) => {
+    if (!record) return;
+
+    const cellKeys = flatKeys;
+    const currentColIndex = cellKeys.indexOf(currentCellKey);
+    if (currentColIndex === -1) return;
+
+    let nextRowIndex = currentRowIndex;
+    let nextColIndex = currentColIndex;
+
+    if (e.key === 'ArrowUp') {
+      nextRowIndex = Math.max(0, currentRowIndex - 1);
+    } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      nextRowIndex = Math.min(record.items.length - 1, currentRowIndex + 1);
+    } else if (e.key === 'ArrowLeft') {
+      nextColIndex = Math.max(0, currentColIndex - 1);
+    } else if (e.key === 'ArrowRight') {
+      nextColIndex = Math.min(cellKeys.length - 1, currentColIndex + 1);
+    } else {
+      return;
+    }
+
+    const isValidCell = (rIdx: number, cIdx: number) => {
+      if (rIdx < 0 || rIdx >= record.items.length) return false;
+      if (cIdx < 0 || cIdx >= cellKeys.length) return false;
+      const item = record.items[rIdx];
+      if (isModeRow(item) || isSuplaiRow(item)) return false;
+      if (getItemDisabled(item.id, cellKeys[cIdx])) return false;
+
+      // Pastikan cell ini bukan bagian dari merge yang di-skip (bukan cell awal merge)
+      for (let i = cIdx - 1; i >= 0; i--) {
+        const checkKey = cellKeys[i];
+        const mergeSpan = getItemMerge(item.id, checkKey);
+        if (mergeSpan > 1 && i + mergeSpan - 1 >= cIdx) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter') {
+      const direction = e.key === 'ArrowUp' ? -1 : 1;
+      let r = nextRowIndex;
+      let found = false;
+      while (r >= 0 && r < record.items.length) {
+        if (isValidCell(r, nextColIndex)) {
+          nextRowIndex = r;
+          found = true;
+          break;
+        }
+        r += direction;
+      }
+      if (!found) nextRowIndex = currentRowIndex;
+    } else {
+      const direction = e.key === 'ArrowLeft' ? -1 : 1;
+      let c = nextColIndex;
+      let found = false;
+      while (c >= 0 && c < cellKeys.length) {
+        if (isValidCell(currentRowIndex, c)) {
+          nextColIndex = c;
+          found = true;
+          break;
+        }
+        c += direction;
+      }
+      if (!found) nextColIndex = currentColIndex;
+    }
+
+    const targetItem = record.items[nextRowIndex];
+    const targetCellKey = cellKeys[nextColIndex];
+
+    if (targetItem && targetCellKey) {
+      requestAnimationFrame(() => {
+        const escapedKey = targetCellKey.replace(/([.#:[\]+>~,])/g, '\\$1');
+        const selector = `input[data-row-index="${nextRowIndex}"][data-cell-key="${escapedKey}"]`;
+        const el = document.querySelector(selector) as HTMLInputElement | null;
+        if (el) {
+          el.focus();
+          el.select();
+        }
+      });
+    }
+  }, [record, flatKeys, getItemDisabled, getItemMerge]);
 
   const mutateItemMeta = (itemId: number, fn: (m: { is_disabled_map: Record<string, boolean>; merge_map: Record<string, number> }) => void) => {
     setDraftItemMeta((prev) => {
@@ -1159,7 +1276,8 @@ export const TfpGlidepathDetailPage: React.FC = () => {
                     renderedCells.push(
                       <td key={cell.key} colSpan={colspan} className={cn(tdCell, disabled && 'bg-slate-100')}>
                         <CellInput isDisabled={disabled} isCompleted={isCompleted}
-                          value={val} onChange={(v) => setItemCell(item.id, cell.key, v)} />
+                          value={val} onChange={(v) => setItemCell(item.id, cell.key, v)}
+                          rowIndex={idx} cellKey={cell.key} onNavigate={handleCellKeyDown} />
                       </td>
                     );
                   });
@@ -1313,7 +1431,7 @@ export const TfpGlidepathDetailPage: React.FC = () => {
         </div>
       )}
 
-      <TfpGlidepathSignaturePanel record={record} onUpdated={hydrate} />
+      <TfpGlidepathSignaturePanel record={record} onUpdated={(r) => setRecord(r)} isDirtyCheck={isDirtyCheck} />
 
       <AddPanelModal open={showAddPanel} onClose={() => setShowAddPanel(false)}
         onAdd={handleAddPanel} existingIds={effectiveConfig.map((p) => p.id)} />

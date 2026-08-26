@@ -298,6 +298,7 @@ const EditEquipmentModal: React.FC<EditEquipmentModalProps> = ({ isOpen, item, o
 
   useEffect(() => {
     if (item) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(item.equipment_name);
       setCategory('');
     }
@@ -348,6 +349,7 @@ const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({ isOpen, defaultCa
   const [name, setName] = useState('');
   const [category, setCategory] = useState(defaultCategory);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setCategory(defaultCategory); setName(''); }, [defaultCategory, isOpen]);
 
   if (!isOpen) return null;
@@ -560,7 +562,8 @@ export const LogbookTfpDetail: React.FC = () => {
   };
 
   // ── Equipment management ───────────────────────────────
-  const handleEditEquipment = async (name: string, _category: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleEditEquipment = async (name: string, _: string) => {
     if (!record || !editingItem) return;
     setIsEquipmentSaving(true);
     try {

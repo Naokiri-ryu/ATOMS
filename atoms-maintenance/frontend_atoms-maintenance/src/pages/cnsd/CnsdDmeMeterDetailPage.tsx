@@ -96,7 +96,7 @@ export const CnsdDmeMeterDetailPage: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
-  useEffect(() => { void fetchRecord(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [recordId]);
+  useEffect(() => { void fetchRecord(); }, [recordId]);
 
   const itemsBySection = useMemo(() => {
     const map: Record<string, CnsdDmeMeterItem[]> = {};
@@ -497,7 +497,7 @@ const DmeItemRow: React.FC<DmeItemRowProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, currentField: typeof availableFields[number]) => {
     if (isReadOnly) return;
 
-    const currentFieldIdx = availableFields.indexOf(currentField);
+    const currentFieldIdx = (availableFields as readonly string[]).indexOf(currentField);
 
     if (e.key === 'ArrowDown' || e.key === 'Enter') {
       e.preventDefault();

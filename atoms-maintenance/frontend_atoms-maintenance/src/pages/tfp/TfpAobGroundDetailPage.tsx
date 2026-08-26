@@ -377,6 +377,7 @@ const AddPanelModal: React.FC<AddPanelModalProps> = ({ open, onClose, onAdd, exi
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLabel(''); setSubs([{ label: 'Input' }, { label: 'Output' }]); setError(null);
     }
   }, [open]);
@@ -401,7 +402,8 @@ const AddPanelModal: React.FC<AddPanelModalProps> = ({ open, onClose, onAdd, exi
     const finalSubs: { key: string; label: string }[] = [];
     for (const s of cleanSubs) {
       let k = slugify(s.label) || 'col';
-      let base = k, n = 1;
+      const base = k;
+      let n = 1;
       while (subKeysSeen.has(k)) { k = `${base}_${++n}`; }
       subKeysSeen.add(k);
       finalSubs.push({ key: k, label: s.label });
@@ -616,9 +618,12 @@ export const TfpAobGroundDetailPage: React.FC = () => {
   }>>({});
   const [showAddPanel, setShowAddPanel] = useState(false);
 
+  const savedSnapshotRef = useRef<string>('');
+
   const hydrate = (data: TfpAobGroundRecordDetail) => {
+    const tf = data.time_filled ?? new Date().toTimeString().slice(0, 5);
     setRecord(data);
-    setTimeFilled(data.time_filled ?? new Date().toTimeString().slice(0, 5));
+    setTimeFilled(tf);
 
     const iv: Record<number, Record<string, string>> = {};
     data.items.forEach((item) => {
@@ -634,7 +639,14 @@ export const TfpAobGroundDetailPage: React.FC = () => {
 
     setDraftConfig(null);
     setDraftItemMeta({});
+
+    savedSnapshotRef.current = JSON.stringify({ iv, fv, tf });
   };
+
+  const isDirtyCheck = useCallback(() => (
+    savedSnapshotRef.current !== '' &&
+    savedSnapshotRef.current !== JSON.stringify({ iv: itemValues, fv: facilityValues, tf: timeFilled })
+  ), [itemValues, facilityValues, timeFilled]);
 
   const fetchRecord = useCallback(async () => {
     if (!id) return;
@@ -1188,7 +1200,7 @@ const handleAutoFillKondisi = (kondisi: string) => {
         }
       });
     }
-  }, [record, flatCells, getItemDisabled, getItemMerge, isModeRow, isSuplaiRow]);
+  }, [record, flatCells, getItemDisabled, getItemMerge]);
 
   if (isLoading) {
     return (
@@ -1437,7 +1449,8 @@ const handleAutoFillKondisi = (kondisi: string) => {
                   )}
                 </tr>
                 <tr className="bg-slate-50 text-slate-500">
-                  {effectiveConfig.flatMap((panel, pi) =>
+                  {/* eslint-disable-next-line @typescript-eslint/no-unused-vars */}
+                  {effectiveConfig.flatMap((panel, _pi) =>
                     panel.sub_columns.map((sub, si) => (
                       <th key={cellKeyOf(panel.id, sub.key)}
                         className={cn(
@@ -1554,7 +1567,7 @@ const handleAutoFillKondisi = (kondisi: string) => {
                     if ((modeRow || suplaiRow) && !disabled && colspan >= 1) {
                       const isPLNATSPanel = suplaiRow && cell.panel.id === 'panel_ats_a12';
                       let options: readonly string[];
-                      let variant: 'mode' | 'suplai' = modeRow ? 'mode' : 'suplai';
+                      const variant: 'mode' | 'suplai' = modeRow ? 'mode' : 'suplai';
                       if (modeRow) options = ['Auto', 'Manual'];
                       else if (isPLNATSPanel) options = ['PLN 1', 'PLN 2'];
                       else options = ['PLN', 'UPS'];
@@ -1757,7 +1770,7 @@ const handleAutoFillKondisi = (kondisi: string) => {
         </div>
       )}
 
-      <TfpAobGroundSignaturePanel record={record} onUpdated={hydrate} />
+      <TfpAobGroundSignaturePanel record={record} onUpdated={(r) => setRecord(r)} isDirtyCheck={isDirtyCheck} />
 
       <AddPanelModal
         open={showAddPanel}

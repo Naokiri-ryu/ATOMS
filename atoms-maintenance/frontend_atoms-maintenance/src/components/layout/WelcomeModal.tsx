@@ -70,11 +70,8 @@ export const WelcomeModal: React.FC = () => {
   useEffect(() => {
     void fetchChecklist();
     const interval = setInterval(() => { void fetchChecklist(); }, 60_000);
-    const onFocus = () => { void fetchChecklist(); };
-    window.addEventListener('focus', onFocus);
     return () => {
       clearInterval(interval);
-      window.removeEventListener('focus', onFocus);
     };
   }, [fetchChecklist]);
 
