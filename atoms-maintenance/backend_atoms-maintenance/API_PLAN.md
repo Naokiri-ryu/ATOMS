@@ -66,6 +66,45 @@
 
 ---
 
+## Statistik Endpoints
+
+Recap of **completed** CNSD + TFP form submissions for the `/statistics`
+page. Modules come from `DashboardModuleRegistry` groups `CNSD Readiness`,
+`CNSD Meter Reading`, and `TFP Performance`; Ground Check / Grounding are
+out of scope. Implemented by `StatisticsController` +
+`StatisticsOverviewService`.
+
+| Method | Endpoint | Description | Auth | Roles |
+|--------|----------|-------------|------|-------|
+| `GET` | `/api/v1/statistics/overview?year=YYYY` | Yearly recap: totals per division, 12-month trend, per-module monthly counts, last submission date. Defaults to current year; out-of-range year falls back defensively. | Bearer | All |
+
+Response `data` shape:
+
+```json
+{
+  "year": 2026,
+  "totals": { "CNSD": 120, "TFP": 84 },
+  "grand_total": 204,
+  "trend": [
+    { "month": 1, "label": "Jan", "cnsd": 10, "tfp": 7, "total": 17 }
+  ],
+  "modules": [
+    {
+      "module_key": "cnsd-dvor",
+      "label": "Meter Reading DVOR",
+      "division": "CNSD",
+      "group": "CNSD Meter Reading",
+      "route": "/cnsd/dvor-meter",
+      "total": 12,
+      "monthly": [1, 0, 2],
+      "last_date": "2026-03-18"
+    }
+  ]
+}
+```
+
+---
+
 ## Work Order Endpoints
 
 | Method | Endpoint | Description | Auth | Roles |

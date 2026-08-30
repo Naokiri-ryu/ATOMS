@@ -49,7 +49,7 @@ class DashboardMonthlySummaryService
                 continue;
             }
 
-            $records = $this->fetchCompletedRecords($module['model'], $year, $month);
+            $records = $this->fetchCompletedRecords($module, $year, $month);
             $currentCount = $records->count();
             $met = $currentCount >= (int) $target->min_count;
             if ($met) {
@@ -93,12 +93,16 @@ class DashboardMonthlySummaryService
      * Returns id + date only — minimal columns to keep the response small
      * even when a target has many records.
      *
-     * @param  class-string<Model>  $modelClass
+     * @param  array<string, mixed>  $module  A row from DashboardModuleRegistry.
      */
-    private function fetchCompletedRecords(string $modelClass, int $year, int $month)
+    private function fetchCompletedRecords(array $module, int $year, int $month)
     {
+        /** @var class-string<Model> $modelClass */
+        $modelClass = $module['model'];
+
         return $modelClass::query()
             ->where('status', 'completed')
+            ->when(!empty($module['form_type']), fn ($q) => $q->where('form_type', $module['form_type']))
             ->whereYear('date', $year)
             ->whereMonth('date', $month)
             ->orderBy('date')

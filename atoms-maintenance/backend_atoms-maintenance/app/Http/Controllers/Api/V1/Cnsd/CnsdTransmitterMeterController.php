@@ -87,7 +87,8 @@ class CnsdTransmitterMeterController extends Controller
 
         try {
             $modulePath = $record->form_type === 'TRANSMITTER-ER' ? '/cnsd/transmitter-er-meter' : '/cnsd/transmitter-meter';
-            $this->activityLogger->logMeterReadingCreated($record, 'TRANSMITTER', $modulePath, $user);
+            $facility = $record->form_type === 'TRANSMITTER-ER' ? 'VHF ER GEDUNG RADAR' : 'TRANSMITTER';
+            $this->activityLogger->logMeterReadingCreated($record, $facility, $modulePath, $user);
         } catch (\Throwable) { /* non-fatal */ }
 
         return $this->success($this->detailRecord($record), 'CNSD Transmitter Meter record created successfully', 201);
@@ -285,6 +286,10 @@ class CnsdTransmitterMeterController extends Controller
                 'power_output'    => $it->power_output,
                 'modulasi'        => $it->modulasi,
                 'keterangan'      => $it->keterangan,
+                'status_a'        => $it->status_a,
+                'status_b'        => $it->status_b,
+                'squelch_tx1'     => $it->squelch_tx1,
+                'squelch_tx2'     => $it->squelch_tx2,
                 'nominal'         => $it->nominal,
                 'hasil'           => $it->hasil,
                 'is_header'       => (bool) $it->is_header,

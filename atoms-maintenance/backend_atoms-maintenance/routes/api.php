@@ -109,6 +109,12 @@ Route::prefix('v1')->group(function () {
                 ->whereNumber('id')->middleware($monthlyEditRoles);
         });
 
+        // ─── Statistik ─────────────────────────────────────────
+        // Cross-module recap of completed CNSD + TFP submissions
+        // (read open to any authenticated user).
+        Route::get('/statistics/overview',
+            [\App\Http\Controllers\Api\V1\Statistics\StatisticsController::class, 'overview']);
+
         // ─── Work Orders ───────────────────────────────────────
         // All authenticated users can read (Teknisi visibility filtered in service)
         Route::get('/work-orders', [WorkOrderController::class, 'index']);

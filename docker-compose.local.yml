@@ -46,6 +46,7 @@ services:
       SESSION_DRIVER: database
       CACHE_STORE: database
       QUEUE_CONNECTION: database
+      PHP_CLI_SERVER_WORKERS: 8
       MAIL_MAILER: log
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       ROSTERING_API_URL: ${ROSTERING_API_URL:-http://rostering-backend:8000}
@@ -94,6 +95,7 @@ services:
     environment:
       VITE_API_URL: ${ROSTERING_API_URL_PUBLIC:-http://localhost:8002/api}
       VITE_MAINTENANCE_URL: ${ATOMS_FRONTEND_URL:-http://localhost:5173}
+      VITE_MAINTENANCE_API_URL: ${MAINTENANCE_API_URL_PUBLIC:-${ATOMS_API_URL:-http://localhost:5657/api}}
       VITE_SAKTI_URL: ${SAKTI_URL:-http://localhost:8001}
     volumes:
       - ./atoms-rostering/frontend_atoms:/app

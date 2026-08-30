@@ -344,7 +344,7 @@ export const MonthlyChecklistTab: React.FC = () => {
 
       {showAdd && (
         <AddTargetModal
-          modules={modules}
+          modules={modules.filter((m) => !m.daily_only)}
           existingKeys={existingKeys}
           onClose={() => setShowAdd(false)}
           onSubmit={handleCreate}

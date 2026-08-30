@@ -23,6 +23,8 @@ export interface ChecklistModule {
   group: string;
   route: string;
   model: string;
+  form_type?: string;
+  daily_only?: boolean;
 }
 
 /**

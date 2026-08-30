@@ -58,7 +58,7 @@ class DashboardChecklistService
             // their pinned shift_type (which equals $shift by definition for
             // forShift()-scoped rows).
             $effectiveShift = $row->category === 'wajib' ? $shift : (string) $row->shift_type;
-            $record = $this->findRecord($module['model'], $date, $effectiveShift);
+            $record = $this->findRecord($module, $date, $effectiveShift);
             $has = $record !== null;
 
             $items[] = [
@@ -94,13 +94,17 @@ class DashboardChecklistService
     }
 
     /**
-     * @param  class-string<Model>  $modelClass
+     * @param  array<string, mixed>  $module  A row from DashboardModuleRegistry.
      */
-    private function findRecord(string $modelClass, string $date, string $shift): ?Model
+    private function findRecord(array $module, string $date, string $shift): ?Model
     {
+        /** @var class-string<Model> $modelClass */
+        $modelClass = $module['model'];
+
         return $modelClass::query()
             ->whereDate('date', $date)
             ->where('shift_type', $shift)
+            ->when(!empty($module['form_type']), fn ($q) => $q->where('form_type', $module['form_type']))
             ->orderBy('id')
             ->first(['id']);
     }

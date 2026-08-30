@@ -291,8 +291,20 @@ class CnsdTransmitterMeterService
                     continue;
                 }
 
-                // For environment items (section 2)
-                if ($item->section_code === '2') {
+                // For receiver items (section 2, RECEIVER)
+                if ($item->section_code === '2' && $item->section_name === 'RECEIVER') {
+                    $receiverFillable = ['status_a', 'status_b', 'squelch_tx1', 'squelch_tx2', 'keterangan'];
+                    foreach ($receiverFillable as $col) {
+                        if (array_key_exists($col, $payload)) {
+                            $item->{$col} = $payload[$col];
+                        }
+                    }
+                    $item->save();
+                    continue;
+                }
+
+                // For environment items (section 2 or 3)
+                if ($item->section_code === '2' || $item->section_code === '3') {
                     $envFillable = ['hasil', 'keterangan'];
                     foreach ($envFillable as $col) {
                         if (array_key_exists($col, $payload)) {

@@ -1,4 +1,6 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate, useNavigate } from "react-router-dom";
+import { useEffect, type FC } from "react";
+import { getRosteringUrl } from "@/config";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
@@ -120,6 +122,17 @@ import { TfpGensetDvorPrintView } from "@/pages/tfp/TfpGensetDVORPrintView";
 import { TfpGensetRadarListPage } from "@/pages/tfp/TfpGensetRadarListPage";
 import { TfpGensetRadarDetailPage } from "@/pages/tfp/TfpGensetRadarDetailPage";
 import { TfpGensetRadarPrintView } from "@/pages/tfp/TfpGensetRadarPrintView";
+
+// User management is owned by atoms-rostering (source of truth for auth/users).
+// Deep-linking /admin/users within maintenance should hand off to rostering's
+// admin user management page instead of a Coming Soon placeholder.
+const RedirectToRosteringUsers: FC = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    window.location.href = `${getRosteringUrl()}/admin/users`;
+  }, [navigate]);
+  return null;
+};
 
 export const router = createBrowserRouter([
   {
@@ -309,7 +322,8 @@ export const router = createBrowserRouter([
           { path: "/logbooks/tfp", element: <LogbookTfp /> },
           { path: "/logbooks/tfp/:id", element: <LogbookTfpDetail /> },
 
-          { path: "/admin/users", element: <ComingSoonPage /> },
+          // User management is owned by atoms-rostering. Redirect out to it.
+          { path: "/admin/users", element: <RedirectToRosteringUsers /> },
 
           // Profile (placeholder)
           { path: "/profile", element: <ComingSoonPage /> },

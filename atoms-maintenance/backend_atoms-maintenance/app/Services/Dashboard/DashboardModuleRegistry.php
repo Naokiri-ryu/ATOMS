@@ -28,6 +28,7 @@ use App\Models\Tfp\TfpAobGroundRecord;
 use App\Models\Tfp\TfpAobLt12Record;
 use App\Models\Tfp\TfpDvorRecord;
 use App\Models\Tfp\TfpGensetDvorRecord;
+use App\Models\Tfp\TfpGensetRadarRecord;
 use App\Models\Tfp\TfpGlidepathRecord;
 use App\Models\Tfp\TfpLocalizerRecord;
 use App\Models\Tfp\TfpRadarRecord;
@@ -53,7 +54,7 @@ use App\Models\Tfp\TfpTransmitterTxRecord;
 class DashboardModuleRegistry
 {
     /**
-     * @return array<int, array{key:string,label:string,division:string,group:string,route:string,model:class-string}>
+     * @return array<int, array{key:string,label:string,division:string,group:string,route:string,model:class-string,form_type?:string,daily_only?:bool}>
      */
     public static function modules(): array
     {
@@ -63,7 +64,7 @@ class DashboardModuleRegistry
              'division' => 'CNSD', 'group' => 'CNSD Readiness',
              'route' => '/cnsd/readiness', 'model' => CnsdReadinessRecord::class],
 
-            // ─── CNSD Meter Reading (16 modul) ──────────────────────────
+            // ─── CNSD Meter Reading (17 modul) ──────────────────────────
             ['key' => 'cnsd-radar',         'label' => 'Meter Reading Radar',
              'division' => 'CNSD', 'group' => 'CNSD Meter Reading',
              'route' => '/cnsd/radar-meter',         'model' => CnsdRadarMeterRecord::class],
@@ -75,7 +76,8 @@ class DashboardModuleRegistry
              'route' => '/cnsd/amsc-meter',          'model' => CnsdAmscMeterRecord::class],
             ['key' => 'cnsd-transmitter',   'label' => 'Meter Reading Transmitter',
              'division' => 'CNSD', 'group' => 'CNSD Meter Reading',
-             'route' => '/cnsd/transmitter-meter',   'model' => CnsdTransmitterMeterRecord::class],
+             'route' => '/cnsd/transmitter-meter',   'model' => CnsdTransmitterMeterRecord::class,
+             'form_type' => 'TRANSMITTER-METER'],
             ['key' => 'cnsd-receiver',      'label' => 'Meter Reading Receiver',
              'division' => 'CNSD', 'group' => 'CNSD Meter Reading',
              'route' => '/cnsd/receiver-meter',      'model' => CnsdReceiverMeterRecord::class],
@@ -109,6 +111,10 @@ class DashboardModuleRegistry
             ['key' => 'cnsd-asmgcs',        'label' => 'Meter Reading ASMGCS',
              'division' => 'CNSD', 'group' => 'CNSD Meter Reading',
              'route' => '/cnsd/asmgcs-meter',        'model' => CnsdAsmgcsMeterRecord::class],
+            ['key' => 'cnsd-transmitter-er','label' => 'Meter Reading VHF ER Gedung Radar',
+             'division' => 'CNSD', 'group' => 'CNSD Meter Reading',
+             'route' => '/cnsd/transmitter-er-meter','model' => CnsdTransmitterMeterRecord::class,
+             'form_type' => 'TRANSMITTER-ER', 'daily_only' => true],
 
             // ─── TFP Performance Check (9 modul) ────────────────────────
             ['key' => 'tfp-aob-ground',     'label' => 'Performance Check AOB Lantai Ground',
@@ -138,6 +144,9 @@ class DashboardModuleRegistry
             ['key' => 'tfp-genset-dvor',    'label' => 'Performance Check Genset DVOR',
              'division' => 'TFP', 'group' => 'TFP Performance',
              'route' => '/tfp/genset-dvor',   'model' => TfpGensetDvorRecord::class],
+            ['key' => 'tfp-genset-radar',   'label' => 'Performance Check Genset Radar',
+             'division' => 'TFP', 'group' => 'TFP Performance',
+             'route' => '/tfp/genset-radar',  'model' => TfpGensetRadarRecord::class],
 
             // ─── Ground Check (5 modul, CNSD) ───────────────────────────
             ['key' => 'gc-adc',  'label' => 'Ground Check ADC',

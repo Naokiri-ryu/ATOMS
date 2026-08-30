@@ -93,6 +93,11 @@ class DashboardMonthlyController extends Controller
             'is_active'  => ['sometimes', 'boolean'],
         ]);
 
+        $module = DashboardModuleRegistry::find($data['module_key']);
+        if ($module && !empty($module['daily_only'])) {
+            return $this->error('Modul ini hanya untuk pengingat harian.', null, 422);
+        }
+
         if (DashboardMonthlyTarget::where('module_key', $data['module_key'])->exists()) {
             return $this->error('Modul ini sudah ada di daftar target bulanan.', null, 409);
         }

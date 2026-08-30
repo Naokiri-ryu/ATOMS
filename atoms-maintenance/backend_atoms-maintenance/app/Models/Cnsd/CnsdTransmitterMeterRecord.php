@@ -56,7 +56,7 @@ class CnsdTransmitterMeterRecord extends Model
     public const STATUSES    = ['ongoing', 'on_hold', 'completed'];
     public const SHIFT_TYPES = ['pagi', 'siang', 'malam'];
     public const FACILITIES  = ['TRANSMITTER'];
-    public const FORM_TYPES  = ['TRANSMITTER-METER'];
+    public const FORM_TYPES  = ['TRANSMITTER-METER', 'TRANSMITTER-ER'];
 
     // ─── Relationships ─────────────────────────────────────────
 

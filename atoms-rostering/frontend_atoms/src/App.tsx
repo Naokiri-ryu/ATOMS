@@ -32,7 +32,7 @@ import SupportTicketDetail from './pages/SupportTicketDetail';
 import SupportTicketsAdminPage from './pages/SupportTicketsAdminPage';
 import DashboardPage from './modules/dashboard/pages/DashboardPage';
 
-import ComingSoonPage from './pages/ComingSoonPage';
+import StatisticsPage from './pages/StatisticsPage';
 
 function App() {
   return (
@@ -69,16 +69,15 @@ function App() {
             }
           />
 
-          {/* ── TAMBAHAN BARU: Statistik Route (Coming Soon) ── */}
+          {/* ── Statistik: rekap setoran form CNSD & TFP dari aplikasi Maintenance ── */}
               <Route
                 path="/statistics"
                 element={
                   <ProtectedRoute>
-                    <ComingSoonPage />
+                    <StatisticsPage />
                   </ProtectedRoute>
                 }
               />
-          {/* ────────────────────────────────────────────────────── */}
 
           {/* Personnel/Employee Management Routes */}
           <Route

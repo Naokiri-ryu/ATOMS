@@ -10,7 +10,7 @@ namespace App\Services\Cnsd;
  * Form structure (per the reference image):
  *
  *   Section 1 — TRANSMITTER / TX RADIO
- *     Groups: Ground, ADC, CDU, APP, TMA West, TMA East, ER Makassar, ER BALI, ER P.BUN, ATIS, Back Up Radio
+ *     Groups: Ground, ADC, CDU, APP, TMA West, TMA East, ER Makassar, ATIS, Back Up Radio
  *     Layout: NO | FREQUENCY | MERK | STATUS | POWER O/P | MODULASI | KETERANGAN
  *
  *   Section 2 — LINGKUNGAN KERJA
@@ -18,8 +18,8 @@ namespace App\Services\Cnsd;
  *     Layout: NO | KEGIATAN | NOMINAL | HASIL | KETERANGAN
  *
  * ER-only mode ($erOnly = true, form_type TRANSMITTER-ER = modul CNSD-017
- * "VHF ER Gedung Radar"): hanya grup ER BALI & ER P.BUN yang disertakan
- * (dinomori ulang 1 & 2), Section 2 dibuang.
+ * "VHF ER Gedung Radar"): ER BALI & ER P.BUN transmitter + receiver sections
+ * + LINGKUNGAN KERJA (3 sections total).
  */
 class CnsdTransmitterMeterTemplate
 {
@@ -28,21 +28,9 @@ class CnsdTransmitterMeterTemplate
      */
     public static function sections(bool $erOnly = false): array
     {
-        $transmitterGroups = self::transmitterGroups();
-        if ($erOnly) {
-            // CNSD-017 "VHF ER Gedung Radar" berdiri sebagai form sendiri,
-            // sehingga nomor grup warisan FORM C-1 Transmitter (8 = ER BALI,
-            // 9 = ER P.BUN) dinomori ulang menjadi 1 dan 2.
-            $erGroups = array_values(array_filter(
-                $transmitterGroups,
-                static fn (array $group): bool => in_array($group['number'], [8, 9], true),
-            ));
-            $transmitterGroups = [];
-            foreach ($erGroups as $index => $group) {
-                $group['number'] = $index + 1;
-                $transmitterGroups[] = $group;
-            }
-        }
+        $transmitterGroups = $erOnly
+            ? self::erOnlyGroups()
+            : self::transmitterGroups();
 
         $sections = [
             // ───────────────────────────────────────────────────────────
@@ -79,7 +67,22 @@ class CnsdTransmitterMeterTemplate
             ],
         ];
 
-        return $erOnly ? [$sections[0]] : $sections;
+        if ($erOnly) {
+            // ER form: add RECEIVER section between transmitter and environment.
+            $receiverSection = [
+                'code'          => '2',
+                'name'          => 'RECEIVER',
+                'inputs_layout' => 'receiver',
+                'groups'        => self::erOnlyReceiverGroups(),
+            ];
+            $envSection = $sections[1];
+            $envSection['code'] = '3';
+            $envSection['groups'][0]['items'] = array_slice($envSection['groups'][0]['items'], 0, 3);
+            $envSection['groups'][0]['number'] = null;
+            return [$sections[0], $receiverSection, $envSection];
+        }
+
+        return $sections;
     }
 
     /**
@@ -173,19 +176,48 @@ class CnsdTransmitterMeterTemplate
                 ],
             ],
 
-            // ─── 8. ER BALI ─────────────────────────────────────────
+            // ─── 8. ATIS ─────────────────────────────────────────
             [
                 'number' => 8,
+                'name'   => 'ATIS',
+                'items'  => [
+                    ['frequency_label' => 'Primary 128.2 MHz', 'merk' => null, 'tx_label' => 'TX 1', 'status_type' => 'on_air_stby'],
+                    ['frequency_label' => 'Primary 128.2 MHz', 'merk' => null, 'tx_label' => 'TX 2', 'status_type' => 'on_air_stby'],
+                ],
+            ],
+
+            // ─── 9. Back Up Radio ────────────────────────────────
+            // Status column is BLOCKED (grey/disabled) per the reference image.
+            [
+                'number' => 9,
+                'name'   => 'Back Up Radio',
+                'items'  => [
+                    ['frequency_label' => '118.1 MHz', 'merk' => 'Becker', 'tx_label' => null, 'status_type' => 'blocked'],
+                    ['frequency_label' => '123.2 MHz', 'merk' => 'OTE',    'tx_label' => null, 'status_type' => 'blocked'],
+                    ['frequency_label' => '122.85 MHz', 'merk' => 'PAE',   'tx_label' => null, 'status_type' => 'blocked'],
+                    ['frequency_label' => '119.15 MHz', 'merk' => 'PAE',   'tx_label' => null, 'status_type' => 'blocked'],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * ER-only transmitter groups for CNSD-017 "VHF ER Gedung Radar".
+     * These groups are standalone (no longer part of the main Transmitter form).
+     */
+    private static function erOnlyGroups(): array
+    {
+        return [
+            [
+                'number' => 1,
                 'name'   => 'ER BALI',
                 'items'  => [
                     ['frequency_label' => 'Primary 120.7 MHz', 'merk' => 'OTE', 'tx_label' => 'TX 1', 'status_type' => 'on_air_stby'],
                     ['frequency_label' => 'Primary 120.7 MHz', 'merk' => 'OTE', 'tx_label' => 'TX 2', 'status_type' => 'on_air_stby'],
                 ],
             ],
-
-            // ─── 9. ER P.BUN ──────────────────────────────────────
             [
-                'number' => 9,
+                'number' => 2,
                 'name'   => 'ER P.BUN',
                 'items'  => [
                     ['frequency_label' => 'Primary 134.1 MHz', 'merk' => 'OTE', 'tx_label' => 'TX 1', 'status_type' => 'on_air_stby'],
@@ -194,27 +226,29 @@ class CnsdTransmitterMeterTemplate
                     ['frequency_label' => 'Secondary 133.6 MHz', 'merk' => 'PAE', 'tx_label' => 'TX 2', 'status_type' => 'online_offline'],
                 ],
             ],
+        ];
+    }
 
-            // ─── 10. ATIS ─────────────────────────────────────────
+    /**
+     * ER-only receiver groups for CNSD-017 "VHF ER Gedung Radar" Section 2.
+     * Each item is a receive frequency for ER BALI / ER P.BUN.
+     */
+    private static function erOnlyReceiverGroups(): array
+    {
+        return [
             [
-                'number' => 10,
-                'name'   => 'ATIS',
+                'number' => 1,
+                'name'   => 'ER BALI',
                 'items'  => [
-                    ['frequency_label' => 'Primary 128.2 MHz', 'merk' => null, 'tx_label' => 'TX 1', 'status_type' => 'on_air_stby'],
-                    ['frequency_label' => 'Primary 128.2 MHz', 'merk' => null, 'tx_label' => 'TX 2', 'status_type' => 'on_air_stby'],
+                    ['frequency_label' => '120.70 MHz'],
                 ],
             ],
-
-            // ─── 11. Back Up Radio ────────────────────────────────
-            // Status column is BLOCKED (grey/disabled) per the reference image.
             [
-                'number' => 11,
-                'name'   => 'Back Up Radio',
+                'number' => 2,
+                'name'   => 'ER P.BUN',
                 'items'  => [
-                    ['frequency_label' => '118.1 MHz', 'merk' => 'Becker', 'tx_label' => null, 'status_type' => 'blocked'],
-                    ['frequency_label' => '123.2 MHz', 'merk' => 'OTE',    'tx_label' => null, 'status_type' => 'blocked'],
-                    ['frequency_label' => '122.85 MHz', 'merk' => 'PAE',   'tx_label' => null, 'status_type' => 'blocked'],
-                    ['frequency_label' => '119.15 MHz', 'merk' => 'PAE',   'tx_label' => null, 'status_type' => 'blocked'],
+                    ['frequency_label' => '134.10 MHz'],
+                    ['frequency_label' => '133.60 MHz'],
                 ],
             ],
         ];
@@ -232,7 +266,7 @@ class CnsdTransmitterMeterTemplate
         foreach (self::sections($erOnly) as $section) {
             foreach ($section['groups'] as $group) {
                 // Add group header row
-                if ($section['code'] === '1') {
+                if ($section['code'] === '1' || $section['inputs_layout'] === 'receiver') {
                     $rows[] = [
                         'transmitter_meter_record_id' => $recordId,
                         'section_code'    => $section['code'],
@@ -246,6 +280,10 @@ class CnsdTransmitterMeterTemplate
                         'power_output'    => null,
                         'modulasi'        => null,
                         'keterangan'      => null,
+                        'status_a'        => null,
+                        'status_b'        => null,
+                        'squelch_tx1'     => null,
+                        'squelch_tx2'     => null,
                         'nominal'         => null,
                         'hasil'           => null,
                         'is_header'       => true,
@@ -274,11 +312,43 @@ class CnsdTransmitterMeterTemplate
                             'power_output'    => null,
                             'modulasi'        => null,
                             'keterangan'      => null,
+                            'status_a'        => null,
+                            'status_b'        => null,
+                            'squelch_tx1'     => null,
+                            'squelch_tx2'     => null,
                             'nominal'         => null,
                             'hasil'           => null,
                             'is_header'       => false,
                             'is_blocked'      => $isBlocked,
                             'block_reason'    => $isBlocked ? 'Status disabled per form resmi' : null,
+                            'sort_order'      => $sortOrder++,
+                            'created_at'      => $now,
+                            'updated_at'      => $now,
+                        ];
+                    } elseif ($section['inputs_layout'] === 'receiver') {
+                        // Receiver item
+                        $rows[] = [
+                            'transmitter_meter_record_id' => $recordId,
+                            'section_code'    => $section['code'],
+                            'section_name'    => $section['name'],
+                            'group_number'    => $group['number'],
+                            'group_name'      => $group['name'],
+                            'frequency_label' => $item['frequency_label'] ?? null,
+                            'merk'            => null,
+                            'tx_label'        => null,
+                            'status_value'    => null,
+                            'power_output'    => null,
+                            'modulasi'        => null,
+                            'keterangan'      => null,
+                            'status_a'        => null,
+                            'status_b'        => null,
+                            'squelch_tx1'     => null,
+                            'squelch_tx2'     => null,
+                            'nominal'         => null,
+                            'hasil'           => null,
+                            'is_header'       => false,
+                            'is_blocked'      => false,
+                            'block_reason'    => null,
                             'sort_order'      => $sortOrder++,
                             'created_at'      => $now,
                             'updated_at'      => $now,
@@ -298,6 +368,10 @@ class CnsdTransmitterMeterTemplate
                             'power_output'    => null,
                             'modulasi'        => null,
                             'keterangan'      => null,
+                            'status_a'        => null,
+                            'status_b'        => null,
+                            'squelch_tx1'     => null,
+                            'squelch_tx2'     => null,
                             'nominal'         => $item['nominal'] ?? null,
                             'hasil'           => null,
                             'is_header'       => false,
