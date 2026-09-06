@@ -554,24 +554,36 @@ const RecorderItemRow: React.FC<RecorderItemRowProps> = ({
       {isServerDual ? (
         <>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
-              value={getValue(item, 'hasil_server_a')}
-              onChange={(e) => onChange(item.id, 'hasil_server_a', e.target.value)}
-              disabled={disabled}
-            />
+            {item.server_a_locked ? (
+              <div className="h-8 flex items-center justify-center rounded bg-red-500 text-white font-bold text-[11px] uppercase tracking-wider">
+                U/S
+              </div>
+            ) : (
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="..."
+                value={getValue(item, 'hasil_server_a')}
+                onChange={(e) => onChange(item.id, 'hasil_server_a', e.target.value)}
+                disabled={disabled}
+              />
+            )}
           </td>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
-              value={getValue(item, 'hasil_server_b')}
-              onChange={(e) => onChange(item.id, 'hasil_server_b', e.target.value)}
-              disabled={disabled}
-            />
+            {item.server_b_locked ? (
+              <div className="h-8 flex items-center justify-center rounded bg-red-500 text-white font-bold text-[11px] uppercase tracking-wider">
+                U/S
+              </div>
+            ) : (
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="..."
+                value={getValue(item, 'hasil_server_b')}
+                onChange={(e) => onChange(item.id, 'hasil_server_b', e.target.value)}
+                disabled={disabled}
+              />
+            )}
           </td>
         </>
       ) : (

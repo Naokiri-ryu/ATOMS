@@ -1,8 +1,7 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { redirectToMaintenance } from '../../../utils/redirectMaintenance';
-import { redirectToSakti } from '../../../utils/redirectSakti';
-
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { redirectToMaintenance } from "../../../utils/redirectMaintenance";
+import { redirectToSakti } from "../../../utils/redirectSakti";
 
 interface MenuGridProps {
   isInitialized?: boolean;
@@ -13,96 +12,77 @@ const MenuGrid: React.FC<MenuGridProps> = ({ isInitialized = true }) => {
 
   const menuItems = [
     {
-      title: 'Dashboard',
-      icon: '/assets/icon/dashboard.svg',
-      route: '/dashboard'
+      title: "Dashboard",
+      icon: "/assets/icon/dashboard.svg",
+      route: "/dashboard",
     },
     {
-      title: 'Rostering',
-      icon: '/assets/icon/rostering.svg',
-      route: '/roster'
+      title: "Rostering",
+      icon: "/assets/icon/rostering.svg",
+      route: "/roster",
     },
     {
-      title: 'Employee Management',
-      icon: '/assets/icon/employee-management.svg',
-      route: '/personnel'
+      title: "Employee Management",
+      icon: "/assets/icon/employee-management.svg",
+      route: "/personnel",
     },
     {
-      title: 'Inventory',
-      icon: '/assets/icon/inventory.svg',
-      route: '/inventory'
+      title: "Inventory",
+      icon: "/assets/icon/inventory.svg",
+      route: "/inventory",
     },
     {
-      title: 'Maintenance',
-      icon: '/assets/icon/maintenance.svg',
-      route: '/maintenance'
+      title: "Maintenance",
+      icon: "/assets/icon/maintenance.svg",
+      route: "/maintenance",
     },
-    { title: 'Statistik', 
-      icon: '/assets/icon/statistics.svg', 
-      route: '/statistics' 
+    { title: "Statistik", icon: "/assets/icon/statistics.svg", route: "/statistics" },
+    {
+      title: "Notifications",
+      icon: "/assets/icon/notifications.svg",
+      route: "/notifications",
     },
     {
-      title: 'Notifications',
-      icon: '/assets/icon/notifications.svg',
-      route: '/notifications'
+      title: "Logs & Report",
+      icon: "/assets/icon/log-activity.svg",
+      route: "/activity-logs",
     },
     {
-      title: 'Logs & Report',
-      icon: '/assets/icon/log-activity.svg',
-      route: '/activity-logs'
+      title: "Support Center",
+      icon: "/assets/icon/support-center.svg",
+      route: "/support",
     },
-    {
-      title: 'Support Center',
-      icon: '/assets/icon/support-center.svg',
-      route: '/support'
-    }
   ];
 
   return (
     <div className="mb-12">
-      <h2 className="text-3xl font-bold text-navy-700 mb-8">
-        Menu
-      </h2>
+      <h2 className="text-3xl font-bold text-navy-700 mb-8">Menu</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8">
         {menuItems.map((item) => (
           <div
             key={item.title}
             onClick={() => {
               if (!isInitialized) return;
-              if (item.title === 'Maintenance') {
+              if (item.title === "Maintenance") {
                 redirectToMaintenance();
-              } else if (item.title === 'Inventory') {
+              } else if (item.title === "Inventory") {
                 redirectToSakti(true);
               } else {
                 navigate(item.route);
               }
             }}
-            className={`group flex justify-center ${
-              isInitialized ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
-            }`}
+            className={`group flex justify-center ${isInitialized ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
           >
             {/* Wrapper for 3D effect */}
             <div className="flex items-end">
-              <div className={`transform transition-all duration-200 group-hover:translate-y-[2px] group-active:translate-y-[4px] ${
-                isInitialized ? '' : 'pointer-events-none'
-              }`}>
+              <div className={`transform transition-all duration-200 group-hover:translate-y-[2px] group-active:translate-y-[4px] ${isInitialized ? "" : "pointer-events-none"}`}>
                 {/* Fixed Size Square Card with Primary Border */}
                 <div className="bg-white rounded-xl shadow-sm group-hover:shadow-lg border-2 border-navy-700 border-b-[6px] border-b-navy-700 group-hover:border-b-[3px] group-active:border-b-[1px] transition-all duration-200 w-[170px]">
                   <div className="flex flex-col items-center justify-center p-5 h-[170px]">
                     <div className="w-24 h-24 flex items-center justify-center mb-3">
-                      <img 
-                        src={item.icon} 
-                        alt={item.title} 
-                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
-                        width={96}
-                        height={96}
-                        loading="lazy"
-                        decoding="async"
-                      />
+                      <img src={item.icon} alt={item.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200" width={96} height={96} loading="lazy" decoding="async" />
                     </div>
-                    <h3 className="text-sm font-semibold text-navy-700 text-center leading-tight">
-                      {item.title}
-                    </h3>
+                    <h3 className="text-sm font-semibold text-navy-700 text-center leading-tight">{item.title}</h3>
                   </div>
                 </div>
               </div>

@@ -8,8 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint \) {
-            \->dropColumn(['password', 'two_factor_secret', 'two_factor_recovery_codes',
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn(['password', 'two_factor_secret', 'two_factor_recovery_codes',
                                 'two_factor_confirmed_at', 'remember_token', 'email_verified_at']);
         });
 
@@ -18,19 +18,19 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint \) {
-            \->string('password')->nullable();
-            \->text('two_factor_secret')->nullable();
-            \->text('two_factor_recovery_codes')->nullable();
-            \->timestamp('two_factor_confirmed_at')->nullable();
-            \->rememberToken();
-            \->timestamp('email_verified_at')->nullable();
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('password')->nullable();
+            $table->text('two_factor_secret')->nullable();
+            $table->text('two_factor_recovery_codes')->nullable();
+            $table->timestamp('two_factor_confirmed_at')->nullable();
+            $table->rememberToken();
+            $table->timestamp('email_verified_at')->nullable();
         });
 
-        Schema::create('password_reset_tokens', function (Blueprint \) {
-            \->string('email')->primary();
-            \->string('token');
-            \->timestamp('created_at')->nullable();
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
         });
     }
 };

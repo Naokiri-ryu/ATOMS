@@ -7,7 +7,33 @@ RUN apk add --no-cache \
         nodejs \
         npm \
         git \
-        unzip
+        unzip \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+        libzip-dev \
+        libxml2-dev \
+        oniguruma-dev \
+        icu-dev \
+        postgresql-dev \
+        curl \
+        autoconf \
+        g++ \
+        make \
+        linux-headers \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo \
+        pdo_pgsql \
+        pgsql \
+        gd \
+        mbstring \
+        xml \
+        zip \
+        intl \
+        bcmath \
+        pcntl \
+        opcache
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -32,12 +58,17 @@ COPY public/ public/
 ENV APP_ENV=production \
     APP_KEY=base64:5EHPpt5IdgfUMUI/BQ+9btirkl+5p73VRPw7gNJn4SQ= \
     DB_CONNECTION=sqlite \
-    DB_DATABASE=/tmp/sakti_build.sqlite
+    DB_DATABASE=/tmp/sakti_build.sqlite \
+    SESSION_DRIVER=file \
+    CACHE_STORE=file \
+    QUEUE_CONNECTION=sync
 
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && touch /tmp/sakti_build.sqlite
 
 RUN php artisan package:discover --ansi
+
+RUN php artisan migrate --force --no-interaction 2>&1 || echo "MIGRATE_EXIT=$?"
 
 RUN npm run build
 

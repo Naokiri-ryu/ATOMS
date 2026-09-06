@@ -110,8 +110,20 @@ const PrintSectionBlock: React.FC<PrintSectionBlockProps> = ({ meta, items }) =>
                   <td className="text-center">{rowNo}</td>
                   <td className="pl-1">{item.item_name}</td>
                   <td className="text-center">{text(item.nominal)}</td>
-                  <td className="text-center">{text(item.hasil_server_a)}</td>
-                  <td className="text-center">{text(item.hasil_server_b)}</td>
+                  {item.server_a_locked ? (
+                    <td className="text-center font-bold uppercase" style={{ backgroundColor: '#ef4444', color: '#fff' }}>
+                      U/S
+                    </td>
+                  ) : (
+                    <td className="text-center">{text(item.hasil_server_a)}</td>
+                  )}
+                  {item.server_b_locked ? (
+                    <td className="text-center font-bold uppercase" style={{ backgroundColor: '#ef4444', color: '#fff' }}>
+                      U/S
+                    </td>
+                  ) : (
+                    <td className="text-center">{text(item.hasil_server_b)}</td>
+                  )}
                   {/* No keterangan col for server_dual to keep 5 col grid */}
                 </tr>
               );

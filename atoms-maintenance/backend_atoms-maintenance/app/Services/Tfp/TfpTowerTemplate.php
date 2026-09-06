@@ -132,6 +132,7 @@ class TfpTowerTemplate
             ['facility_name' => 'Hazard Beacon',           'keterangan' => null],
             ['facility_name' => 'AC 22 (Split Wall)',      'keterangan' => 'A'],
             ['facility_name' => 'AC 23 (Split Wall)',      'keterangan' => 'A'],
+            ['facility_name' => 'AC 24 (Split Wall)',      'keterangan' => 'A'],
             ['facility_name' => 'Pompa Air Lt 5 Tower',    'keterangan' => null],
             ['facility_name' => 'Lift',                    'keterangan' => null],
             ['facility_name' => 'APAR/Fire Extinguisher',  'keterangan' => null],

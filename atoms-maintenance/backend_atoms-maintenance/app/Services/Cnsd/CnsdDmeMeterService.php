@@ -87,7 +87,7 @@ class CnsdDmeMeterService
                 'form_code'       => $formCode,
                 'merk'            => $data['merk']          ?? 'INTERSCAN',
                 'type'            => $data['type']          ?? 'LDB 102',
-                'serial_number'   => $data['serial_number'] ?? null,
+                'serial_number'   => $data['serial_number'] ?? '04HI-012',
                 'tx1_mode'        => $data['tx1_mode']      ?? 'MAIN / STANDBY',
                 'tx2_mode'        => $data['tx2_mode']      ?? 'MAIN / STANDBY',
                 'date'            => $date,

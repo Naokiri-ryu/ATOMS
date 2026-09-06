@@ -44,6 +44,9 @@ export interface CnsdRecorderMeterItem {
   keterangan: string | null;
   is_blocked: boolean;
   block_reason: string | null;
+  /** Fixed "U/S" cell on Server A / Server B (input disabled, not editable). */
+  server_a_locked: boolean;
+  server_b_locked: boolean;
   sort_order: number;
 }
 

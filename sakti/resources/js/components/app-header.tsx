@@ -1,12 +1,13 @@
 import { Link, usePage, router } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, ChevronDown, BarChart3, Bell, Box, ClipboardCheck, ClipboardList, FileCheck, FolderOpen, LayoutGrid, Menu, Package } from 'lucide-react';
+import { AlertTriangle, ChevronDown, BarChart3, Bell, Box, ClipboardCheck, ClipboardList, FileCheck, FolderOpen, LayoutGrid, Menu, Moon, Package, Sun } from 'lucide-react';
 import { useState } from 'react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { useAppearance } from '@/hooks/use-appearance';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -77,6 +78,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth } = page.props as unknown as { auth: { user: User } };
     const getInitials = useInitials();
     const { isCurrentUrl } = useCurrentUrl();
+    const { resolvedAppearance, updateAppearance } = useAppearance();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     
     const activeNavItems = auth?.user?.role === 'admin' ? adminNavItems : teknisiNavItems;
@@ -236,6 +238,18 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     <div className="ml-auto flex shrink-0 items-center space-x-2 sm:space-x-3">
                         {/* Header Actions Portal Target */}
                         <div id="header-actions-portal" className="hidden items-center gap-2 sm:flex"></div>
+
+                        {/* Theme Toggle */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="relative size-10 rounded-full border border-primary-foreground/20 hover:bg-primary-foreground/10 text-primary-foreground"
+                            onClick={() => updateAppearance(resolvedAppearance === 'dark' ? 'light' : 'dark')}
+                            aria-label={resolvedAppearance === 'dark' ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+                            title={resolvedAppearance === 'dark' ? 'Mode terang' : 'Mode gelap'}
+                        >
+                            {resolvedAppearance === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                        </Button>
 
                         {/* Notifications Bell */}
                         <DropdownMenu>

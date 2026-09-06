@@ -85,7 +85,7 @@ class CnsdAtcSystemMeterService
                 'form_type'       => $formType,
                 'facility'        => $facility,
                 'form_code'       => $formCode,
-                'merk'            => $data['merk']          ?? 'TERA',
+                'merk'            => $data['merk']          ?? 'TERN',
                 'type'            => $data['type']          ?? 'TAS',
                 'serial_number'   => $data['serial_number'] ?? null,
                 'date'            => $date,

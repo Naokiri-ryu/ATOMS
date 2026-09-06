@@ -289,6 +289,8 @@ class CnsdRecorderMeterController extends Controller
                 'keterangan'      => $it->keterangan,
                 'is_blocked'      => (bool) $it->is_blocked,
                 'block_reason'    => $it->block_reason,
+                'server_a_locked' => (bool) $it->server_a_locked,
+                'server_b_locked' => (bool) $it->server_b_locked,
                 'sort_order'      => $it->sort_order,
             ])->values()->toArray(),
             'sections_meta' => CnsdRecorderMeterTemplate::sectionMeta(),

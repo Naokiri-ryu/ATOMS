@@ -37,13 +37,17 @@ class CnsdRecorderMeterItem extends Model
         'keterangan',
         'is_blocked',
         'block_reason',
+        'server_a_locked',
+        'server_b_locked',
         'sort_order',
     ];
 
     protected $casts = [
-        'sort_order'   => 'integer',
-        'group_number' => 'integer',
-        'is_blocked'   => 'boolean',
+        'sort_order'       => 'integer',
+        'group_number'     => 'integer',
+        'is_blocked'       => 'boolean',
+        'server_a_locked'  => 'boolean',
+        'server_b_locked'  => 'boolean',
     ];
 
     public function record(): BelongsTo

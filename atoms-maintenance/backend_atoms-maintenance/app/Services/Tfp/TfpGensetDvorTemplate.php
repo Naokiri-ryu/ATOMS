@@ -49,10 +49,10 @@ class TfpGensetDvorTemplate
         return [
             // ── 17. Pengukuran Tegangan Output Genset ───────────
             ['parameter_number' => '17', 'group_label' => 'Pengukuran Tegangan Output Genset', 'parameter_name' => 'V R-N', 'unit' => 'Vac'],
-            ['parameter_number' => '17', 'group_label' => 'Pengukuran Tegangan Output Genset', 'parameter_name' => 'V R-S', 'unit' => 'Vac'],
             ['parameter_number' => '17', 'group_label' => 'Pengukuran Tegangan Output Genset', 'parameter_name' => 'V S-N', 'unit' => 'Vac'],
-            ['parameter_number' => '17', 'group_label' => 'Pengukuran Tegangan Output Genset', 'parameter_name' => 'V R-T', 'unit' => 'Vac'],
             ['parameter_number' => '17', 'group_label' => 'Pengukuran Tegangan Output Genset', 'parameter_name' => 'V T-N', 'unit' => 'Vac'],
+            ['parameter_number' => '17', 'group_label' => 'Pengukuran Tegangan Output Genset', 'parameter_name' => 'V R-S', 'unit' => 'Vac'],
+            ['parameter_number' => '17', 'group_label' => 'Pengukuran Tegangan Output Genset', 'parameter_name' => 'V R-T', 'unit' => 'Vac'],
             ['parameter_number' => '17', 'group_label' => 'Pengukuran Tegangan Output Genset', 'parameter_name' => 'V S-T', 'unit' => 'Vac'],
             // ── 18. Pengukuran Arus Beban ────────────────────────
             ['parameter_number' => '18', 'group_label' => 'Pengukuran Arus Beban', 'parameter_name' => 'I R', 'unit' => 'Ampere'],
@@ -69,10 +69,10 @@ class TfpGensetDvorTemplate
             ['parameter_number' => '26', 'group_label' => null, 'parameter_name' => 'Daya yang terpakai',                          'unit' => 'KW'],
             // ── 27. Pengukuran Tegangan PLN / Output Stabilizer ──
             ['parameter_number' => '27', 'group_label' => 'Pengukuran Tegangan PLN / Output Stabilizer', 'parameter_name' => 'V R-N', 'unit' => 'Vac'],
-            ['parameter_number' => '27', 'group_label' => 'Pengukuran Tegangan PLN / Output Stabilizer', 'parameter_name' => 'V R-S', 'unit' => 'Vac'],
             ['parameter_number' => '27', 'group_label' => 'Pengukuran Tegangan PLN / Output Stabilizer', 'parameter_name' => 'V S-N', 'unit' => 'Vac'],
-            ['parameter_number' => '27', 'group_label' => 'Pengukuran Tegangan PLN / Output Stabilizer', 'parameter_name' => 'V R-T', 'unit' => 'Vac'],
             ['parameter_number' => '27', 'group_label' => 'Pengukuran Tegangan PLN / Output Stabilizer', 'parameter_name' => 'V T-N', 'unit' => 'Vac'],
+            ['parameter_number' => '27', 'group_label' => 'Pengukuran Tegangan PLN / Output Stabilizer', 'parameter_name' => 'V R-S', 'unit' => 'Vac'],
+            ['parameter_number' => '27', 'group_label' => 'Pengukuran Tegangan PLN / Output Stabilizer', 'parameter_name' => 'V R-T', 'unit' => 'Vac'],
             ['parameter_number' => '27', 'group_label' => 'Pengukuran Tegangan PLN / Output Stabilizer', 'parameter_name' => 'V S-T', 'unit' => 'Vac'],
             // ── 28-33. Single-value readings ────────────────────
             ['parameter_number' => '28', 'group_label' => null, 'parameter_name' => 'KWH Meter',                       'unit' => null],

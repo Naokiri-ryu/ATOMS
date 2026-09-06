@@ -249,17 +249,17 @@ export const CnsdTdmeMeterPrintView: React.FC = () => {
                     <tr>
                       <td className="font-semibold pr-1" style={{ width: '40px' }}>MERK</td>
                       <td className="px-0.5">:</td>
-                      <td>{text(record.merk) || 'MOPENS'}</td>
+                      <td>{text(record.merk) || 'Mopiens'}</td>
                     </tr>
                     <tr>
                       <td className="font-semibold pr-1">TYPE</td>
                       <td className="px-0.5">:</td>
-                      <td>{text(record.type) || '-'}</td>
+                      <td>{text(record.type) || '310 DME'}</td>
                     </tr>
                     <tr>
                       <td className="font-semibold pr-1">S N</td>
                       <td className="px-0.5">:</td>
-                      <td>{text(record.serial_number) || '-'}</td>
+                      <td>{text(record.serial_number) || '00207'}</td>
                     </tr>
                     <tr>
                       <td className="font-semibold pr-1">Tx 1</td>

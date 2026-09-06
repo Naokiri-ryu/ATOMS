@@ -309,7 +309,7 @@ export const CnsdAtcSystemMeterDetailPage: React.FC = () => {
           <InfoCell label="Tanggal" value={record.date} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-2 border-t border-slate-100">
-          <EditableMetaField label="Merk" value={merk} onChange={setMerk} disabled={!!isReadOnly || !canEditMetadata} placeholder="TERA" />
+          <EditableMetaField label="Merk" value={merk} onChange={setMerk} disabled={!!isReadOnly || !canEditMetadata} placeholder="TERN" />
           <EditableMetaField label="Type" value={type} onChange={setType} disabled={!!isReadOnly || !canEditMetadata} placeholder="TAS" />
           <EditableMetaField label="Serial Number" value={serialNumber} onChange={setSerialNumber} disabled={!!isReadOnly || !canEditMetadata} placeholder="—" />
         </div>

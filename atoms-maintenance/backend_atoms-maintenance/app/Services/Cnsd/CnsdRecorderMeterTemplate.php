@@ -23,10 +23,18 @@ namespace App\Services\Cnsd;
  *
  * U/S (Un-Serviceable) channels:
  *   Some channels appear as red strips on the paper form with a "U/S" label
- *   (Channel 7, 21-27, 29-35). These are physically unavailable on the
- *   recorder. They are seeded with `is_blocked = true` and `block_reason = 'U/S'`.
- *   Frontend renders them as a red strip with all inputs disabled.
- *   Backend rejects any update payload targeting blocked rows.
+ *   (Channel 21-27, 29-35 partially; whole-channel blocks: 25, 27, 29-31, 33).
+ *   Fully blocked channels are seeded with `is_blocked = true` and
+ *   `block_reason = 'U/S'`. Frontend renders them as a red strip with all
+ *   inputs disabled. Backend rejects any update payload targeting blocked rows.
+ *
+ * Per-server lock:
+ *   Channels 21-35 may have a fixed "U/S" on one of Server A / Server B while
+ *   the other server stays editable. Locked cells are seeded with
+ *   `hasil_server_a`/`hasil_server_b` = 'U/S' plus `server_a_locked` /
+ *   `server_b_locked` = true. Frontend renders them disabled, backend ignores
+ *   writes to locked cells. The paper form's "OK" cells are left empty for the
+ *   technician to check themselves.
  *
  * Nominal values seeded from the form (column NOMINAL):
  *   - "Normal / Alrm"  → KVM (dropdown Normal / Alrm)
@@ -126,14 +134,22 @@ class CnsdRecorderMeterTemplate
      * Channel 1 - 64 list, mirroring the paper form. Channels marked U/S in
      * the reference image are seeded with is_blocked = true.
      *
+     * Channel map value forms:
+     *   - string          → serviceable channel, both servers editable; value = content
+     *   - null            → fully U/S (is_blocked = true, block_reason = 'U/S')
+     *   - array           → serviceable channel with per-server status:
+     *                       ['content' => '...', 'server_a' => 'OK'|'U/S', 'server_b' => 'OK'|'U/S']
+     *     'U/S' on a server → that cell is seeded 'U/S' and locked (not editable);
+     *     'OK'             → cell left empty, technician fills/checks it.
+     *
      * Channel header on paper form:
      *   NOMINAL = "Content" (e.g. "Ground Primary")
      *   HASIL   = Normal / Fault (dropdown on FE)
      */
     private static function channelItems(): array
     {
-        // Map of channel number → content (null = U/S blocked).
-        // Channel 7, 21-27, 29-35 are U/S per the reference image.
+        // Map of channel number → content / status (see docblock above).
+        // Channel 21-27, 29-35 carry per-server status; 25, 27, 29-31, 33 stay U/S.
         $channels = [
             1  => 'Ground Primary',
             2  => 'Ground Secondary',
@@ -141,7 +157,7 @@ class CnsdRecorderMeterTemplate
             4  => 'Tower Secondary',
             5  => 'Director Primary',
             6  => 'Director Secondary',
-            7  => null,                      // U/S
+            7  => 'Spare',                   // serviceable (spare channel)
             8  => 'East Primary',
             9  => 'West Primary',
             10 => 'West Secondary',
@@ -155,25 +171,28 @@ class CnsdRecorderMeterTemplate
             18 => 'CDU Primary',
             19 => 'CDU Secondary',
             20 => 'Blora Secondary',
-            21 => null,                      // U/S
-            22 => null,                      // U/S
-            23 => null,                      // U/S
-            24 => null,                      // U/S
-            25 => null,                      // U/S
-            26 => null,                      // U/S
-            27 => null,                      // U/S
-            28 => 'DS Jogja',
-            29 => null,                      // U/S
-            30 => null,                      // U/S
-            31 => null,                      // U/S
-            32 => null,                      // U/S
-            33 => null,                      // U/S
-            34 => null,                      // U/S
-            35 => null,                      // U/S
+            // Channels 21-35 carry per-server status. Array form:
+            //   ['content' => <column>', 'server_a' => 'OK'|'U/S', 'server_b' => 'OK'|'U/S']
+            //   null = fully U/S (whole-channel block).
+            21 => ['content' => 'DS UPN PKN',     'server_a' => 'OK', 'server_b' => 'OK'],
+            22 => ['content' => 'DS Banjarmasin', 'server_a' => 'U/S', 'server_b' => 'OK'],
+            23 => ['content' => 'Spare',          'server_a' => 'OK', 'server_b' => 'OK'],
+            24 => ['content' => '',                 'server_a' => 'U/S', 'server_b' => 'OK'],
+            25 => null,                      // U/S semua
+            26 => ['content' => '',                 'server_a' => 'U/S', 'server_b' => 'OK'],
+            27 => null,                      // U/S semua
+            28 => ['content' => 'DS Jogja',       'server_a' => 'OK', 'server_b' => 'U/S'],
+            29 => null,                      // U/S semua
+            30 => null,                      // U/S semua
+            31 => null,                      // U/S semua
+            32 => ['content' => 'DS Madiun',      'server_a' => 'OK', 'server_b' => 'OK'],
+            33 => null,                      // U/S semua
+            34 => ['content' => '',                 'server_a' => 'U/S', 'server_b' => 'OK'],
+            35 => ['content' => '',                 'server_a' => 'U/S', 'server_b' => 'OK'],
             36 => 'Telp TOWER 581',
             37 => 'Telp TOWER 110',
             38 => 'Telp APP 597',
-            39 => 'Telp APP 8655223',
+            39 => ['content' => 'Telp APP 8655223', 'server_a' => 'U/S', 'server_b' => 'U/S'], // nama dipertahankan, kedua server U/S
             40 => 'TRUNKING TOWER',
             41 => 'Frequentis Control Tower',
             42 => 'Frequentis Ass Tower',
@@ -186,38 +205,55 @@ class CnsdRecorderMeterTemplate
             49 => 'Frequentis Director Control',
             50 => 'Frequentis Director Asst',
             51 => 'Frequentis Supervisor APP',
-            52 => 'DS Banjarmasin',
-            53 => 'DS Pangkalanbun',
+            52 => null,                      // U/S penuh — nama kosong
+            53 => ['content' => 'DS Pangkalanbun',  'server_a' => 'U/S', 'server_b' => 'OK'],
             54 => 'DS JAKARTA',
             55 => 'DS MKS- EAST',
-            56 => 'DS MKS-WEST',
+            56 => ['content' => 'DS MKS-WEST',       'server_a' => 'OK', 'server_b' => 'U/S'],
             57 => 'DS BALI',
             58 => 'DS SEMARANG',
             59 => 'DS BALI INFO',
             60 => 'DS MALANG',
             61 => 'DS YIA',
-            62 => 'DS MADIUN',
+            62 => ['content' => '',                 'server_a' => 'U/S', 'server_b' => 'U/S'],
             63 => 'EAST SECONDARY',
-            64 => 'DS UPG PKN',
+            64 => ['content' => '',                 'server_a' => 'U/S', 'server_b' => 'U/S'],
         ];
 
         $items = [];
         foreach ($channels as $num => $content) {
             if ($content === null) {
                 $items[] = [
-                    'item_number'  => 'Channel ' . $num,
-                    'item_name'    => 'Channel ' . $num,
-                    'nominal'      => null,
-                    'is_blocked'   => true,
-                    'block_reason' => 'U/S',
+                    'item_number'   => 'Channel ' . $num,
+                    'item_name'     => 'Channel ' . $num,
+                    'nominal'       => null,
+                    'is_blocked'    => true,
+                    'block_reason'  => 'U/S',
+                    'server_a_lock' => false,
+                    'server_b_lock' => false,
                 ];
                 continue;
             }
+
+            if (is_array($content)) {
+                $items[] = [
+                    'item_number'   => 'Channel ' . $num,
+                    'item_name'     => 'Channel ' . $num,
+                    'nominal'       => $content['content'],
+                    'is_blocked'    => false,
+                    'server_a_lock' => $content['server_a'] === 'U/S',
+                    'server_b_lock' => $content['server_b'] === 'U/S',
+                ];
+                continue;
+            }
+
             $items[] = [
-                'item_number' => 'Channel ' . $num,
-                'item_name'   => 'Channel ' . $num,
-                'nominal'     => $content,
-                'is_blocked'  => false,
+                'item_number'   => 'Channel ' . $num,
+                'item_name'     => 'Channel ' . $num,
+                'nominal'       => $content,
+                'is_blocked'    => false,
+                'server_a_lock' => false,
+                'server_b_lock' => false,
             ];
         }
 
@@ -236,6 +272,8 @@ class CnsdRecorderMeterTemplate
         foreach (self::sections() as $section) {
             foreach ($section['groups'] as $group) {
                 foreach ($group['items'] as $item) {
+                    $serverALock = $item['server_a_lock'] ?? false;
+                    $serverBLock = $item['server_b_lock'] ?? false;
                     $rows[] = [
                         'recorder_meter_record_id' => $recordId,
                         'section_code'             => $section['code'],
@@ -245,12 +283,14 @@ class CnsdRecorderMeterTemplate
                         'item_number'              => $item['item_number'] ?? null,
                         'item_name'                => $item['item_name'],
                         'nominal'                  => $item['nominal']    ?? null,
-                        'hasil_server_a'           => null,
-                        'hasil_server_b'           => null,
+                        'hasil_server_a'           => $serverALock ? 'U/S' : null,
+                        'hasil_server_b'           => $serverBLock ? 'U/S' : null,
                         'hasil'                    => null,
                         'keterangan'               => null,
                         'is_blocked'               => $item['is_blocked'] ?? false,
                         'block_reason'             => $item['block_reason'] ?? null,
+                        'server_a_locked'          => $serverALock,
+                        'server_b_locked'          => $serverBLock,
                         'sort_order'               => $sortOrder++,
                         'created_at'               => $now,
                         'updated_at'               => $now,

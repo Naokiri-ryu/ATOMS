@@ -351,12 +351,16 @@ class CnsdRecorderMeterService
                         continue;
                     }
 
-                    $item->fill(array_intersect_key($payload, array_flip([
-                        'hasil_server_a',
-                        'hasil_server_b',
-                        'hasil',
-                        'keterangan',
-                    ])));
+                    // Per-server locked cells (fixed "U/S") ignore writes.
+                    $fillable = ['hasil', 'keterangan'];
+                    if (!$item->server_a_locked) {
+                        $fillable[] = 'hasil_server_a';
+                    }
+                    if (!$item->server_b_locked) {
+                        $fillable[] = 'hasil_server_b';
+                    }
+
+                    $item->fill(array_intersect_key($payload, array_flip($fillable)));
                     $item->save();
                 }
             }

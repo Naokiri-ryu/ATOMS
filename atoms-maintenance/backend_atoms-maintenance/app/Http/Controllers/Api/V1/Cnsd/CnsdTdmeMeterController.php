@@ -42,10 +42,13 @@ class CnsdTdmeMeterController extends Controller
     public function template(): JsonResponse
     {
         return $this->success([
-            'form_type' => 'TDME-METER',
-            'facility'  => 'T-DME',
-            'form_code' => 'FORM N-5',
-            'sections'  => CnsdTdmeMeterTemplate::sections(),
+            'form_type'             => 'TDME-METER',
+            'facility'              => 'T-DME',
+            'form_code'             => 'FORM N-5',
+            'merk_default'          => 'Mopiens',
+            'type_default'          => '310 DME',
+            'serial_number_default' => '00207',
+            'sections'              => CnsdTdmeMeterTemplate::sections(),
         ], 'T-DME Meter template retrieved successfully');
     }
 

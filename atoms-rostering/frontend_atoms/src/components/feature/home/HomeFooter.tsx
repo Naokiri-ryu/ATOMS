@@ -1,17 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Globe,
-  Twitter,
-  Facebook,
-  Instagram,
-  Linkedin,
-  ArrowUp,
-} from "lucide-react";
+import { Mail, Phone, MapPin, Globe, Twitter, Facebook, Instagram, Linkedin, ArrowUp } from "lucide-react";
 import { redirectToMaintenance } from "../../../utils/redirectMaintenance";
+import { redirectToSakti } from "../../../utils/redirectSakti";
 
 const HomeFooter: React.FC = () => {
   const navigate = useNavigate();
@@ -20,20 +11,9 @@ const HomeFooter: React.FC = () => {
     <footer className="bg-gradient-to-r from-navy-600 to-navy-800 text-white relative overflow-hidden">
       <div className="absolute inset-0 opacity-10">
         <picture>
-          <source
-            type="image/webp"
-            srcSet="/assets/image/image14-640.webp 640w, /assets/image/image14-960.webp 960w, /assets/image/image14-1280.webp 1280w, /assets/image/image14.webp 1400w"
-            sizes="100vw"
-          />
+          <source type="image/webp" srcSet="/assets/image/image14-640.webp 640w, /assets/image/image14-960.webp 960w, /assets/image/image14-1280.webp 1280w, /assets/image/image14.webp 1400w" sizes="100vw" />
           <source type="image/png" srcSet="/assets/image/image14.png" />
-          <img
-            src="/assets/image/image14.webp"
-            alt="Background"
-            className="w-full h-full object-cover"
-            loading="lazy"
-            decoding="async"
-            fetchPriority="low"
-          />
+          <img src="/assets/image/image14.webp" alt="Background" className="w-full h-full object-cover" loading="lazy" decoding="async" fetchPriority="low" />
         </picture>
       </div>
 
@@ -47,47 +27,23 @@ const HomeFooter: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-xl font-bold">AIRNAV Management</h3>
-                <p className="text-sm opacity-80">
-                  Integrated Aviation Solutions
-                </p>
+                <p className="text-sm opacity-80">Integrated Aviation Solutions</p>
               </div>
             </div>
             <p className="text-sm opacity-90 leading-relaxed mb-6 max-w-md">
-              Comprehensive aviation management system designed to streamline
-              operations, enhance safety protocols, and optimize resource
-              allocation for modern aviation facilities.
+              Comprehensive aviation management system designed to streamline operations, enhance safety protocols, and optimize resource allocation for modern aviation facilities.
             </p>
             <div className="flex items-center gap-4">
-              <a
-                href="https://www.facebook.com/airnavindonesia/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-              >
+              <a href="https://www.facebook.com/airnavindonesia/" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a
-                href="https://x.com/airnavindonesia"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-              >
+              <a href="https://x.com/airnavindonesia" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a
-                href="https://www.instagram.com/airnavindonesia/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-              >
+              <a href="https://www.instagram.com/airnavindonesia/" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a
-                href="https://id.linkedin.com/company/airnav-indonesia"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-              >
+              <a href="https://id.linkedin.com/company/airnav-indonesia" target="_blank" rel="noopener noreferrer" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
                 <Linkedin className="h-5 w-5" />
               </a>
             </div>
@@ -97,34 +53,19 @@ const HomeFooter: React.FC = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
             <div className="space-y-3">
-              <button
-                onClick={() => navigate("/roster")}
-                className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors"
-              >
+              <button onClick={() => navigate("/roster")} className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors">
                 Personnel & Rostering
               </button>
-              <button
-                onClick={() => navigate("/personnel")}
-                className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors"
-              >
+              <button onClick={() => navigate("/personnel")} className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors">
                 Employee Management
               </button>
-              <button
-                onClick={() => redirectToMaintenance()}
-                className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors"
-              >
+              <button onClick={() => redirectToMaintenance()} className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors">
                 Maintenance & Operation
               </button>
-              <button
-                onClick={() => navigate("/inventory")}
-                className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors"
-              >
+              <button onClick={() => redirectToSakti(true)} className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors">
                 Supply & Administration
               </button>
-              <button
-                onClick={() => navigate("/support")}
-                className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors"
-              >
+              <button onClick={() => navigate("/support")} className="block text-sm opacity-90 hover:opacity-100 hover:text-blue-300 transition-colors">
                 Support Center
               </button>
             </div>
@@ -144,7 +85,7 @@ const HomeFooter: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="h-4 w-4 flex-shrink-0 opacity-80" />
-                <span className="text-sm opacity-90">+62 21 xxxx-xxxx</span>
+                <span className="text-sm opacity-90">(021) 55915000</span>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="h-4 w-4 flex-shrink-0 opacity-80" />
@@ -152,7 +93,7 @@ const HomeFooter: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Globe className="h-4 w-4 flex-shrink-0 opacity-80" />
-                <span className="text-sm opacity-90">www.airnav.co.id</span>
+                <span className="text-sm opacity-90">airnavindonesia.co.id</span>
               </div>
             </div>
           </div>
@@ -161,81 +102,25 @@ const HomeFooter: React.FC = () => {
         {/* Collaboration Section */}
         <div className="border-t border-white/10 py-8">
           <div className="text-center mb-6">
-            <h4 className="text-lg font-semibold mb-2">
-              In Collaboration With
-            </h4>
-            <p className="text-sm opacity-80">
-              Supporting partnerships for aviation excellence
-            </p>
+            <h4 className="text-lg font-semibold mb-2">In Collaboration With</h4>
+            <p className="text-sm opacity-80">Supporting partnerships for aviation excellence</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-            <a
-              href="https://pens.ac.id/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors"
-            >
-              <img
-                src="/assets/icon/logopens.svg"
-                alt="PENS Logo"
-                className="h-8 w-auto"
-                width={32}
-                height={32}
-                loading="lazy"
-                decoding="async"
-              />
+            <a href="https://pens.ac.id/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
+              <img src="/assets/icon/logopens.svg" alt="PENS Logo" className="h-8 w-auto" width={32} height={32} loading="lazy" decoding="async" />
               <span className="text-sm font-medium opacity-90">PENS</span>
             </a>
-            <a
-              href="https://www.ugm.ac.id/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors"
-            >
-              <img
-                src="/assets/icon/logougm.svg"
-                alt="UGM Logo"
-                className="h-8 w-auto"
-                width={32}
-                height={32}
-                loading="lazy"
-                decoding="async"
-              />
+            <a href="https://www.ugm.ac.id/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
+              <img src="/assets/icon/logougm.svg" alt="UGM Logo" className="h-8 w-auto" width={32} height={32} loading="lazy" decoding="async" />
               <span className="text-sm font-medium opacity-90">UGM</span>
             </a>
-            <a
-              href="https://polinema.ac.id/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors"
-            >
-              <img
-                src="/assets/icon/logopolinema.png"
-                alt="Polinema Logo"
-                className="h-8 w-auto"
-                width={8}
-                height={8}
-                loading="lazy"
-                decoding="async"
-              />
+            <a href="https://polinema.ac.id/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
+              <img src="/assets/icon/logopolinema.png" alt="Polinema Logo" className="h-8 w-auto" width={8} height={8} loading="lazy" decoding="async" />
               <span className="text-sm font-medium opacity-90">POLINEMA</span>
             </a>
-            <a
-              href="https://telkomuniversity.ac.id/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors"
-            >
-              <img
-                src="/assets/icon/logotelu.png"
-                alt="Tel-U Logo"
-                className="h-8 w-auto"
-                width={8}
-                height={8}
-                loading="lazy"
-                decoding="async"
-              />
-              <span className="text-sm font-medium opacity-90">Tel-U</span>
+            <a href="https://telkomuniversity.ac.id/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/15 transition-colors">
+              <img src="/assets/icon/logotelu.png" alt="Tel-U Logo" className="h-8 w-auto" width={8} height={8} loading="lazy" decoding="async" />
+              <span className="text-sm font-medium opacity-90">TEL-U</span>
             </a>
           </div>
         </div>
@@ -243,26 +128,15 @@ const HomeFooter: React.FC = () => {
         {/* Bottom Bar */}
         <div className="border-t border-white/10 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-sm opacity-80">
-              © 2026 AIRNAV Management System. All rights reserved.
-            </div>
+            <div className="text-sm opacity-80">© 2026 AIRNAV Management System. All rights reserved.</div>
             <div className="flex items-center gap-6 text-sm">
-              <button
-                onClick={() => navigate("/privacy")}
-                className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-colors"
-              >
+              <button onClick={() => navigate("/privacy")} className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-colors">
                 Privacy Policy
               </button>
-              <button
-                onClick={() => navigate("/terms")}
-                className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-colors"
-              >
+              <button onClick={() => navigate("/terms")} className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-colors">
                 Terms of Service
               </button>
-              <button
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors flex items-center gap-2"
-              >
+              <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors flex items-center gap-2">
                 <ArrowUp className="h-4 w-4" />
                 Top
               </button>

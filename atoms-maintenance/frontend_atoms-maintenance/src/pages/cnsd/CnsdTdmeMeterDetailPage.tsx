@@ -302,9 +302,9 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
           <InfoCell label="Tanggal" value={record.date} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-2 border-t border-slate-100">
-          <EditableMetaField label="Merk" value={merk} onChange={setMerk} disabled={!!isReadOnly || !canEditMetadata} placeholder="MOPENS" />
-          <EditableMetaField label="Type" value={type} onChange={setType} disabled={!!isReadOnly || !canEditMetadata} placeholder="—" />
-          <EditableMetaField label="Serial Number" value={serialNumber} onChange={setSerialNumber} disabled={!!isReadOnly || !canEditMetadata} placeholder="—" />
+          <EditableMetaField label="Merk" value={merk} onChange={setMerk} disabled={!!isReadOnly || !canEditMetadata} placeholder="Mopiens" />
+          <EditableMetaField label="Type" value={type} onChange={setType} disabled={!!isReadOnly || !canEditMetadata} placeholder="310 DME" />
+          <EditableMetaField label="Serial Number" value={serialNumber} onChange={setSerialNumber} disabled={!!isReadOnly || !canEditMetadata} placeholder="00207" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-100">
           <EditableSelectField label="Tx 1 Mode" value={tx1Mode} onChange={setTx1Mode} options={TX_MODE_OPTIONS} disabled={!!isReadOnly || !canEditMetadata} />

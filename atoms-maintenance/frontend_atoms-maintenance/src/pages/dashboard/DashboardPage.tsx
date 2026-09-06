@@ -67,8 +67,8 @@ const quickNavItems: Array<{
   hideForRoles?: string[];
 }> = [
   { label: 'Work Order', icon: FileText, path: '/work-orders', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100' },
-  { label: 'CNSD', icon: CheckSquare, path: '/cnsd', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100', hideForRoles: ['General Manager'] },
-  { label: 'TFP', icon: Activity, path: '/tfp', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100', hideForRoles: ['General Manager'] },
+  { label: 'CNSD', icon: CheckSquare, path: '/cnsd', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100', hideForRoles: ['General Manager', 'Supervisor TFP', 'Teknisi TFP'] },
+  { label: 'TFP', icon: Activity, path: '/tfp', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100', hideForRoles: ['General Manager', 'Supervisor CNSD', 'Teknisi CNSD'] },
   { label: 'Ground Check', icon: Plane, path: '/ground-check', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100', hideForRoles: ['General Manager'] },
   { label: 'Grounding', icon: Zap, path: '/grounding', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100', hideForRoles: ['General Manager'] },
   { label: 'Reporting', icon: ClipboardList, path: '/reporting', color: 'text-brand-primary', bgColor: 'bg-brand-50', hoverColor: 'hover:bg-brand-100' },

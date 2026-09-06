@@ -348,7 +348,7 @@ export const CnsdAtcSystemMeterPrintView: React.FC = () => {
                     <tr>
                       <td className="font-semibold pr-1" style={{ width: '40px' }}>MERK</td>
                       <td className="px-0.5">:</td>
-                      <td>{text(record.merk) || 'TERA'}</td>
+                      <td>{text(record.merk) || 'TERM'}</td>
                     </tr>
                     <tr>
                       <td className="font-semibold pr-1">TYPE</td>

@@ -1,33 +1,30 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, Printer } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { cnsdAsmgcsMeterService } from '@/services/cnsdAsmgcsMeterService';
-import type {
-  CnsdAsmgcsMeterItem,
-  CnsdAsmgcsMeterRecordDetail,
-  CnsdAsmgcsMeterSectionMeta,
-} from '@/types/cnsdAsmgcs';
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Loader2, Printer } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { cnsdAsmgcsMeterService } from "@/services/cnsdAsmgcsMeterService";
+import type { CnsdAsmgcsMeterItem, CnsdAsmgcsMeterRecordDetail, CnsdAsmgcsMeterSectionMeta } from "@/types/cnsdAsmgcs";
 
 const SHIFT_TIME_LABELS: Record<string, string> = {
-  pagi:  '07:00 — 13:00',
-  siang: '13:00 — 19:00',
-  malam: '19:00 — 07:00',
+  pagi: "07:00 — 13:00",
+  siang: "13:00 — 19:00",
+  malam: "19:00 — 07:00",
 };
 
 const formatDateID = (v?: string | null): string => {
-  if (!v) return '';
+  if (!v) return "";
   try {
-    return new Date(v).toLocaleDateString('id-ID', {
-      day: '2-digit', month: 'long', year: 'numeric',
+    return new Date(v).toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
     });
   } catch {
     return v;
   }
 };
 
-const text = (v: string | null | undefined): string =>
-  v == null || v === '' ? '' : String(v);
+const text = (v: string | null | undefined): string => (v == null || v === "" ? "" : String(v));
 
 interface PrintSectionBlockProps {
   meta: CnsdAsmgcsMeterSectionMeta;
@@ -56,28 +53,28 @@ const PrintSectionBlock: React.FC<PrintSectionBlockProps> = ({ meta, items }) =>
   return (
     <>
       {/* Section sub-header bar with column sub-labels */}
-      {layout === 'single_adaptive' && (
+      {layout === "single_adaptive" && (
         <tr>
           <td className="text-center font-bold gc-group-bar">{meta.code}</td>
           <td className="gc-group-bar font-bold uppercase">{meta.name}</td>
           <td className="gc-group-bar text-center font-bold">Standart</td>
           <td colSpan={2} className="gc-group-bar text-center font-bold">
-            {meta.columns_label_1 ?? 'Redundant Server'}
+            {meta.columns_label_1 ?? "Redundant Server"}
           </td>
           <td className="gc-group-bar font-bold">{/* KETERANGAN */}</td>
         </tr>
       )}
-      {layout === 'dual_toggle_nf' && (
+      {layout === "dual_toggle_nf" && (
         <tr>
           <td className="text-center font-bold gc-group-bar">{meta.code}</td>
           <td className="gc-group-bar font-bold uppercase">{meta.name}</td>
           <td className="gc-group-bar text-center font-bold">Status</td>
-          <td className="gc-group-bar text-center font-bold">{meta.columns_label_1 ?? 'Normal'}</td>
-          <td className="gc-group-bar text-center font-bold">{meta.columns_label_2 ?? 'Fault'}</td>
+          <td className="gc-group-bar text-center font-bold">{meta.columns_label_1 ?? "Normal"}</td>
+          <td className="gc-group-bar text-center font-bold">{meta.columns_label_2 ?? "Fault"}</td>
           <td className="gc-group-bar font-bold">{/* KETERANGAN */}</td>
         </tr>
       )}
-      {layout === 'environment' && (
+      {layout === "environment" && (
         <>
           <tr>
             <td colSpan={totalCols} className="gc-section-bar font-bold uppercase">
@@ -88,15 +85,17 @@ const PrintSectionBlock: React.FC<PrintSectionBlockProps> = ({ meta, items }) =>
             <td className="text-center font-bold gc-group-bar">NO</td>
             <td className="gc-group-bar font-bold">KEGIATAN</td>
             <td className="gc-group-bar text-center font-bold">Nominal</td>
-            <td colSpan={2} className="gc-group-bar text-center font-bold">HASIL PEMERIKSAAN</td>
+            <td colSpan={2} className="gc-group-bar text-center font-bold">
+              HASIL PEMERIKSAAN
+            </td>
             <td className="gc-group-bar font-bold">KETERANGAN</td>
           </tr>
         </>
       )}
 
       {groupedItems.map((group) => (
-        <React.Fragment key={group.name ?? '__nogroup__'}>
-          {hasMultipleGroups && group.name && layout === 'dual_toggle_nf' && (
+        <React.Fragment key={group.name ?? "__nogroup__"}>
+          {hasMultipleGroups && group.name && layout === "dual_toggle_nf" && (
             <tr>
               <td className="text-center" />
               <td className="pl-1 font-bold uppercase">{group.name}</td>
@@ -104,19 +103,21 @@ const PrintSectionBlock: React.FC<PrintSectionBlockProps> = ({ meta, items }) =>
             </tr>
           )}
           {group.items.map((item) => {
-            const rowNo = item.item_number && item.item_number.trim() !== '' ? item.item_number : '';
-            if (layout === 'single_adaptive') {
+            const rowNo = item.item_number && item.item_number.trim() !== "" ? item.item_number : "";
+            if (layout === "single_adaptive") {
               return (
                 <tr key={item.id} className="text-[10px]">
                   <td className="text-center">{rowNo}</td>
                   <td className="pl-1">{item.item_name}</td>
                   <td className="text-center">{text(item.nominal)}</td>
-                  <td colSpan={2} className="text-center">{text(item.hasil_a)}</td>
+                  <td colSpan={2} className="text-center">
+                    {text(item.hasil_a)}
+                  </td>
                   <td>{text(item.keterangan)}</td>
                 </tr>
               );
             }
-            if (layout === 'dual_toggle_nf') {
+            if (layout === "dual_toggle_nf") {
               return (
                 <tr key={item.id} className="text-[10px]">
                   <td className="text-center" />
@@ -134,7 +135,9 @@ const PrintSectionBlock: React.FC<PrintSectionBlockProps> = ({ meta, items }) =>
                 <td className="text-center">{rowNo}</td>
                 <td className="pl-1">{item.item_name}</td>
                 <td className="text-center">{text(item.nominal)}</td>
-                <td colSpan={2} className="text-center">{text(item.hasil)}</td>
+                <td colSpan={2} className="text-center">
+                  {text(item.hasil)}
+                </td>
                 <td>{text(item.keterangan)}</td>
               </tr>
             );
@@ -173,7 +176,7 @@ export const CnsdAsmgcsMeterPrintView: React.FC = () => {
   const itemsBySection = useMemo(() => {
     const map: Record<string, CnsdAsmgcsMeterItem[]> = {};
     record?.items.forEach((it) => {
-      const code = it.section_code ?? '1';
+      const code = it.section_code ?? "1";
       if (!map[code]) map[code] = [];
       map[code].push(it);
     });
@@ -192,7 +195,9 @@ export const CnsdAsmgcsMeterPrintView: React.FC = () => {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4">
         <p className="text-sm text-slate-600">Form tidak ditemukan atau gagal memuat data.</p>
-        <Button variant="outline" onClick={() => navigate('/cnsd/asmgcs-meter')}>Kembali</Button>
+        <Button variant="outline" onClick={() => navigate("/cnsd/asmgcs-meter")}>
+          Kembali
+        </Button>
       </div>
     );
   }
@@ -201,8 +206,8 @@ export const CnsdAsmgcsMeterPrintView: React.FC = () => {
 
   // Section A umbrella covers FRONT PANEL (1) + CENTRAL SERVER (2);
   // Section B is LINGKUNGAN KERJA (code '4' kept to mirror VCCS Freq partition).
-  const peralatanSections = record.sections_meta.filter((s) => s.code === '1' || s.code === '2');
-  const envSection = record.sections_meta.find((s) => s.code === '4');
+  const peralatanSections = record.sections_meta.filter((s) => s.code === "1" || s.code === "2");
+  const envSection = record.sections_meta.find((s) => s.code === "4");
 
   return (
     <div className="min-h-screen w-full bg-slate-100 p-4 text-black print:bg-white print:p-0">
@@ -239,18 +244,17 @@ export const CnsdAsmgcsMeterPrintView: React.FC = () => {
         </Button>
       </div>
 
-      <div
-        className="gc-paper mx-auto bg-white print:mx-0 print:w-full print:max-w-none"
-        style={{ width: '210mm', minHeight: '297mm', padding: '5mm' }}
-      >
+      <div className="gc-paper mx-auto bg-white print:mx-0 print:w-full print:max-w-none" style={{ width: "210mm", minHeight: "297mm", padding: "5mm" }}>
         {/* Kop */}
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="flex items-center gap-2">
             <img
               src="/assets/icon/logoairnav.svg"
               alt="AirNav Indonesia"
-              style={{ height: '38px', width: 'auto' }}
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              style={{ height: "38px", width: "auto" }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
             />
             <div className="leading-tight">
               <div className="text-[11px] font-bold">AirNav Indonesia</div>
@@ -269,20 +273,24 @@ export const CnsdAsmgcsMeterPrintView: React.FC = () => {
         {/* Title band */}
         <table className="gc-table mb-0">
           <colgroup>
-            <col style={{ width: '36%' }} />
-            <col style={{ width: '34%' }} />
-            <col style={{ width: '30%' }} />
+            <col style={{ width: "36%" }} />
+            <col style={{ width: "34%" }} />
+            <col style={{ width: "30%" }} />
           </colgroup>
           <tbody>
             <tr>
-              <td colSpan={3} className="text-center font-bold text-[14px] py-1">METER READING</td>
+              <td colSpan={3} className="text-center font-bold text-[14px] py-1">
+                METER READING
+              </td>
             </tr>
             <tr>
               <td rowSpan={2} className="align-top leading-tight">
                 <table className="gc-meta">
                   <tbody>
                     <tr>
-                      <td className="font-semibold pr-1" style={{ width: '60px' }}>LOKASI</td>
+                      <td className="font-semibold pr-1" style={{ width: "60px" }}>
+                        LOKASI
+                      </td>
                       <td className="px-0.5">:</td>
                       <td className="uppercase">{text(record.location)}</td>
                     </tr>
@@ -301,28 +309,28 @@ export const CnsdAsmgcsMeterPrintView: React.FC = () => {
                 <table className="gc-meta text-[10px]">
                   <tbody>
                     <tr>
-                      <td className="font-semibold pr-1" style={{ width: '40px' }}>MERK</td>
+                      <td className="font-semibold pr-1" style={{ width: "40px" }}>
+                        MERK
+                      </td>
                       <td className="px-0.5">:</td>
-                      <td>{text(record.merk) || 'SAAB'}</td>
+                      <td>{text(record.merk) || "SAAB"}</td>
                     </tr>
                     <tr>
                       <td className="font-semibold pr-1">TYPE</td>
                       <td className="px-0.5">:</td>
-                      <td>{text(record.type) || ''}</td>
+                      <td>{text(record.type) || ""}</td>
                     </tr>
                     <tr>
                       <td className="font-semibold pr-1">S N</td>
                       <td className="px-0.5">:</td>
-                      <td>{text(record.serial_number) || ''}</td>
+                      <td>{text(record.serial_number) || ""}</td>
                     </tr>
                   </tbody>
                 </table>
               </td>
             </tr>
             <tr>
-              <td className="text-center font-semibold text-[9px] leading-tight">
-                COMMUNICATION NAVIGATION SURVEILLANCE AND DATA PROCESSING
-              </td>
+              <td className="text-center font-semibold text-[9px] leading-tight">COMMUNICATION NAVIGATION SURVEILLANCE AND DATA PROCESSING</td>
             </tr>
           </tbody>
         </table>
@@ -330,19 +338,21 @@ export const CnsdAsmgcsMeterPrintView: React.FC = () => {
         {/* Items table — 6 cols */}
         <table className="gc-table">
           <colgroup>
-            <col style={{ width: '6%' }} />
-            <col style={{ width: '34%' }} />
-            <col style={{ width: '18%' }} />
-            <col style={{ width: '12%' }} />
-            <col style={{ width: '12%' }} />
-            <col style={{ width: '18%' }} />
+            <col style={{ width: "6%" }} />
+            <col style={{ width: "34%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "18%" }} />
           </colgroup>
           <thead>
             <tr className="text-center font-bold gc-section-bar">
               <th className="border border-black py-1">NO</th>
               <th className="border border-black py-1">PEMBACAAN METER READING</th>
               <th className="border border-black py-1">NOMINAL</th>
-              <th colSpan={2} className="border border-black py-1">HASIL PEMERIKSAAN</th>
+              <th colSpan={2} className="border border-black py-1">
+                HASIL PEMERIKSAAN
+              </th>
               <th className="border border-black py-1">KETERANGAN</th>
             </tr>
           </thead>
@@ -355,28 +365,19 @@ export const CnsdAsmgcsMeterPrintView: React.FC = () => {
               </tr>
             )}
             {peralatanSections.map((meta) => (
-              <PrintSectionBlock
-                key={meta.code}
-                meta={meta}
-                items={itemsBySection[meta.code] ?? []}
-              />
+              <PrintSectionBlock key={meta.code} meta={meta} items={itemsBySection[meta.code] ?? []} />
             ))}
 
-            {envSection && (
-              <PrintSectionBlock
-                meta={{ ...envSection, code: 'B' }}
-                items={itemsBySection[envSection.code] ?? []}
-              />
-            )}
+            {envSection && <PrintSectionBlock meta={{ ...envSection, code: "B" }} items={itemsBySection[envSection.code] ?? []} />}
           </tbody>
         </table>
 
         {/* Footer signatures */}
         <table className="gc-table">
           <colgroup>
-            <col style={{ width: '44%' }} />
-            <col style={{ width: '28%' }} />
-            <col style={{ width: '28%' }} />
+            <col style={{ width: "44%" }} />
+            <col style={{ width: "28%" }} />
+            <col style={{ width: "28%" }} />
           </colgroup>
           <thead>
             <tr className="text-center font-bold gc-section-bar">
@@ -388,68 +389,56 @@ export const CnsdAsmgcsMeterPrintView: React.FC = () => {
           <tbody>
             <tr>
               <td className="align-top p-0">
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
-                      <th style={{ width: '12%', border: '1px solid #000', padding: '2px', fontWeight: 700, textAlign: 'center' }}>No</th>
-                      <th style={{ width: '58%', border: '1px solid #000', padding: '2px', fontWeight: 700, textAlign: 'center' }}>Nama</th>
-                      <th style={{ width: '30%', border: '1px solid #000', padding: '2px', fontWeight: 700, textAlign: 'center' }}>Paraf</th>
+                      <th style={{ width: "12%", border: "1px solid #000", padding: "2px", fontWeight: 700, textAlign: "center" }}>No</th>
+                      <th style={{ width: "58%", border: "1px solid #000", padding: "2px", fontWeight: 700, textAlign: "center" }}>Nama</th>
+                      <th style={{ width: "30%", border: "1px solid #000", padding: "2px", fontWeight: 700, textAlign: "center" }}>Paraf</th>
                     </tr>
                   </thead>
                   <tbody>
                     {record.technicians.map((t, idx) => (
                       <tr key={t.id}>
-                        <td style={{ border: '1px solid #000', padding: '2px', textAlign: 'center' }}>{idx + 1}</td>
-                        <td style={{ border: '1px solid #000', padding: '2px' }} className="uppercase">{t.technician_name}</td>
-                        <td style={{ border: '1px solid #000', padding: '2px', textAlign: 'center', height: '26px' }}>
-                          {t.signature ? (
-                            <img src={t.signature} alt="ttd" style={{ maxHeight: '20px', display: 'inline-block' }} />
-                          ) : ''}
+                        <td style={{ border: "1px solid #000", padding: "2px", textAlign: "center" }}>{idx + 1}</td>
+                        <td style={{ border: "1px solid #000", padding: "2px" }} className="uppercase">
+                          {t.technician_name}
                         </td>
+                        <td style={{ border: "1px solid #000", padding: "2px", textAlign: "center", height: "26px" }}>{t.signature ? <img src={t.signature} alt="ttd" style={{ maxHeight: "20px", display: "inline-block" }} /> : ""}</td>
                       </tr>
                     ))}
                     {record.technicians.length === 0 && (
                       <tr>
-                        <td colSpan={3} style={{ border: '1px solid #000', padding: '4px', textAlign: 'center', fontStyle: 'italic' }}>—</td>
+                        <td colSpan={3} style={{ border: "1px solid #000", padding: "4px", textAlign: "center", fontStyle: "italic" }}>
+                          —
+                        </td>
                       </tr>
                     )}
-                    {record.technicians.length > 0 && record.technicians.length < 5 && (
+                    {record.technicians.length > 0 &&
+                      record.technicians.length < 5 &&
                       Array.from({ length: 5 - record.technicians.length }).map((_, i) => (
                         <tr key={`empty-tech-${i}`}>
-                          <td style={{ border: '1px solid #000', padding: '2px', textAlign: 'center', height: '22px' }}>&nbsp;</td>
-                          <td style={{ border: '1px solid #000', padding: '2px' }}>&nbsp;</td>
-                          <td style={{ border: '1px solid #000', padding: '2px' }}>&nbsp;</td>
+                          <td style={{ border: "1px solid #000", padding: "2px", textAlign: "center", height: "22px" }}>&nbsp;</td>
+                          <td style={{ border: "1px solid #000", padding: "2px" }}>&nbsp;</td>
+                          <td style={{ border: "1px solid #000", padding: "2px" }}>&nbsp;</td>
                         </tr>
-                      ))
-                    )}
+                      ))}
                   </tbody>
                 </table>
               </td>
 
-              <td className="text-center align-top" style={{ minHeight: '120px' }}>
-                <div style={{ minHeight: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}>
-                  {record.supervisor?.signature ? (
-                    <img src={record.supervisor.signature} alt="ttd" style={{ maxHeight: '60px', maxWidth: '120px', objectFit: 'contain' }} />
-                  ) : (
-                    <span>&nbsp;</span>
-                  )}
+              <td className="text-center align-top" style={{ minHeight: "120px" }}>
+                <div style={{ minHeight: "70px", display: "flex", alignItems: "center", justifyContent: "center", padding: "4px" }}>
+                  {record.supervisor?.signature ? <img src={record.supervisor.signature} alt="ttd" style={{ maxHeight: "60px", maxWidth: "120px", objectFit: "contain" }} /> : <span>&nbsp;</span>}
                 </div>
-                <div className="font-semibold uppercase border-t border-black pt-1 px-1">
-                  {text(record.supervisor?.name) || '—'}
-                </div>
+                <div className="font-semibold uppercase border-t border-black pt-1 px-1">{text(record.supervisor?.name) || "—"}</div>
               </td>
 
-              <td className="text-center align-top" style={{ minHeight: '120px' }}>
-                <div style={{ minHeight: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}>
-                  {record.manager?.signature ? (
-                    <img src={record.manager.signature} alt="ttd" style={{ maxHeight: '60px', maxWidth: '120px', objectFit: 'contain' }} />
-                  ) : (
-                    <span>&nbsp;</span>
-                  )}
+              <td className="text-center align-top" style={{ minHeight: "120px" }}>
+                <div style={{ minHeight: "70px", display: "flex", alignItems: "center", justifyContent: "center", padding: "4px" }}>
+                  {record.manager?.signature ? <img src={record.manager.signature} alt="ttd" style={{ maxHeight: "60px", maxWidth: "120px", objectFit: "contain" }} /> : <span>&nbsp;</span>}
                 </div>
-                <div className="font-semibold uppercase border-t border-black pt-1 px-1">
-                  {text(record.manager?.name) || '—'}
-                </div>
+                <div className="font-semibold uppercase border-t border-black pt-1 px-1">{text(record.manager?.name) || "—"}</div>
               </td>
             </tr>
           </tbody>

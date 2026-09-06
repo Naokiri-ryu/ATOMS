@@ -99,6 +99,29 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Scroll-mouse horizontal pada tabel roster: saat kursor di dalam area tabel,
+  // putaran scroll wheel menggeser tabel ke kiri/kanan. Saat kursor di luar tabel,
+  // scroll vertikal halaman tetap berjalan normal.
+  useEffect(() => {
+    const container = tableContainerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const { scrollWidth, clientWidth } = container;
+      if (scrollWidth <= clientWidth) return;
+
+      const delta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      container.scrollLeft += delta;
+
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, []);
+
   // Update toolbar position when selection changes
   useEffect(() => {
     if (selectedCells.length === 0 || isSelecting) {
@@ -1238,32 +1261,30 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
 
   const getShiftClasses = (shiftName: string) => {
     const name = shiftName.toLowerCase();
-    const spmlClass = 'bg-white text-black border border-black font-semibold';
-    if (name.includes('morning') || name.includes('pagi') || name.includes('shift 1')) return spmlClass;
-    if (name.includes('afternoon') || name.includes('siang') || name.includes('shift 2')) return spmlClass;
-    if (name.includes('night') || name.includes('malam') || name.includes('shift 3')) return spmlClass;
-    if (name.includes('libur') || name.includes('off')) return spmlClass;
+    if (name.includes('morning') || name.includes('pagi') || name.includes('shift 1')) return 'bg-blue-500 text-white font-semibold';
+    if (name.includes('afternoon') || name.includes('siang') || name.includes('shift 2')) return 'bg-orange-500 text-white font-semibold';
+    if (name.includes('night') || name.includes('malam') || name.includes('shift 3')) return 'bg-emerald-600 text-white font-semibold';
+    if (name.includes('libur') || name.includes('off')) return 'bg-red-500 text-white font-semibold';
     return 'bg-yellow-400 text-black font-semibold';
   };
 
   const getNotesClasses = (notes: string) => {
     const note = notes.toLowerCase().trim();
-    const spmlClass = 'bg-white text-black border border-black font-semibold';
     
-    // Shift reguler dengan warna kontras tinggi
-    if (note === 'pagi' || note === 'p') return spmlClass;
-    if (note === 'siang' || note === 's') return spmlClass;
-    if (note === 'malam' || note === 'm') return spmlClass;
+    // Shift reguler, konsisten dengan keterangan shift & status
+    if (note === 'pagi' || note === 'p') return 'bg-blue-500 text-white font-semibold';
+    if (note === 'siang' || note === 's') return 'bg-orange-500 text-white font-semibold';
+    if (note === 'malam' || note === 'm') return 'bg-emerald-600 text-white font-semibold';
     
-    // Libur tetap merah
-    if (note === 'l' || note === 'libur' || note === 'off') return spmlClass;
-    if (note === 'l1' || note === 'l2' || note === 'libur1' || note === 'libur2') return spmlClass;
+    // Libur merah, konsisten dengan keterangan shift & status
+    if (note === 'l' || note === 'libur' || note === 'off') return 'bg-red-500 text-white font-semibold';
+    if (note === 'l1' || note === 'l2' || note === 'libur1' || note === 'libur2') return 'bg-red-500 text-white font-semibold';
     
     // Partial matches - Gunakan warna yang sama dengan exact match
-    if (note.includes('pagi')) return spmlClass;
-    if (note.includes('siang')) return spmlClass;
-    if (note.includes('malam')) return spmlClass;
-    if (note.includes('libur') || note.includes('off')) return spmlClass;
+    if (note.includes('pagi')) return 'bg-blue-500 text-white font-semibold';
+    if (note.includes('siang')) return 'bg-orange-500 text-white font-semibold';
+    if (note.includes('malam')) return 'bg-emerald-600 text-white font-semibold';
+    if (note.includes('libur') || note.includes('off')) return 'bg-red-500 text-white font-semibold';
     
     // Semua status selain P/S/M/L -> kuning
     return 'bg-yellow-400 text-black font-semibold';
