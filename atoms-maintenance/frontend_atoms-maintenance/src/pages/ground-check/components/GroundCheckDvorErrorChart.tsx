@@ -65,7 +65,8 @@ export const GroundCheckDvorErrorChart: React.FC<Props> = ({
   const formatTick = (v: number): string => `${v}`;
 
   const chartContent = (
-    <LineChart data={data} margin={{ top: 24, right: 24, left: 8, bottom: 24 }}>
+    <LineChart data={data} margin={{ top: 24, right: 24, left: 8, bottom: 24 }}
+    {...(width ? { width, height: chartHeight } : {})}>
       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
       <XAxis
         type="number"

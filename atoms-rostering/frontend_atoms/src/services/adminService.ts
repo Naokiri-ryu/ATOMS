@@ -7,6 +7,8 @@ import type {
   CreateUserRequest,
   UpdateUserRequest,
   GenerateTokenResponse,
+  Employee,
+  EmployeeProfileUpdateRequest,
 } from '../types';
 
 export const adminService = {
@@ -70,6 +72,49 @@ export const adminService = {
     const response = await apiClient.post<{ message: string }>(`/admin/users/${id}/send-activation-code`, {
       token
     });
+    return response.data;
+  },
+
+  // Get Employee Profile
+  async getEmployeeProfile(id: number): Promise<Employee> {
+    const response = await apiClient.get<{ success: boolean; message: string; data: Employee }>(
+      `/admin/employees/${id}/profile`
+    );
+    return response.data.data;
+  },
+
+  // Update Employee Profile
+  async updateEmployeeProfile(id: number, data: EmployeeProfileUpdateRequest): Promise<Employee> {
+    const response = await apiClient.put<{ success: boolean; message: string; data: Employee }>(
+      `/admin/employees/${id}/profile`,
+      data
+    );
+    return response.data.data;
+  },
+
+  // Get Employee Profile (public for any authenticated user)
+  async getPublicProfile(id: number): Promise<Employee> {
+    const response = await apiClient.get<{ success: boolean; message: string; data: Employee }>(
+      `/employees/${id}/profile`
+    );
+    return response.data.data;
+  },
+
+  // Update Employee Profile (self or admin)
+  async updateProfile(id: number, data: EmployeeProfileUpdateRequest): Promise<Employee> {
+    const response = await apiClient.put<{ success: boolean; message: string; data: Employee }>(
+      `/employees/${id}/profile`,
+      data
+    );
+    return response.data.data;
+  },
+
+  // Admin reset user password (set temporary password)
+  async resetPassword(id: number, password?: string): Promise<{ message: string; password: string; must_change_password: boolean }> {
+    const response = await apiClient.post<{ message: string; password: string; must_change_password: boolean }>(
+      `/admin/users/${id}/reset-password`,
+      password ? { password } : {}
+    );
     return response.data;
   },
 };

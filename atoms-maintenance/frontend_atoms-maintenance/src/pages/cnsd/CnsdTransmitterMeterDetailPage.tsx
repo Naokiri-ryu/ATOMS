@@ -335,6 +335,7 @@ const TransmitterSectionPanel: React.FC<TransmitterSectionPanelProps> = ({ secti
   }, [items]);
 
   const colCount = isReceiver ? 6 : isTx ? 7 : 5;
+  const editableItems = useMemo(() => items.filter((it) => !it.is_header), [items]);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -344,10 +345,10 @@ const TransmitterSectionPanel: React.FC<TransmitterSectionPanelProps> = ({ secti
             {sectionMeta.code}. {sectionMeta.name}
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            {isReceiver ? "Isi kolom STATUS A, STATUS B, SQUELCH TX 1, SQUELCH TX 2 untuk tiap receiver." : isTx ? "Isi STATUS (On Air/STBY/Online/Offline), POWER O/P, MODULASI per TX. Back Up Radio status diblok per form." : "Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan."}
+            {isReceiver ? "Isi kolom STATUS A, STATUS B, SQUELCH TX 1, SQUELCH TX 2 untuk tiap receiver. Gunakan ↑↓←→ atau Enter untuk navigasi." : isTx ? "Isi STATUS (On Air/STBY/Online/Offline), POWER O/P, MODULASI per TX. Back Up Radio status diblok per form. Gunakan ↑↓←→ atau Enter untuk navigasi." : "Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan. Gunakan ↑↓←→ atau Enter untuk navigasi."}
           </p>
         </div>
-        <span className="text-xs font-medium text-slate-400">{items.filter((i) => !i.is_header).length} item</span>
+        <span className="text-xs font-medium text-slate-400">{editableItems.length} item</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -397,7 +398,7 @@ const TransmitterSectionPanel: React.FC<TransmitterSectionPanelProps> = ({ secti
                       </td>
                     </tr>
                   )}
-                  {isReceiver ? group.items.map((item, idx) => <ReceiverItemRow key={item.id} item={item} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} index={idx + 1} />) : isTx ? renderTransmitterGroupRows(group.items, isReadOnly, getValue, onChange) : group.items.map((item, idx) => <EnvItemRow key={item.id} item={item} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} index={idx + 1} />)}
+                  {isReceiver ? group.items.map((item, idx) => <ReceiverItemRow key={item.id} item={item} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} index={idx + 1} rowIndex={editableItems.findIndex((e) => e.id === item.id)} totalRows={editableItems.length} />) : isTx ? renderTransmitterGroupRows(group.items, isReadOnly, getValue, onChange, (id) => editableItems.findIndex((e) => e.id === id), editableItems.length) : group.items.map((item, idx) => <EnvItemRow key={item.id} item={item} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} index={idx + 1} rowIndex={editableItems.findIndex((e) => e.id === item.id)} totalRows={editableItems.length} />)}
                 </React.Fragment>
               ))
             )}
@@ -415,6 +416,8 @@ function renderTransmitterGroupRows(
   isReadOnly: boolean,
   getValue: (item: CnsdTransmitterMeterItem, field: keyof CnsdTransmitterMeterItem) => string,
   onChange: (itemId: number, field: keyof CnsdTransmitterMeterItem, value: string | null) => void,
+  rowIndexOf: (id: number) => number,
+  totalRows: number,
 ): React.ReactNode[] {
   const rows: React.ReactNode[] = [];
   let lastFreq: string | null = null;
@@ -438,7 +441,7 @@ function renderTransmitterGroupRows(
       lastFreq = freq;
     }
 
-    rows.push(<TransmitterItemRow key={item.id} item={item} isBackup={isBackup} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} />);
+    rows.push(<TransmitterItemRow key={item.id} item={item} isBackup={isBackup} rowIndex={rowIndexOf(item.id)} totalRows={totalRows} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} />);
   });
 
   return rows;
@@ -449,18 +452,83 @@ function renderTransmitterGroupRows(
 interface TransmitterItemRowProps {
   item: CnsdTransmitterMeterItem;
   isBackup: boolean;
+  rowIndex: number;
+  totalRows: number;
   isReadOnly: boolean;
   getValue: (item: CnsdTransmitterMeterItem, field: keyof CnsdTransmitterMeterItem) => string;
   onChange: (itemId: number, field: keyof CnsdTransmitterMeterItem, value: string | null) => void;
 }
 
-const TransmitterItemRow: React.FC<TransmitterItemRowProps> = ({ item, isBackup, isReadOnly, getValue, onChange }) => {
+const TransmitterItemRow: React.FC<TransmitterItemRowProps> = ({ item, isBackup, rowIndex, totalRows, isReadOnly, getValue, onChange }) => {
   const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
   const selectClass = inputClass + " appearance-none cursor-pointer";
   const disabled = isReadOnly;
   // Status options pick: items in "on_air_stby" groups (orange/peach merk PAE) vs online/offline
   // Simpler: present full union list. Backend stores free text.
   const statusOptions = isBackup ? [] : [...STATUS_OPTIONS_ON_AIR, ...STATUS_OPTIONS_ONLINE];
+
+  // Blocked (Back Up Radio) rows have no Status control, so they cannot
+  // navigate into the status_value field.
+  const availableFields = item.is_blocked
+    ? (['power_output', 'modulasi', 'keterangan'] as const)
+    : (['status_value', 'power_output', 'modulasi', 'keterangan'] as const);
+
+  const focusInput = (targetRow: number, preferredField: string) => {
+    let el = document.querySelector(
+      `input[data-row="${targetRow}"][data-field="${preferredField}"]`,
+    ) as HTMLInputElement | null;
+    if (!el) {
+      el = document.querySelector(
+        `select[data-row="${targetRow}"][data-field="${preferredField}"]`,
+      ) as HTMLInputElement | null;
+    }
+    if (!el) {
+      el = document.querySelector(
+        `button[data-row="${targetRow}"][data-field="${preferredField}"]`,
+      ) as HTMLInputElement | null;
+    }
+    if (el) {
+      el.focus();
+      if (el instanceof HTMLInputElement) el.select();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, currentField: typeof availableFields[number]) => {
+    if (isReadOnly) return;
+
+    const currentFieldIdx = (availableFields as readonly string[]).indexOf(currentField);
+
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      const nextRow = rowIndex + 1;
+      if (nextRow < totalRows) {
+        focusInput(nextRow, currentField);
+      }
+    }
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevRow = rowIndex - 1;
+      if (prevRow >= 0) {
+        focusInput(prevRow, currentField);
+      }
+    }
+    else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (currentFieldIdx < availableFields.length - 1) {
+        focusInput(rowIndex, availableFields[currentFieldIdx + 1]);
+      } else if (rowIndex + 1 < totalRows) {
+        focusInput(rowIndex + 1, availableFields[0]);
+      }
+    }
+    else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentFieldIdx > 0) {
+        focusInput(rowIndex, availableFields[currentFieldIdx - 1]);
+      } else if (rowIndex - 1 >= 0) {
+        focusInput(rowIndex - 1, availableFields[availableFields.length - 1]);
+      }
+    }
+  };
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
@@ -473,7 +541,7 @@ const TransmitterItemRow: React.FC<TransmitterItemRowProps> = ({ item, isBackup,
         </td>
       ) : (
         <td className="px-2 py-2 align-middle">
-          <select className={selectClass} value={getValue(item, "status_value")} onChange={(e) => onChange(item.id, "status_value", e.target.value || null)} disabled={disabled}>
+          <select className={selectClass} value={getValue(item, "status_value")} onChange={(e) => onChange(item.id, "status_value", e.target.value || null)} disabled={disabled} data-row={rowIndex} data-field="status_value" onKeyDown={(e) => handleKeyDown(e, "status_value")}>
             <option value="">—</option>
             {statusOptions.map((opt) => (
               <option key={opt} value={opt}>
@@ -484,13 +552,13 @@ const TransmitterItemRow: React.FC<TransmitterItemRowProps> = ({ item, isBackup,
         </td>
       )}
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "power_output")} onChange={(e) => onChange(item.id, "power_output", e.target.value)} disabled={disabled} />
+        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "power_output")} onChange={(e) => onChange(item.id, "power_output", e.target.value)} disabled={disabled} data-row={rowIndex} data-field="power_output" onKeyDown={(e) => handleKeyDown(e, "power_output")} />
       </td>
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "modulasi")} onChange={(e) => onChange(item.id, "modulasi", e.target.value)} disabled={disabled} />
+        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "modulasi")} onChange={(e) => onChange(item.id, "modulasi", e.target.value)} disabled={disabled} data-row={rowIndex} data-field="modulasi" onKeyDown={(e) => handleKeyDown(e, "modulasi")} />
       </td>
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={disabled} />
+        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={disabled} data-row={rowIndex} data-field="keterangan" onKeyDown={(e) => handleKeyDown(e, "keterangan")} />
       </td>
     </tr>
   );
@@ -502,10 +570,61 @@ interface EnvItemRowProps {
   getValue: (item: CnsdTransmitterMeterItem, field: keyof CnsdTransmitterMeterItem) => string;
   onChange: (itemId: number, field: keyof CnsdTransmitterMeterItem, value: string | null) => void;
   index: number;
+  rowIndex: number;
+  totalRows: number;
 }
 
-const EnvItemRow: React.FC<EnvItemRowProps> = ({ item, isReadOnly, getValue, onChange, index }) => {
+const EnvItemRow: React.FC<EnvItemRowProps> = ({ item, isReadOnly, getValue, onChange, index, rowIndex, totalRows }) => {
   const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
+
+  const availableFields = ['hasil', 'keterangan'] as const;
+
+  const focusInput = (targetRow: number, preferredField: string) => {
+    const el = document.querySelector(
+      `input[data-row="${targetRow}"][data-field="${preferredField}"]`,
+    ) as HTMLInputElement | null;
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, currentField: typeof availableFields[number]) => {
+    if (isReadOnly) return;
+
+    const currentFieldIdx = (availableFields as readonly string[]).indexOf(currentField);
+
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      const nextRow = rowIndex + 1;
+      if (nextRow < totalRows) {
+        focusInput(nextRow, currentField);
+      }
+    }
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevRow = rowIndex - 1;
+      if (prevRow >= 0) {
+        focusInput(prevRow, currentField);
+      }
+    }
+    else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (currentFieldIdx < availableFields.length - 1) {
+        focusInput(rowIndex, availableFields[currentFieldIdx + 1]);
+      } else if (rowIndex + 1 < totalRows) {
+        focusInput(rowIndex + 1, availableFields[0]);
+      }
+    }
+    else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentFieldIdx > 0) {
+        focusInput(rowIndex, availableFields[currentFieldIdx - 1]);
+      } else if (rowIndex - 1 >= 0) {
+        focusInput(rowIndex - 1, availableFields[availableFields.length - 1]);
+      }
+    }
+  };
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
@@ -513,10 +632,10 @@ const EnvItemRow: React.FC<EnvItemRowProps> = ({ item, isReadOnly, getValue, onC
       <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.frequency_label ?? item.group_name ?? ""}</td>
       <td className={cn("px-2 py-2 align-middle text-center text-slate-600 text-[11px]", !item.nominal && "text-slate-300")}>{item.nominal || "—"}</td>
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "hasil")} onChange={(e) => onChange(item.id, "hasil", e.target.value)} disabled={isReadOnly} />
+        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "hasil")} onChange={(e) => onChange(item.id, "hasil", e.target.value)} disabled={isReadOnly} data-row={rowIndex} data-field="hasil" onKeyDown={(e) => handleKeyDown(e, "hasil")} />
       </td>
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={isReadOnly} />
+        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={isReadOnly} data-row={rowIndex} data-field="keterangan" onKeyDown={(e) => handleKeyDown(e, "keterangan")} />
       </td>
     </tr>
   );
@@ -530,29 +649,80 @@ interface ReceiverItemRowProps {
   getValue: (item: CnsdTransmitterMeterItem, field: keyof CnsdTransmitterMeterItem) => string;
   onChange: (itemId: number, field: keyof CnsdTransmitterMeterItem, value: string | null) => void;
   index: number;
+  rowIndex: number;
+  totalRows: number;
 }
 
-const ReceiverItemRow: React.FC<ReceiverItemRowProps> = ({ item, isReadOnly, getValue, onChange, index }) => {
+const ReceiverItemRow: React.FC<ReceiverItemRowProps> = ({ item, isReadOnly, getValue, onChange, index, rowIndex, totalRows }) => {
   const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
+
+  const availableFields = ['status_a', 'squelch_tx1', 'status_b', 'squelch_tx2', 'keterangan'] as const;
+
+  const focusInput = (targetRow: number, preferredField: string) => {
+    const el = document.querySelector(
+      `input[data-row="${targetRow}"][data-field="${preferredField}"]`,
+    ) as HTMLInputElement | null;
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, currentField: typeof availableFields[number]) => {
+    if (isReadOnly) return;
+
+    const currentFieldIdx = (availableFields as readonly string[]).indexOf(currentField);
+
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      const nextRow = rowIndex + 1;
+      if (nextRow < totalRows) {
+        focusInput(nextRow, currentField);
+      }
+    }
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevRow = rowIndex - 1;
+      if (prevRow >= 0) {
+        focusInput(prevRow, currentField);
+      }
+    }
+    else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (currentFieldIdx < availableFields.length - 1) {
+        focusInput(rowIndex, availableFields[currentFieldIdx + 1]);
+      } else if (rowIndex + 1 < totalRows) {
+        focusInput(rowIndex + 1, availableFields[0]);
+      }
+    }
+    else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentFieldIdx > 0) {
+        focusInput(rowIndex, availableFields[currentFieldIdx - 1]);
+      } else if (rowIndex - 1 >= 0) {
+        focusInput(rowIndex - 1, availableFields[availableFields.length - 1]);
+      }
+    }
+  };
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
       <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{index}</td>
       <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.frequency_label ?? ""}</td>
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "status_a")} onChange={(e) => onChange(item.id, "status_a", e.target.value)} disabled={isReadOnly} />
+        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "status_a")} onChange={(e) => onChange(item.id, "status_a", e.target.value)} disabled={isReadOnly} data-row={rowIndex} data-field="status_a" onKeyDown={(e) => handleKeyDown(e, "status_a")} />
       </td>
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "squelch_tx1")} onChange={(e) => onChange(item.id, "squelch_tx1", e.target.value)} disabled={isReadOnly} />
+        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "squelch_tx1")} onChange={(e) => onChange(item.id, "squelch_tx1", e.target.value)} disabled={isReadOnly} data-row={rowIndex} data-field="squelch_tx1" onKeyDown={(e) => handleKeyDown(e, "squelch_tx1")} />
       </td>
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "status_b")} onChange={(e) => onChange(item.id, "status_b", e.target.value)} disabled={isReadOnly} />
+        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "status_b")} onChange={(e) => onChange(item.id, "status_b", e.target.value)} disabled={isReadOnly} data-row={rowIndex} data-field="status_b" onKeyDown={(e) => handleKeyDown(e, "status_b")} />
       </td>
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "squelch_tx2")} onChange={(e) => onChange(item.id, "squelch_tx2", e.target.value)} disabled={isReadOnly} />
+        <input type="text" className={inputClass} placeholder="..." value={getValue(item, "squelch_tx2")} onChange={(e) => onChange(item.id, "squelch_tx2", e.target.value)} disabled={isReadOnly} data-row={rowIndex} data-field="squelch_tx2" onKeyDown={(e) => handleKeyDown(e, "squelch_tx2")} />
       </td>
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={isReadOnly} />
+        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={isReadOnly} data-row={rowIndex} data-field="keterangan" onKeyDown={(e) => handleKeyDown(e, "keterangan")} />
       </td>
     </tr>
   );

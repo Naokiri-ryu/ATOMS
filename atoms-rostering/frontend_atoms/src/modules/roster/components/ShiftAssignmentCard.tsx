@@ -6,6 +6,7 @@
 
 import React from 'react';
 import type { ShiftAssignment, Shift, ManagerDuty } from '../types/roster';
+import RatingTags from '../../../components/common/RatingTags';
 
 interface ShiftAssignmentCardProps {
   shift: Shift;
@@ -98,6 +99,7 @@ const ShiftAssignmentCard: React.FC<ShiftAssignmentCardProps> = ({
                   <p className="text-xs text-orange-600 truncate">
                     {duty.duty_type}
                   </p>
+                  <RatingTags ratings={duty.employee.ratings} size="xs" max={3} className="mt-1" />
                 </div>
               </div>
             ))}
@@ -126,6 +128,7 @@ const ShiftAssignmentCard: React.FC<ShiftAssignmentCardProps> = ({
                 <p className="text-[10px] sm:text-xs text-gray-500 truncate">
                   {assignment.employee.employee_type}
                 </p>
+                <RatingTags ratings={assignment.employee.ratings} size="xs" max={3} className="mt-1" />
               </div>
               
               {/* Remove Button (if not readonly) */}

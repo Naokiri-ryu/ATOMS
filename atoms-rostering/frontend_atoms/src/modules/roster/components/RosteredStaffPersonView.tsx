@@ -7,11 +7,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import type { RosterPeriod, Shift, Employee, ShiftAssignment, ManagerDuty } from '../types/roster';
 import { useAuth } from '../../auth/core/AuthContext';
 import { rosterService } from '../repository/rosterService';
 import { useDataCache } from '../../../contexts/DataCacheContext';
+import RatingTags from '../../../components/common/RatingTags';
 import RosteredStaffHeader from './rosteredStaff/RosteredStaffHeader';
 import RosteredStaffPrintStyles from './rosteredStaff/RosteredStaffPrintStyles';
 import SectionTableDividerRows from './rosteredStaff/SectionTableDividerRows';
@@ -48,6 +50,7 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
   shifts
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { updateRosterDetail, getRosterDetail } = useDataCache();
   const [editingCell, setEditingCell] = useState<{ employeeId: number; day: number } | null>(null);
   const [customText, setCustomText] = useState('');
@@ -2618,7 +2621,17 @@ const RosteredStaffPersonView: React.FC<RosteredStaffPersonViewProps> = ({
                             >
                               <div className="flex items-center gap-2 min-w-0">
                                 <span className="text-gray-500 font-normal">{rowIndexInGroup + 1}</span>
-                                <span className="whitespace-nowrap overflow-hidden text-ellipsis block min-w-0">{row.employee.user.name}</span>
+                                <div className="min-w-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => navigate(`/personnel/${row.employee.id}`)}
+                                    title={`Lihat profil ${row.employee.user.name}`}
+                                    className="whitespace-nowrap overflow-hidden text-ellipsis block min-w-0 max-w-full font-medium text-gray-900 hover:text-navy-700 hover:underline"
+                                  >
+                                    {row.employee.user.name}
+                                  </button>
+                                  <RatingTags ratings={row.employee.ratings} size="xs" max={4} className="mt-0.5" />
+                                </div>
 
                                 {typeGroup.type === 'Manager Teknik' && canEditRoster && (
                                   <div className="relative ml-auto" data-group-selector>

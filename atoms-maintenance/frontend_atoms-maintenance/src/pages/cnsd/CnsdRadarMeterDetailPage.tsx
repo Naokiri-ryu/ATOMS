@@ -44,6 +44,10 @@ const isSubHeader = (item: CnsdRadarMeterItem): boolean =>
 const subHeaderLabel = (item: CnsdRadarMeterItem): string =>
   item.item_name.replace(/^\*\s*/, '');
 
+/** Items whose standard contains "Green" render a GREEN/RED choice instead of free text. */
+const isGreenStandard = (standard: string | null): boolean =>
+  !!standard && standard.trim().toLowerCase().includes('green');
+
 // ─── Main component ───────────────────────────────────────────
 
 /**
@@ -470,6 +474,7 @@ const RadarSectionPanel: React.FC<RadarSectionPanelProps> = ({
 
   const isTxDual = sectionMeta.inputs_layout === 'tx_dual';
   const colCount = isTxDual ? 6 : 5;
+  const editableItems = useMemo(() => items.filter((it) => !isSubHeader(it)), [items]);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -480,11 +485,11 @@ const RadarSectionPanel: React.FC<RadarSectionPanelProps> = ({
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
             {isTxDual
-              ? 'Isi nilai TX I dan TX II untuk tiap parameter. Baris dengan tanda `*` adalah sub-heading (tidak diisi).'
-              : 'Isi kolom HASIL untuk tiap kegiatan pemeriksaan.'}
+              ? 'Isi nilai TX I dan TX II untuk tiap parameter. Baris dengan tanda `*` adalah sub-heading (tidak diisi). Gunakan ↑↓←→ atau Enter untuk navigasi.'
+              : 'Isi kolom HASIL untuk tiap kegiatan pemeriksaan. Gunakan ↑↓←→ atau Enter untuk navigasi.'}
           </p>
         </div>
-        <span className="text-xs font-medium text-slate-400">{items.length} item</span>
+        <span className="text-xs font-medium text-slate-400">{editableItems.length} item</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -545,6 +550,8 @@ const RadarSectionPanel: React.FC<RadarSectionPanelProps> = ({
                       <RadarItemRow
                         key={item.id}
                         item={item}
+                        rowIndex={editableItems.findIndex((e) => e.id === item.id)}
+                        totalRows={editableItems.length}
                         isTxDual={isTxDual}
                         isReadOnly={isReadOnly}
                         getValue={getValue}
@@ -566,6 +573,8 @@ const RadarSectionPanel: React.FC<RadarSectionPanelProps> = ({
 
 interface RadarItemRowProps {
   item: CnsdRadarMeterItem;
+  rowIndex: number;
+  totalRows: number;
   isTxDual: boolean;
   isReadOnly: boolean;
   getValue: (item: CnsdRadarMeterItem, field: keyof CnsdRadarMeterItem) => string;
@@ -573,10 +582,75 @@ interface RadarItemRowProps {
 }
 
 const RadarItemRow: React.FC<RadarItemRowProps> = ({
-  item, isTxDual, isReadOnly, getValue, onChange,
+  item, rowIndex, totalRows, isTxDual, isReadOnly, getValue, onChange,
 }) => {
   const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
   const standardCell = item.standard ?? '';
+  const isGreen = isGreenStandard(item.standard);
+
+  const availableFields = isTxDual
+    ? (['kondisi_teknis_tx1', 'kondisi_teknis_tx2', 'keterangan'] as const)
+    : (['hasil', 'keterangan'] as const);
+
+  const focusInput = (targetRow: number, preferredField: string) => {
+    let el = document.querySelector(
+      `input[data-row="${targetRow}"][data-field="${preferredField}"]`,
+    ) as HTMLInputElement | null;
+    if (!el) {
+      el = document.querySelector(
+        `button[data-row="${targetRow}"][data-field="${preferredField}"]`,
+      ) as HTMLInputElement | null;
+    }
+    if (el) {
+      el.focus();
+      if (el instanceof HTMLInputElement) el.select();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, currentField: typeof availableFields[number]) => {
+    if (isReadOnly) return;
+
+    const currentFieldIdx = (availableFields as readonly string[]).indexOf(currentField);
+
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      const nextRow = rowIndex + 1;
+      if (nextRow < totalRows) {
+        focusInput(nextRow, currentField);
+      }
+    }
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevRow = rowIndex - 1;
+      if (prevRow >= 0) {
+        focusInput(prevRow, currentField);
+      }
+    }
+    else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (currentFieldIdx < availableFields.length - 1) {
+        focusInput(rowIndex, availableFields[currentFieldIdx + 1]);
+      } else if (rowIndex + 1 < totalRows) {
+        focusInput(rowIndex + 1, availableFields[0]);
+      }
+    }
+    else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentFieldIdx > 0) {
+        focusInput(rowIndex, availableFields[currentFieldIdx - 1]);
+      } else if (rowIndex - 1 >= 0) {
+        focusInput(rowIndex - 1, availableFields[availableFields.length - 1]);
+      }
+    }
+  };
+
+  // Toggle buttons keep native Enter (fires the click / toggles GREEN⇄RED);
+  // arrows still navigate between cells/rows.
+  const handleToggleKeyDown = (currentField: typeof availableFields[number]) =>
+    (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === 'Enter') return;
+      handleKeyDown(e, currentField);
+    };
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
@@ -595,24 +669,54 @@ const RadarItemRow: React.FC<RadarItemRowProps> = ({
       {isTxDual ? (
         <>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
-              value={getValue(item, 'kondisi_teknis_tx1')}
-              onChange={(e) => onChange(item.id, 'kondisi_teknis_tx1', e.target.value)}
-              disabled={isReadOnly}
-            />
+            {isGreen ? (
+              <BinaryToggle
+                options={['GREEN', 'RED']}
+                value={getValue(item, 'kondisi_teknis_tx1')}
+                onChange={(v) => onChange(item.id, 'kondisi_teknis_tx1', v)}
+                disabled={isReadOnly}
+                dataRow={rowIndex}
+                dataField="kondisi_teknis_tx1"
+                onKeyDown={handleToggleKeyDown('kondisi_teknis_tx1')}
+              />
+            ) : (
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="..."
+                value={getValue(item, 'kondisi_teknis_tx1')}
+                onChange={(e) => onChange(item.id, 'kondisi_teknis_tx1', e.target.value)}
+                disabled={isReadOnly}
+                data-row={rowIndex}
+                data-field="kondisi_teknis_tx1"
+                onKeyDown={(e) => handleKeyDown(e, 'kondisi_teknis_tx1')}
+              />
+            )}
           </td>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
-              value={getValue(item, 'kondisi_teknis_tx2')}
-              onChange={(e) => onChange(item.id, 'kondisi_teknis_tx2', e.target.value)}
-              disabled={isReadOnly}
-            />
+            {isGreen ? (
+              <BinaryToggle
+                options={['GREEN', 'RED']}
+                value={getValue(item, 'kondisi_teknis_tx2')}
+                onChange={(v) => onChange(item.id, 'kondisi_teknis_tx2', v)}
+                disabled={isReadOnly}
+                dataRow={rowIndex}
+                dataField="kondisi_teknis_tx2"
+                onKeyDown={handleToggleKeyDown('kondisi_teknis_tx2')}
+              />
+            ) : (
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="..."
+                value={getValue(item, 'kondisi_teknis_tx2')}
+                onChange={(e) => onChange(item.id, 'kondisi_teknis_tx2', e.target.value)}
+                disabled={isReadOnly}
+                data-row={rowIndex}
+                data-field="kondisi_teknis_tx2"
+                onKeyDown={(e) => handleKeyDown(e, 'kondisi_teknis_tx2')}
+              />
+            )}
           </td>
         </>
       ) : (
@@ -624,6 +728,9 @@ const RadarItemRow: React.FC<RadarItemRowProps> = ({
             value={getValue(item, 'hasil')}
             onChange={(e) => onChange(item.id, 'hasil', e.target.value)}
             disabled={isReadOnly}
+            data-row={rowIndex}
+            data-field="hasil"
+            onKeyDown={(e) => handleKeyDown(e, 'hasil')}
           />
         </td>
       )}
@@ -635,6 +742,9 @@ const RadarItemRow: React.FC<RadarItemRowProps> = ({
           value={getValue(item, 'keterangan')}
           onChange={(e) => onChange(item.id, 'keterangan', e.target.value)}
           disabled={isReadOnly}
+          data-row={rowIndex}
+          data-field="keterangan"
+          onKeyDown={(e) => handleKeyDown(e, 'keterangan')}
         />
       </td>
     </tr>
@@ -642,6 +752,59 @@ const RadarItemRow: React.FC<RadarItemRowProps> = ({
 };
 
 // ─── Small subcomponents ──────────────────────────────────────
+
+interface BinaryToggleProps {
+  options: [string, string];
+  value: string;
+  onChange: (v: string | null) => void;
+  disabled: boolean;
+  dataRow?: number;
+  dataField?: string;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+}
+
+const BinaryToggle: React.FC<BinaryToggleProps> = ({
+  options, value, onChange, disabled, dataRow, dataField, onKeyDown,
+}) => {
+  const [leftOpt, rightOpt] = options;
+  const active = (opt: string) => value.trim().toLowerCase() === opt.trim().toLowerCase();
+
+  const leftActive = 'bg-emerald-600 text-white border-emerald-600';
+  const rightActive = 'bg-red-600 text-white border-red-600';
+  const idle = 'bg-white text-slate-600 border-slate-300 hover:border-slate-400';
+
+  const click = (opt: string) => {
+    if (disabled) return;
+    onChange(active(opt) ? null : opt);
+  };
+
+  return (
+    <div className="inline-flex rounded-md overflow-hidden border border-slate-300 select-none w-full justify-center">
+      <button
+        type="button"
+        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300', active(leftOpt) ? leftActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        onClick={() => click(leftOpt)}
+        disabled={disabled}
+        data-row={dataRow}
+        data-field={dataField}
+        onKeyDown={onKeyDown}
+      >
+        {leftOpt}
+      </button>
+      <button
+        type="button"
+        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors', active(rightOpt) ? rightActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        onClick={() => click(rightOpt)}
+        disabled={disabled}
+        data-row={dataRow}
+        data-field={dataField}
+        onKeyDown={onKeyDown}
+      >
+        {rightOpt}
+      </button>
+    </div>
+  );
+};
 
 const InfoCell: React.FC<{ label: string; value: string | null }> = ({ label, value }) => (
   <div>

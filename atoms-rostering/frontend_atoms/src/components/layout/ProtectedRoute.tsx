@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user, mustChangePassword } = useAuth();
   const { isLoading: dataLoading, isInitialized } = useDataCache();
 
   // Show full loading page during auth check
@@ -18,13 +18,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     return <InitialLoadingPage message="Checking authentication..." />;
   }
 
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Force user to change temporary password before accessing protected routes
+  if (mustChangePassword) {
+    return <Navigate to="/login" replace />;
+  }
+
   // Show full loading page during initial data loading
   if (isAuthenticated && !isInitialized && dataLoading) {
     return <InitialLoadingPage message="Loading your workspace..." />;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
   }
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {

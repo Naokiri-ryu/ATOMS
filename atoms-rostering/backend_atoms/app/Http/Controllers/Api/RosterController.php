@@ -192,7 +192,7 @@ class RosterController extends Controller
             });
 
             // Include all employees (optimized - only essential fields)
-            $allEmployees = \App\Models\Employee::with('user:id,name,email,grade')
+            $allEmployees = \App\Models\Employee::with(['user:id,name,email,grade', 'ratings'])
                 ->where('is_active', true)
                 ->orderBy('employee_type')
                 ->orderBy('group_number')
@@ -301,7 +301,7 @@ class RosterController extends Controller
         });
 
         // Include all employees (reference data for frontend lookup)
-        $allEmployees = \App\Models\Employee::with('user:id,name,email,grade')
+        $allEmployees = \App\Models\Employee::with(['user:id,name,email,grade', 'ratings'])
             ->where('is_active', true)
             ->orderBy('employee_type')
             ->orderBy('group_number')

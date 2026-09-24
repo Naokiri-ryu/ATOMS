@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../auth/core/AuthContext';
 import { useDataCache } from '../../../contexts/DataCacheContext';
@@ -16,12 +17,16 @@ import {
   LoadingScreen,
   CreateUserModal,
   EditUserModal,
-  TokenModal
+  TokenModal,
+  ResetPasswordModal,
+  EmployeeProfileModal,
+  RatingTags
 } from '../../../components';
-import { Edit, Trash2, RotateCcw, Key, Users, Search, Plus, MoreVertical, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, RotateCcw, Key, Users, Search, Plus, MoreVertical, ChevronLeft, ChevronRight, UserCog, Eye, Lock } from 'lucide-react';
 
 const UsersPage: React.FC = () => {
   const { logout, user } = useAuth();
+  const navigate = useNavigate();
   const { users: cachedUsers, refreshUsers, loadingStates } = useDataCache();
   const canManageUsers = user?.role === 'Admin';
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,8 +39,10 @@ const UsersPage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [generatedToken, setGeneratedToken] = useState('');
   const [isSendingEmail, setIsSendingEmail] = useState(false);
@@ -88,7 +95,8 @@ const UsersPage: React.FC = () => {
       const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter(user => 
         user.name.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query)
+        user.email.toLowerCase().includes(query) ||
+        (user.username || '').toLowerCase().includes(query)
       );
     }
 
@@ -148,6 +156,13 @@ const UsersPage: React.FC = () => {
       await refreshUsers(); // Refresh cache - will automatically update cachedUsers
     }
     setIsEditModalOpen(false);
+    setSelectedUser(null);
+  }, [refreshUsers]);
+
+  // Employee profile saved handler
+  const handleProfileSuccess = useCallback(async () => {
+    await refreshUsers(); // Refresh cache so ratings/NIK in the table update immediately
+    setIsProfileModalOpen(false);
     setSelectedUser(null);
   }, [refreshUsers]);
 
@@ -248,6 +263,14 @@ const UsersPage: React.FC = () => {
     }
   };
 
+  // Reset password handler
+  const handleResetPassword = async (userId: number, password?: string) => {
+    if (!canManageUsers) throw new Error('Unauthorized');
+    const response = await adminService.resetPassword(userId, password);
+    await refreshUsers();
+    return response;
+  };
+
   // Pagination handlers
   // Pagination handlers
   const handlePageChange = (newPage: number) => {
@@ -263,7 +286,13 @@ const UsersPage: React.FC = () => {
       header: 'Name',
       render: (user: User) => (
         <div>
-          <div className="font-medium text-gray-900">{user.name}</div>
+          <button
+            onClick={() => navigate(`/personnel/${user.employee?.id ?? user.id}`)}
+            className="font-medium text-gray-900 hover:text-navy-700 hover:underline text-left"
+            title={`Lihat profil ${user.name}`}
+          >
+            {user.name}
+          </button>
           <div className="text-sm text-gray-500">{user.email}</div>
         </div>
       ),
@@ -297,6 +326,13 @@ const UsersPage: React.FC = () => {
           .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
           .join(' ');
       },
+    },
+    {
+      key: 'ratings',
+      header: 'Rating',
+      render: (user: User) => (
+        <RatingTags ratings={user.employee?.ratings} size="xs" max={4} />
+      ),
     },
     {
       key: 'last_login',
@@ -402,6 +438,27 @@ const UsersPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => {
+                        navigate(`/personnel/${user.employee?.id ?? user.id}`);
+                        setOpenDropdownId(null);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Eye className="h-4 w-4 text-slate-600" />
+                      <span>Lihat Profil</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setIsProfileModalOpen(true);
+                        setOpenDropdownId(null);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <UserCog className="h-4 w-4 text-navy-600" />
+                      <span>Profil Personel</span>
+                    </button>
+                    <button
+                      onClick={() => {
                         handleGenerateToken(user);
                         setOpenDropdownId(null);
                       }}
@@ -418,6 +475,17 @@ const UsersPage: React.FC = () => {
                         <Key className="h-4 w-4 text-green-600" />
                       )}
                       <span>Generate Token</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setIsResetPasswordModalOpen(true);
+                        setOpenDropdownId(null);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Lock className="h-4 w-4 text-navy-600" />
+                      <span>Reset Password</span>
                     </button>
                     <div className="border-t border-gray-100 my-1"></div>
                     <button
@@ -628,6 +696,19 @@ const UsersPage: React.FC = () => {
         />
       )}
 
+      {canManageUsers && selectedUser?.employee && (
+        <EmployeeProfileModal
+          isOpen={isProfileModalOpen}
+          employee={selectedUser.employee}
+          userName={selectedUser.name}
+          onClose={() => {
+            setIsProfileModalOpen(false);
+            setSelectedUser(null);
+          }}
+          onSuccess={handleProfileSuccess}
+        />
+      )}
+
       {canManageUsers && (
         <TokenModal
           isOpen={isTokenModalOpen}
@@ -638,6 +719,18 @@ const UsersPage: React.FC = () => {
           isSending={isSendingEmail}
           onCopyToken={handleCopyToken}
           onSendEmail={handleSendTokenEmail}
+        />
+      )}
+
+      {canManageUsers && (
+        <ResetPasswordModal
+          isOpen={isResetPasswordModalOpen}
+          onClose={() => {
+            setIsResetPasswordModalOpen(false);
+            setSelectedUser(null);
+          }}
+          user={selectedUser}
+          onReset={handleResetPassword}
         />
       )}
 

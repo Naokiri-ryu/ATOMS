@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, User as UserIcon, Settings, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, User as UserIcon, Settings, LogOut, Eye } from 'lucide-react';
 import { useAuth } from '../../modules/auth/core/AuthContext';
 import Avatar from '../ui/Avatar';
 
@@ -15,6 +16,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
   onLogoutClick
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -51,6 +53,17 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
             <p className="text-xs text-gray-500">{user?.email}</p>
           </div>
           
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              navigate(`/personnel/${user?.employee?.id ?? user?.id}`);
+            }}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+          >
+            <Eye className="h-4 w-4" />
+            Lihat Profil Saya
+          </button>
+
           <button
             onClick={() => {
               setIsOpen(false);

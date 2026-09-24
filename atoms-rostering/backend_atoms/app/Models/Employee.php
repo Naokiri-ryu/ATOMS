@@ -18,6 +18,19 @@ class Employee extends Model
     const TYPE_MANAGER_TEKNIK = 'manager_teknik';
     const TYPE_GENERAL_MANAGER = 'general_manager';
 
+    // Unit kerja constants
+    const UNIT_CNSD = 'CNSD';
+    const UNIT_TFP = 'TFP';
+
+    // Available unit kerja
+    public static function getUnits()
+    {
+        return [
+            self::UNIT_CNSD => 'CNSD',
+            self::UNIT_TFP => 'TFP',
+        ];
+    }
+
     // Available employee types
     public static function getTypes()
     {
@@ -32,7 +45,12 @@ class Employee extends Model
 
     protected $fillable = [
         'user_id',
+        'nik',
         'employee_type',
+        'birth_place',
+        'birth_date',
+        'unit_kerja',
+        'jabatan',
         'group_number',
         'is_active',
         'is_fixed_manager',
@@ -43,12 +61,23 @@ class Employee extends Model
         return [
             'is_active' => 'boolean',
             'is_fixed_manager' => 'boolean',
+            'birth_date' => 'date:Y-m-d',
         ];
     }
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function licenses()
+    {
+        return $this->hasMany(License::class);
+    }
+
+    public function ratings()
+    {
+        return $this->hasMany(EmployeeRating::class);
     }
 
     public function shiftAssignments()

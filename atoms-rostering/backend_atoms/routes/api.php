@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\EmployeeProfileController;
 use App\Http\Controllers\Api\EmployeeScheduleController;
 use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\NotificationController;
@@ -48,7 +49,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // USERS (Read-only for all authenticated users)
     // =======================================
     Route::get('/users', [AdminUserController::class, 'index']);
-    
+
+    // =======================================
+    // EMPLOYEE PROFILE (Read for all authenticated users;
+    //                   Write only for the employee themself or admin)
+    // =======================================
+    Route::get('/employees/{id}/profile', [EmployeeProfileController::class, 'show']);
+    Route::put('/employees/{id}/profile', [EmployeeProfileController::class, 'update']);
+
     // =======================================
     // ADMIN - USER & EMPLOYEE MANAGEMENT
     // =======================================
@@ -62,6 +70,11 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('throttle:3,1'); // Max 3 requests per minute
         Route::post('/users/{id}/send-activation-code', [AdminUserController::class, 'sendActivationCode'])
             ->middleware('throttle:1,1,send-email-{id}'); // Max 1 email per user per minute
+        Route::post('/users/{id}/reset-password', [AdminUserController::class, 'resetPassword']);
+
+        // Employee profile (data pribadi, license, rating/kewenangan)
+        Route::get('/employees/{employee}/profile', [EmployeeProfileController::class, 'show']);
+        Route::put('/employees/{employee}/profile', [EmployeeProfileController::class, 'update']);
     });
 
     // =======================================

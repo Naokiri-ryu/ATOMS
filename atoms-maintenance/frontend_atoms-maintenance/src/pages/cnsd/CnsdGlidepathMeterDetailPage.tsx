@@ -34,6 +34,14 @@ const SHIFT_TIME_LABELS: Record<string, string> = {
   malam: '19:00 — 07:00',
 };
 
+/**
+ * Records created at/after this timestamp get the adaptive toggle cells for
+ * the FRONT PANEL dual columns (hasil_1 / hasil_2). Older records — including
+ * the pre-existing batch created 2026-09-08 10:09 — keep their plain text
+ * inputs so previously entered values stay visible and untouched.
+ */
+const GLIDEPATH_TOGGLE_CUTOFF = '2026-09-08T12:00:00';
+
 interface SectionMeta {
   code: string;
   name: string;
@@ -111,6 +119,12 @@ export const CnsdGlidepathMeterDetailPage: React.FC = () => {
       map[code].push(it);
     });
     return map;
+  }, [record]);
+
+  const useFrontPanelToggles = useMemo(() => {
+    if (!record?.created_at) return false;
+    const created = new Date(record.created_at.replace(' ', 'T')).getTime();
+    return !Number.isNaN(created) && created >= new Date(GLIDEPATH_TOGGLE_CUTOFF).getTime();
   }, [record]);
 
   const isReadOnly = record?.status === 'completed' || !canEditCnsd(user);
@@ -318,6 +332,7 @@ export const CnsdGlidepathMeterDetailPage: React.FC = () => {
           sectionMeta={activeSectionMeta}
           items={itemsBySection[activeSectionMeta.code] ?? []}
           isReadOnly={!!isReadOnly}
+          useFrontPanelToggles={useFrontPanelToggles}
           getValue={getValue}
           onChange={updateField}
         />
@@ -350,12 +365,13 @@ interface GlidepathSectionPanelProps {
   sectionMeta: SectionMeta;
   items: CnsdGlidepathMeterItem[];
   isReadOnly: boolean;
+  useFrontPanelToggles: boolean;
   getValue: (item: CnsdGlidepathMeterItem, field: keyof CnsdGlidepathMeterItem) => string;
   onChange: (itemId: number, field: keyof CnsdGlidepathMeterItem, value: string | null) => void;
 }
 
 const GlidepathSectionPanel: React.FC<GlidepathSectionPanelProps> = ({
-  sectionMeta, items, isReadOnly, getValue, onChange,
+  sectionMeta, items, isReadOnly, useFrontPanelToggles, getValue, onChange,
 }) => {
   const groups = useMemo(() => {
     const order: string[] = [];
@@ -382,6 +398,7 @@ const GlidepathSectionPanel: React.FC<GlidepathSectionPanelProps> = ({
   const isMeterReading = sectionMeta.inputs_layout === 'meter_reading';
   // Always 6 cols (NO | PEMERIKSAAN | STANDART | M1 | M2 | KETERANGAN), single rows use colspan
   const colCount = 6;
+  const editableItems = useMemo(() => items.filter((it) => !it.is_header), [items]);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -392,11 +409,11 @@ const GlidepathSectionPanel: React.FC<GlidepathSectionPanelProps> = ({
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
             {isMeterReading
-              ? 'CL / DS / CLR / Near Field menggunakan dua kolom M1/M2. Front Panel dan Power Supply menggunakan satu kolom HASIL.'
-              : 'Isi kolom HASIL PEMERIKSAAN untuk tiap kegiatan lingkungan.'}
+              ? 'CL / DS / CLR / Near Field menggunakan dua kolom M1/M2. Front Panel dan Power Supply menggunakan satu kolom HASIL. Gunakan ↑↓←→ atau Enter untuk navigasi.'
+              : 'Isi kolom HASIL PEMERIKSAAN untuk tiap kegiatan lingkungan. Gunakan ↑↓←→ atau Enter untuk navigasi.'}
           </p>
         </div>
-        <span className="text-xs font-medium text-slate-400">{items.filter((i) => !i.is_header).length} item</span>
+        <span className="text-xs font-medium text-slate-400">{editableItems.length} item</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -438,7 +455,10 @@ const GlidepathSectionPanel: React.FC<GlidepathSectionPanelProps> = ({
                     <GlidepathItemRow
                       key={item.id}
                       item={item}
+                      rowIndex={editableItems.findIndex((e) => e.id === item.id)}
+                      totalRows={editableItems.length}
                       isReadOnly={isReadOnly}
+                      useFrontPanelToggles={useFrontPanelToggles}
                       getValue={getValue}
                       onChange={onChange}
                     />
@@ -455,14 +475,81 @@ const GlidepathSectionPanel: React.FC<GlidepathSectionPanelProps> = ({
 
 interface GlidepathItemRowProps {
   item: CnsdGlidepathMeterItem;
+  rowIndex: number;
+  totalRows: number;
   isReadOnly: boolean;
+  useFrontPanelToggles: boolean;
   getValue: (item: CnsdGlidepathMeterItem, field: keyof CnsdGlidepathMeterItem) => string;
   onChange: (itemId: number, field: keyof CnsdGlidepathMeterItem, value: string | null) => void;
 }
 
-const GlidepathItemRow: React.FC<GlidepathItemRowProps> = ({ item, isReadOnly, getValue, onChange }) => {
+const GlidepathItemRow: React.FC<GlidepathItemRowProps> = ({ item, rowIndex, totalRows, isReadOnly, useFrontPanelToggles, getValue, onChange }) => {
   const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
   const isDual = item.hasil_layout === 'dual';
+
+  const availableFields = isDual
+    ? (['hasil_1', 'hasil_2', 'keterangan'] as const)
+    : (['hasil_1', 'keterangan'] as const);
+
+  const focusInput = (targetRow: number, preferredField: string) => {
+    let el = document.querySelector(
+      `input[data-row="${targetRow}"][data-field="${preferredField}"]`,
+    ) as HTMLInputElement | null;
+    if (!el) {
+      el = document.querySelector(
+        `button[data-row="${targetRow}"][data-field="${preferredField}"]`,
+      ) as HTMLInputElement | null;
+    }
+    if (el) {
+      el.focus();
+      if (el instanceof HTMLInputElement) el.select();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, currentField: typeof availableFields[number]) => {
+    if (isReadOnly) return;
+
+    const currentFieldIdx = (availableFields as readonly string[]).indexOf(currentField);
+
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      const nextRow = rowIndex + 1;
+      if (nextRow < totalRows) {
+        focusInput(nextRow, currentField);
+      }
+    }
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevRow = rowIndex - 1;
+      if (prevRow >= 0) {
+        focusInput(prevRow, currentField);
+      }
+    }
+    else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (currentFieldIdx < availableFields.length - 1) {
+        focusInput(rowIndex, availableFields[currentFieldIdx + 1]);
+      } else if (rowIndex + 1 < totalRows) {
+        focusInput(rowIndex + 1, availableFields[0]);
+      }
+    }
+    else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentFieldIdx > 0) {
+        focusInput(rowIndex, availableFields[currentFieldIdx - 1]);
+      } else if (rowIndex - 1 >= 0) {
+        focusInput(rowIndex - 1, availableFields[availableFields.length - 1]);
+      }
+    }
+  };
+
+  // Toggle buttons keep native Enter (fires the click / toggles the pair);
+  // arrows still navigate between cells/rows.
+  const handleToggleKeyDown = (currentField: typeof availableFields[number]) =>
+    (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === 'Enter') return;
+      handleKeyDown(e, currentField);
+    };
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
@@ -474,24 +561,58 @@ const GlidepathItemRow: React.FC<GlidepathItemRowProps> = ({ item, isReadOnly, g
       {isDual ? (
         <>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="M1"
-              value={getValue(item, 'hasil_1')}
-              onChange={(e) => onChange(item.id, 'hasil_1', e.target.value)}
-              disabled={isReadOnly}
-            />
+            {useFrontPanelToggles ? (
+              <AdaptiveCell
+                nominal={item.nominal}
+                value={getValue(item, 'hasil_1')}
+                onChange={(v) => onChange(item.id, 'hasil_1', v)}
+                disabled={isReadOnly}
+                inputClass={inputClass}
+                dataRow={rowIndex}
+                dataField="hasil_1"
+                onKeyDown={(e) => handleKeyDown(e, 'hasil_1')}
+                onToggleKeyDown={handleToggleKeyDown('hasil_1')}
+              />
+            ) : (
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="M1"
+                value={getValue(item, 'hasil_1')}
+                onChange={(e) => onChange(item.id, 'hasil_1', e.target.value)}
+                disabled={isReadOnly}
+                data-row={rowIndex}
+                data-field="hasil_1"
+                onKeyDown={(e) => handleKeyDown(e, 'hasil_1')}
+              />
+            )}
           </td>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="M2"
-              value={getValue(item, 'hasil_2')}
-              onChange={(e) => onChange(item.id, 'hasil_2', e.target.value)}
-              disabled={isReadOnly}
-            />
+            {useFrontPanelToggles ? (
+              <AdaptiveCell
+                nominal={item.nominal}
+                value={getValue(item, 'hasil_2')}
+                onChange={(v) => onChange(item.id, 'hasil_2', v)}
+                disabled={isReadOnly}
+                inputClass={inputClass}
+                dataRow={rowIndex}
+                dataField="hasil_2"
+                onKeyDown={(e) => handleKeyDown(e, 'hasil_2')}
+                onToggleKeyDown={handleToggleKeyDown('hasil_2')}
+              />
+            ) : (
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="M2"
+                value={getValue(item, 'hasil_2')}
+                onChange={(e) => onChange(item.id, 'hasil_2', e.target.value)}
+                disabled={isReadOnly}
+                data-row={rowIndex}
+                data-field="hasil_2"
+                onKeyDown={(e) => handleKeyDown(e, 'hasil_2')}
+              />
+            )}
           </td>
         </>
       ) : (
@@ -503,6 +624,9 @@ const GlidepathItemRow: React.FC<GlidepathItemRowProps> = ({ item, isReadOnly, g
             value={getValue(item, 'hasil_1')}
             onChange={(e) => onChange(item.id, 'hasil_1', e.target.value)}
             disabled={isReadOnly}
+            data-row={rowIndex}
+            data-field="hasil_1"
+            onKeyDown={(e) => handleKeyDown(e, 'hasil_1')}
           />
         </td>
       )}
@@ -514,9 +638,152 @@ const GlidepathItemRow: React.FC<GlidepathItemRowProps> = ({ item, isReadOnly, g
           value={getValue(item, 'keterangan')}
           onChange={(e) => onChange(item.id, 'keterangan', e.target.value)}
           disabled={isReadOnly}
+          data-row={rowIndex}
+          data-field="keterangan"
+          onKeyDown={(e) => handleKeyDown(e, 'keterangan')}
         />
       </td>
     </tr>
+  );
+};
+
+// ─── Adaptive dual column cell (FRONT PANEL) ─────────────────
+
+/**
+ * Adaptive shape parser, mirrors AMSC / ASMGCS / Recorder:
+ *   "Normal / Alrm" → toggle NORMAL / ALARM
+ *   "√ / –" variants (en-dash or hyphen) → toggle √ / –
+ *   "local / Remote" → toggle LOCAL / REMOTE
+ *   numeric / other (0.00%, 80%, 28 V, 5V, …) → free-text input
+ */
+type AdaptiveShape = { kind: 'toggle'; options: [string, string] } | { kind: 'text' };
+
+const parseAdaptiveShape = (nominal: string | null): AdaptiveShape => {
+  if (!nominal) return { kind: 'text' };
+  const u = nominal.trim().toUpperCase().replace(/\s+/g, ' ');
+  if (u === 'NORMAL / ALRM' || u === 'NORMAL/ALRM' || u === 'NORMAL / ALARM' || u === 'NORMAL/ALARM') {
+    return { kind: 'toggle', options: ['NORMAL', 'ALARM'] };
+  }
+  if (u === '√ / –' || u === '√/–' || u === '√ / -' || u === '√/-') {
+    return { kind: 'toggle', options: ['√', '–'] };
+  }
+  if (u === 'LOCAL / REMOTE' || u === 'LOCAL/REMOTE') {
+    return { kind: 'toggle', options: ['LOCAL', 'REMOTE'] };
+  }
+  return { kind: 'text' };
+};
+
+/**
+ * Normalize a stored/legacy value to the canonical toggle option so old
+ * records still render as active instead of looking empty.
+ *   √ / ✓ / v / V → '√'; - / – → '–'; ok / OK → 'ok'; else lowercased trim.
+ */
+const toggleAliasFor = (value: string): string => {
+  const v = value.trim();
+  if (v === '√' || v === '✓' || v.toLowerCase() === 'v') return '√';
+  if (v === '-' || v === '–') return '–';
+  if (v.toLowerCase() === 'ok') return 'ok';
+  return v.toLowerCase();
+};
+
+/** Whether a stored value matches a toggle option (alias-aware). */
+const toggleMatches = (option: string, value: string): boolean => {
+  if (!option || !value) return false;
+  const o = toggleAliasFor(option);
+  const v = toggleAliasFor(value);
+  if (v === o) return true;
+  if (o === 'normal' && (v === '√' || v === 'ok')) return true;
+  if (o === '√' && v === 'ok') return true;
+  return false;
+};
+
+interface AdaptiveCellProps {
+  nominal: string | null;
+  value: string;
+  onChange: (v: string | null) => void;
+  disabled: boolean;
+  inputClass: string;
+  dataRow?: number;
+  dataField?: string;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onToggleKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+}
+
+const AdaptiveCell: React.FC<AdaptiveCellProps> = ({ nominal, value, onChange, disabled, inputClass, dataRow, dataField, onKeyDown, onToggleKeyDown }) => {
+  const shape = parseAdaptiveShape(nominal);
+
+  if (shape.kind === 'toggle') {
+    return <BinaryToggle options={shape.options} value={value} onChange={onChange} disabled={disabled} dataRow={dataRow} dataField={dataField} onKeyDown={onToggleKeyDown} />;
+  }
+
+  return (
+    <input
+      type="text"
+      className={cn(inputClass, 'text-center')}
+      placeholder={nominal ?? '...'}
+      value={value}
+      onChange={(e) => onChange(e.target.value || null)}
+      disabled={disabled}
+      data-row={dataRow}
+      data-field={dataField}
+      onKeyDown={onKeyDown}
+    />
+  );
+};
+
+interface BinaryToggleProps {
+  options: [string, string];
+  value: string;
+  onChange: (v: string | null) => void;
+  disabled: boolean;
+  dataRow?: number;
+  dataField?: string;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+}
+
+const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, disabled, dataRow, dataField, onKeyDown }) => {
+  const [leftOpt, rightOpt] = options;
+  const isLeft = toggleMatches(leftOpt, value);
+  const isRight = toggleMatches(rightOpt, value);
+
+  const leftActive = 'bg-emerald-600 text-white border-emerald-600';
+  const rightActive = rightOpt === 'ALARM' || rightOpt === 'NOT'
+    ? 'bg-red-600 text-white border-red-600'
+    : 'bg-slate-600 text-white border-slate-600';
+  const idle = 'bg-white text-slate-600 border-slate-300 hover:border-slate-400';
+
+  const click = (opt: string) => {
+    if (disabled) return;
+    onChange(toggleMatches(opt, value) ? null : opt);
+  };
+
+  return (
+    <div className="inline-flex rounded-md overflow-hidden border border-slate-300 select-none w-full justify-center">
+      <button
+        type="button"
+        title="Klik untuk memilih"
+        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300', isLeft ? leftActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        onClick={() => click(leftOpt)}
+        disabled={disabled}
+        data-row={dataRow}
+        data-field={dataField}
+        onKeyDown={onKeyDown}
+      >
+        {leftOpt}
+      </button>
+      <button
+        type="button"
+        title="Klik untuk memilih"
+        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors', isRight ? rightActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        onClick={() => click(rightOpt)}
+        disabled={disabled}
+        data-row={dataRow}
+        data-field={dataField}
+        onKeyDown={onKeyDown}
+      >
+        {rightOpt}
+      </button>
+    </div>
   );
 };
 

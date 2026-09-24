@@ -87,7 +87,7 @@ class CnsdDvorMeterService
                 'form_code'       => $formCode,
                 'merk'            => $data['merk']          ?? null,
                 'type'            => $data['type']          ?? null,
-                'serial_number'   => $data['serial_number'] ?? null,
+                'serial_number'   => $data['serial_number'] ?? '04HI-015/04HI-019',
                 'tx1_mode'        => $data['tx1_mode']      ?? 'MAIN',
                 'tx2_mode'        => $data['tx2_mode']      ?? 'STANDBY',
                 'date'            => $date,

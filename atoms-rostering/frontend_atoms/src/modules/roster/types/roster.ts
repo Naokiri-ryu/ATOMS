@@ -13,12 +13,21 @@ export interface User {
   grade?: number | null;
 }
 
+export interface EmployeeRating {
+  id: number;
+  employee_id: number;
+  rating: string;
+  valid_until?: string | null;
+  keterangan?: string | null;
+}
+
 export interface Employee {
   id: number;
   user_id: number;
   employee_type: 'CNS' | 'Support' | 'Manager Teknik' | 'General Manager';
   group_number?: number | null;
   is_fixed_manager?: boolean; // Cannot be removed as manager if true
+  ratings?: EmployeeRating[];
   user: User;
 }
 

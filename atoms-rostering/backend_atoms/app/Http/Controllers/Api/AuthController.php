@@ -21,11 +21,15 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|string',
             'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        // Support login via email OR username
+        $credential = $request->email;
+        $user = User::where('email', $credential)
+            ->orWhere('username', $credential)
+            ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
@@ -58,6 +62,7 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $user,
+            'must_change_password' => $user->must_change_password,
         ]);
     }
 
@@ -189,6 +194,7 @@ class AuthController extends Controller
         $isFirstTimeSetup = empty($user->password);
         
         $user->password = Hash::make($request->password);
+        $user->must_change_password = false;
         $user->is_active = true;
         $user->save();
 
@@ -261,6 +267,7 @@ class AuthController extends Controller
 
         // Update password
         $user->password = Hash::make($request->new_password);
+        $user->must_change_password = false;
         $user->save();
 
         ActivityLog::create([

@@ -3,15 +3,38 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  username?: string | null;
   role: 'Admin' | 'Cns' | 'Support' | 'Manager Teknik' | 'General Manager';
   role_name?: string;
   grade?: number;
+  must_change_password?: boolean;
   is_active: boolean;
   last_login?: string;
   employee?: Employee;
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
+}
+
+export interface License {
+  id: number;
+  employee_id: number;
+  license_name?: string | null;
+  license_number?: string | null;
+  valid_until?: string | null;
+  keterangan?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmployeeRating {
+  id: number;
+  employee_id: number;
+  rating: string;
+  valid_until?: string | null;
+  keterangan?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Employee {
@@ -22,9 +45,36 @@ export interface Employee {
   group_number?: number | null;
   is_active: boolean;
   is_fixed_manager?: boolean; // Cannot be removed as manager if true
+  nik?: string | null;
+  birth_place?: string | null;
+  birth_date?: string | null;
+  unit_kerja?: 'CNSD' | 'TFP' | null;
+  jabatan?: string | null;
+  licenses?: License[];
+  ratings?: EmployeeRating[];
   user?: User;
   created_at: string;
   updated_at: string;
+}
+
+// Employee profile update payload (PUT /admin/employees/{id}/profile)
+export interface EmployeeProfileUpdateRequest {
+  nik?: string | null;
+  birth_place?: string | null;
+  birth_date?: string | null;
+  unit_kerja?: 'CNSD' | 'TFP' | null;
+  jabatan?: string | null;
+  licenses?: Array<{
+    license_name?: string | null;
+    license_number?: string | null;
+    valid_until?: string | null;
+    keterangan?: string | null;
+  }>;
+  ratings?: Array<{
+    rating: string;
+    valid_until?: string | null;
+    keterangan?: string | null;
+  }>;
 }
 
 // Role Constants
@@ -73,6 +123,7 @@ export interface LoginResponse {
   access_token: string;
   token_type: string;
   user: User;
+  must_change_password?: boolean;
 }
 
 export interface AccountToken {
@@ -292,19 +343,25 @@ export interface MorningTask {
 export interface CreateUserRequest {
   name: string;
   email: string;
+  username?: string;
   role: 'Admin' | 'Cns' | 'Support' | 'Manager Teknik' | 'General Manager';
   employee_type: 'Administrator' | 'CNS' | 'Support' | 'Manager Teknik' | 'General Manager';
   grade?: number;
   is_active: boolean;
+  must_change_password?: boolean;
+  password?: string;
 }
 
 export interface UpdateUserRequest {
   name?: string;
   email?: string;
+  username?: string;
   role?: 'Admin' | 'Cns' | 'Support' | 'Manager Teknik' | 'General Manager';
   employee_type?: 'Administrator' | 'CNS' | 'Support' | 'Manager Teknik' | 'General Manager';
   grade?: number;
   is_active?: boolean;
+  must_change_password?: boolean;
+  password?: string;
 }
 
 export interface GenerateTokenResponse {

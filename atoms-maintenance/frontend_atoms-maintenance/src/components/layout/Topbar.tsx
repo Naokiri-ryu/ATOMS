@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Bell, LogOut, Menu, X, Clock, LayoutDashboard, FileText, CheckSquare, Activity, Plane, Zap, Users, ClipboardList, BookOpen, Inbox, Monitor as MonitorIcon, ChevronDown, Home, BarChart3 } from "lucide-react";
+import { Bell, LogOut, Menu, X, Clock, LayoutDashboard, FileText, CheckSquare, Activity, Plane, Zap, Users, ClipboardList, BookOpen, Inbox, Monitor as MonitorIcon, ChevronDown, Home, BarChart3, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotification } from "@/hooks/useNotification";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,11 @@ import { getRosteringUrl } from "@/config";
 // Roles allowed to rotate the kiosk monitor password (must match backend
 // route middleware: `role:Admin,Manager Teknik,Supervisor CNSD,Supervisor TFP`).
 const MONITOR_SETTINGS_ROLES = ["Admin", "Manager Teknik", "Supervisor CNSD", "Supervisor TFP"];
+
+// Is this real prod SSO (rostering-managed) vs VITE_DEV_MOCK_AUTH mock mode?
+// Used to gate the "Profil Saya" deep-link, which only resolves in prod because
+// maintenance's employee_id is the rostering employee id (SSO against rostering).
+const isProdAuth = import.meta.env.VITE_DEV_MOCK_AUTH !== "true";
 
 // ─── Env ──────────────────────────────────────────────────────
 // ─── Nav definition ───────────────────────────────────────────
@@ -302,6 +307,24 @@ export const Topbar: React.FC = () => {
                   <p className="text-sm font-semibold text-slate-900 truncate">{user?.name || "User"}</p>
                   <p className="text-[11px] text-slate-500 truncate">{user?.role || "Guest"}</p>
                 </div>
+
+                {/* Profil Saya → deep-link to the rostering app's self profile page.
+                    The maintenance user's employee_id IS the rostering employee id
+                    (maintenance SSO resolves against rostering employees), so this
+                    deep-link always points at the matching rostering profile. */}
+                {isProdAuth && user?.employee_id && (
+                  <button
+                    onClick={() => {
+                      setShowAccountMenu(false);
+                      window.location.href = `${getRosteringUrl()}/personnel/${user?.employee_id}`;
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:bg-slate-50"
+                    role="menuitem"
+                  >
+                    <UserIcon size={15} className="text-slate-400" />
+                    Profil Saya
+                  </button>
+                )}
 
                 {canOpenMonitorSettings && (
                   <button

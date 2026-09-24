@@ -36,7 +36,8 @@ import { dashboardChecklistService, type ChecklistItem as EditableChecklistItem 
 import { dashboardMonthlyService, type MonthlySummary } from '@/services/dashboardMonthlyService';
 import { MonthlyReminderCard } from './components/MonthlyReminderCard';
 import { getCurrentShiftType, getCurrentShiftDate, getShiftLabel } from '@/lib/shiftUtils';
-import type { Notification, ShiftContextResponse, WorkOrder } from '@/types';
+import type { Notification, ShiftContextResponse, WorkOrder, RosteringRating } from '@/types';
+import { RatingTags } from '@/components/common/RatingTags';
 import type { ReportingDamageReportSummary } from '@/types/reporting';
 import { OBSTACLE_CODE_LABELS } from '@/types/reporting';
 import { API_URL_PROD } from '@/config';
@@ -111,6 +112,7 @@ interface DisplayPerson {
   name: string;
   role: string;
   division: 'Management' | 'CNSD' | 'TFP';
+  ratings?: RosteringRating[];
 }
 
 export const DashboardPage: React.FC = () => {
@@ -192,6 +194,7 @@ export const DashboardPage: React.FC = () => {
         name: shiftCtx.manager.name,
         role: 'Manager Teknik',
         division: 'Management',
+        ratings: shiftCtx.manager.ratings,
       });
     }
     if (shiftCtx.supervisor_cnsd) {
@@ -201,6 +204,7 @@ export const DashboardPage: React.FC = () => {
         name: shiftCtx.supervisor_cnsd.name,
         role: 'Supervisor CNSD',
         division: 'CNSD',
+        ratings: shiftCtx.supervisor_cnsd.ratings,
       });
     }
     if (shiftCtx.supervisor_tfp) {
@@ -210,6 +214,7 @@ export const DashboardPage: React.FC = () => {
         name: shiftCtx.supervisor_tfp.name,
         role: 'Supervisor TFP',
         division: 'TFP',
+        ratings: shiftCtx.supervisor_tfp.ratings,
       });
     }
     shiftCtx.personnel.forEach((p) => {
@@ -221,6 +226,7 @@ export const DashboardPage: React.FC = () => {
         name: p.name,
         role: p.employee_type === 'CNS' ? 'Teknisi CNSD' : 'Teknisi TFP',
         division: toDivision(p.employee_type) as DisplayPerson['division'],
+        ratings: p.ratings ?? undefined,
       });
     });
   }
@@ -551,6 +557,9 @@ export const DashboardPage: React.FC = () => {
                           <div>
                             <p className="text-sm font-semibold text-slate-800">{p.name}</p>
                             <p className="text-xs text-slate-500">{p.role}</p>
+                            {p.ratings && p.ratings.length > 0 && (
+                              <RatingTags ratings={p.ratings} size="xs" max={4} className="mt-1.5" />
+                            )}
                           </div>
                         </div>
                       ))}
@@ -574,6 +583,9 @@ export const DashboardPage: React.FC = () => {
                           <div>
                             <p className="text-sm font-semibold text-slate-800">{p.name}</p>
                             <p className="text-xs text-slate-500">{p.role}</p>
+                            {p.ratings && p.ratings.length > 0 && (
+                              <RatingTags ratings={p.ratings} size="xs" max={4} className="mt-1.5" />
+                            )}
                           </div>
                         </div>
                       ))}
@@ -593,6 +605,9 @@ export const DashboardPage: React.FC = () => {
                           <div>
                             <p className="text-sm font-semibold text-slate-800">{p.name}</p>
                             <p className="text-xs text-slate-500">{p.role}</p>
+                            {p.ratings && p.ratings.length > 0 && (
+                              <RatingTags ratings={p.ratings} size="xs" max={4} className="mt-1.5" />
+                            )}
                           </div>
                         </div>
                       ))}

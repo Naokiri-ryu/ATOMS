@@ -19,6 +19,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, user, onClose, on
   const [formData, setFormData] = useState<UpdateUserRequest>({
     name: user.name,
     email: user.email,
+    username: user.username || '',
     role: user.role,
     employee_type: user.employee?.employee_type || 'CNS',
     grade: user.grade,
@@ -40,6 +41,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, user, onClose, on
     setFormData({
       name: user.name,
       email: user.email,
+      username: user.username || '',
       role: user.role,
       employee_type: (roleToEmployeeTypeMap[user.role] || user.employee?.employee_type || 'CNS') as any,
       grade: user.grade,
@@ -56,6 +58,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, user, onClose, on
       ...user,
       name: formData.name || user.name,
       email: formData.email || user.email,
+      username: formData.username || user.username,
       role: (formData.role || user.role) as any,
       grade: formData.grade,
       is_active: formData.is_active ?? user.is_active,
@@ -102,6 +105,12 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, user, onClose, on
           value={formData.email}
           onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, email: e.target.value })}
           required
+        />
+        <Input
+          label="Username (for login)"
+          value={formData.username || ''}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, username: e.target.value })}
+          placeholder="e.g. johndoe"
         />
         <Input
           label="Grade"

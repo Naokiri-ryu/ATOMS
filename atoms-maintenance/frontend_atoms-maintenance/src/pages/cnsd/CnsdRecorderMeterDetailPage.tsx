@@ -5,6 +5,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Calendar,
+  Check,
   Clock,
   Lock as LockIcon,
   MapPin,
@@ -12,6 +13,7 @@ import {
   Printer,
   Save,
   Users,
+  X as XIcon,
 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { ShiftBadge } from '@/components/common/ShiftBadge';
@@ -559,13 +561,13 @@ const RecorderItemRow: React.FC<RecorderItemRowProps> = ({
                 U/S
               </div>
             ) : (
-              <input
-                type="text"
-                className={inputClass}
-                placeholder="..."
+              <AdaptiveCell
+                nominal={item.nominal}
+                isChannel={item.group_name === 'CHANNEL'}
                 value={getValue(item, 'hasil_server_a')}
-                onChange={(e) => onChange(item.id, 'hasil_server_a', e.target.value)}
+                onChange={(v) => onChange(item.id, 'hasil_server_a', v)}
                 disabled={disabled}
+                inputClass={inputClass}
               />
             )}
           </td>
@@ -575,26 +577,25 @@ const RecorderItemRow: React.FC<RecorderItemRowProps> = ({
                 U/S
               </div>
             ) : (
-              <input
-                type="text"
-                className={inputClass}
-                placeholder="..."
+              <AdaptiveCell
+                nominal={item.nominal}
+                isChannel={item.group_name === 'CHANNEL'}
                 value={getValue(item, 'hasil_server_b')}
-                onChange={(e) => onChange(item.id, 'hasil_server_b', e.target.value)}
+                onChange={(v) => onChange(item.id, 'hasil_server_b', v)}
                 disabled={disabled}
+                inputClass={inputClass}
               />
             )}
           </td>
         </>
       ) : (
         <td className="px-2 py-2 align-middle">
-          <input
-            type="text"
-            className={inputClass}
-            placeholder="..."
+          <EnvironmentCell
+            nominal={item.nominal}
             value={getValue(item, 'hasil')}
-            onChange={(e) => onChange(item.id, 'hasil', e.target.value)}
+            onChange={(v) => onChange(item.id, 'hasil', v)}
             disabled={disabled}
+            inputClass={inputClass}
           />
         </td>
       )}
@@ -609,6 +610,185 @@ const RecorderItemRow: React.FC<RecorderItemRowProps> = ({
         />
       </td>
     </tr>
+  );
+};
+
+// ─── Adaptive cell (Section A: KVM / SERVER / CHANNEL) ────────
+
+type AdaptiveShape = { kind: 'toggle'; options: [string, string] } | { kind: 'text' };
+
+/**
+ * Normalize a stored reading into a canonical token so old manual entries still
+ * map to the right toggle. Check-mark variants and "OK" both mean "positive",
+ * regardless of how the technician typed them (√, ✓, V, v, OK, Normal).
+ */
+const toggleAliasFor = (v: string): string => {
+  const t = v.trim();
+  if (t === '√' || t === '✓' || t === 'v' || t === 'V') return '√';
+  const l = t.toLowerCase();
+  if (l === 'ok') return 'ok';
+  return l;
+};
+
+/** True when a stored value represents the "active" state of a toggle option. */
+const toggleMatches = (value: string, opt: string): boolean => {
+  const v = toggleAliasFor(value);
+  const o = toggleAliasFor(opt);
+  if (v === o) return true;
+  if (o === 'normal' && (v === '√' || v === 'ok')) return true;
+  if (o === '√' && v === 'ok') return true;
+  return false;
+};
+
+/**
+ * Parse the nominal text from the paper form and decide what input shape to
+ * render for a Section A result cell. Mirrors VCCS / ATC SYSTEM parsing:
+ *   "Normal / Alrm"  → toggle 'NORMAL' / 'ALARM'
+ *   "√ / -" or "√/-" → toggle '√' / '-'
+ *   numeric / anything else → free-text input
+ */
+const parseAdaptiveShape = (nominal: string | null): AdaptiveShape => {
+  if (!nominal) return { kind: 'text' };
+  const u = nominal.trim().toUpperCase().replace(/\s+/g, ' ');
+  if (u === 'NORMAL / ALRM' || u === 'NORMAL/ALRM' || u === 'NORMAL / ALARM' || u === 'NORMAL/ALARM') {
+    return { kind: 'toggle', options: ['NORMAL', 'ALARM'] };
+  }
+  if (u === '√ / -' || u === '√/-' || u === '√ /-' || u === '√/ -') {
+    return { kind: 'toggle', options: ['√', '-'] };
+  }
+  return { kind: 'text' };
+};
+
+interface AdaptiveCellProps {
+  nominal: string | null;
+  isChannel: boolean;
+  value: string;
+  onChange: (v: string | null) => void;
+  disabled: boolean;
+  inputClass: string;
+}
+
+const AdaptiveCell: React.FC<AdaptiveCellProps> = ({ nominal, isChannel, value, onChange, disabled, inputClass }) => {
+  const shape = isChannel
+    ? { kind: 'toggle', options: ['NORMAL', 'FAULT'] as [string, string] }
+    : parseAdaptiveShape(nominal);
+
+  if (shape.kind === 'toggle') {
+    return <BinaryToggle options={shape.options} value={value} onChange={onChange} disabled={disabled} />;
+  }
+
+  return (
+    <input
+      type="text"
+      className={cn(inputClass, 'text-center')}
+      placeholder={nominal ?? '...'}
+      value={value}
+      onChange={(e) => onChange(e.target.value || null)}
+      disabled={disabled}
+    />
+  );
+};
+
+interface BinaryToggleProps {
+  options: [string, string];
+  value: string;
+  onChange: (v: string | null) => void;
+  disabled: boolean;
+}
+
+const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, disabled }) => {
+  const [leftOpt, rightOpt] = options;
+  const isActive = (opt: string) => toggleMatches(value, opt);
+
+  const leftActive = 'bg-emerald-600 text-white border-emerald-600';
+  const rightActive = leftOpt === 'NORMAL' ? 'bg-red-600 text-white border-red-600' : 'bg-slate-600 text-white border-slate-600';
+  const idle = 'bg-white text-slate-600 border-slate-300 hover:border-slate-400';
+
+  const click = (opt: string) => {
+    if (disabled) return;
+    onChange(isActive(opt) ? null : opt);
+  };
+
+  return (
+    <div className="inline-flex rounded-md overflow-hidden border border-slate-300 select-none w-full justify-center">
+      <button
+        type="button"
+        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300', isActive(leftOpt) ? leftActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        onClick={() => click(leftOpt)}
+        disabled={disabled}
+      >
+        {leftOpt}
+      </button>
+      <button
+        type="button"
+        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors', isActive(rightOpt) ? rightActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        onClick={() => click(rightOpt)}
+        disabled={disabled}
+      >
+        {rightOpt}
+      </button>
+    </div>
+  );
+};
+
+// ─── Environment cell (Section B) ─────────────────────────────
+
+interface EnvironmentCellProps {
+  nominal: string | null;
+  value: string;
+  onChange: (v: string | null) => void;
+  disabled: boolean;
+  inputClass: string;
+}
+
+const EnvironmentCell: React.FC<EnvironmentCellProps> = ({ nominal, value, onChange, disabled, inputClass }) => {
+  const isCheckNominal = !!nominal && nominal.trim() === '√';
+
+  if (isCheckNominal) {
+    return (
+      <CheckToggleCell
+        checked={toggleMatches(value, '√')}
+        onToggle={(checked) => onChange(checked ? '√' : null)}
+        disabled={disabled}
+      />
+    );
+  }
+
+  return (
+    <input
+      type="text"
+      className={cn(inputClass, 'text-center')}
+      placeholder={nominal ?? '...'}
+      value={value}
+      onChange={(e) => onChange(e.target.value || null)}
+      disabled={disabled}
+    />
+  );
+};
+
+const CheckToggleCell: React.FC<{
+  checked: boolean;
+  onToggle: (checked: boolean) => void;
+  disabled: boolean;
+}> = ({ checked, onToggle, disabled }) => {
+  const active = 'bg-emerald-600 text-white border-emerald-600';
+  const idle = 'bg-white text-slate-300 border-slate-300 hover:border-slate-400 hover:text-slate-500';
+
+  return (
+    <button
+      type="button"
+      onClick={() => !disabled && onToggle(!checked)}
+      disabled={disabled}
+      aria-pressed={checked}
+      title={checked ? 'Klik lagi untuk hapus centang' : 'Klik untuk centang'}
+      className={cn(
+        'mx-auto flex h-8 w-12 items-center justify-center rounded-md border-2 transition-colors',
+        checked ? active : idle,
+        disabled && 'opacity-50 cursor-not-allowed',
+      )}
+    >
+      {checked ? <Check size={16} strokeWidth={3} /> : <XIcon size={14} className="opacity-40" />}
+    </button>
   );
 };
 

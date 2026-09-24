@@ -32,32 +32,40 @@ This project is edited in a **split client-server setup**:
 | App | Purpose | Frontend | Backend | Own AGENTS.md |
 |-----|---------|----------|---------|---------------|
 | `atoms-maintenance/` | equipment maintenance & ops (Work Orders, CNSD, TFP, grounding, logbook, report) | `frontend_atoms-maintenance/` — React 19 + Vite 8 + Tailwind 3.4 SPA | `backend_atoms-maintenance/` — Laravel 13 + Postgres, API under `/api/v1/` | yes (frontend + backend) |
-| `atoms-rostering/` | roster/shift management. SSO + user/employee/shift **source of truth** consumed by the other two apps | `frontend_atoms/` — React 19 + Vite SPA | `backend_atoms/` — Laravel 12 + Postgres + Sanctum (Swagger at `/api-docs.html`) | — |
+| `atoms-rostering/` | roster/shift management. SSO + user/employee/shift **source of truth** consumed by the other two apps | `frontend_atoms/` — React 19 + Vite SPA | `backend_atoms/` — Laravel 12 + Postgres + Sanctum. No Swagger — APIs are hand-rolled JSON | — |
 | `sakti/` | inventory & borrowing with QR codes | Inertia.js v2 React in `resources/js` | Laravel 12, Pest tests | — |
 
-Read an app's own `AGENTS.md` / context files (`BACKEND_CONTEXT.md`, `FRONTEND_CONTEXT.md`) before working inside it.
+Read an app's own `AGENTS.md` / context files (`BACKEND_CONTEXT.md`, `FRONTEND_CONTEXT.md`) before working inside it. ⚠️ The two maintenance `AGENTS.md` files lag the code (backend still says "Phase 3 / ready for Work Orders" though it now routes ~16 CNSD + TFP modules; frontend points at a `CLAUDE.md` that no longer exists — real docs: `FRONTEND_CONTEXT.md`, `PRODUCT.md`, `DESIGN.md`). Treat them as context and verify against `routes/api.php` / `src/pages/`.
 
 ## Running locally
 
 > Remember: all commands in this section run **on the server** (via SSH — see setup section above), not on the Windows client.
 
-- **Full stack (fastest):** `docker compose -f docker-compose.local.yml up -d --build` (reads root `.env`). Ports: atoms frontend `5656`, atoms backend `5657`, rostering frontend `5658`, rostering backend `5659`, sakti `5660`.
-  - ⚠️ `docker-compose.yml` and `docker-compose.prod.yml` are stale — they build `./atoms/...` which no longer exists. Use `docker-compose.local.yml` for local dev; prod uses `.env.prod` + `docker-compose.prod.yml` after fixing that path.
+- **Full stack (fastest):** `docker compose -f docker-compose.local.yml up -d --build` (reads root `.env`). Ports: atoms frontend `5656`, atoms backend `5657`, rostering frontend `5658`, rostering backend `5659`, sakti `5660`. **Local dev = this compose only.**
+  - ⚠️ Only `docker-compose.yml` is stale (legacy `build: ./atoms` → won't build). `docker-compose.prod.yml` is current but is NOT for local dev — it builds all three apps behind Caddy exposing only ports 80/443 and reads `.env.prod` (see `docs/DEPLOYMENT.md`).
 - **Per-app, without Docker (run from that app dir):**
   - Frontends: `npm install` → `npm run dev` (Vite). `npm run lint` (ESLint), `npm run build` (`tsc -b && vite build`). No test framework.
   - Laravel backends: `composer dev` (runs `artisan serve` + queue + pail + `npm run dev` together; Postgres must be reachable per `.env`). `composer test` / `php artisan test`.
   - sakti: `composer dev`; verification gate `composer ci:check` (= `npm run lint:check` + `format:check` + `types:check` + tests); `composer lint` runs Pint.
-- Frontends call backends directly (no Vite proxy). Targets come from each frontend's `.env` (`VITE_API_URL`, `VITE_SAKTI_URL`, `VITE_ROSTERING_FRONTEND_URL`). `frontend_atoms-maintenance/.env` points API at `http://localhost:5657/api` (Docker port); a bare-metal backend serves `:8000`.
+- Frontends call backends directly (no Vite proxy). Frontends are hostname-aware: each frontend `.env` (gitignored) defines a plain var used when reached from `localhost` and a `_PROD` variant used when reached by IP, with hardcoded `172.19.38.157` fallbacks (see `frontend_atoms-maintenance/src/config/index.ts`). `frontend_atoms-maintenance/.env` currently points the API at `http://localhost:5657/api` (Docker port); a bare-metal backend serves `:8000`.
 
 ## Cross-app conventions
 
-- **Rostering owns auth/users.** maintenance + sakti authenticate via rostering SSO, or bypass in dev with `DEV_MOCK_AUTH=true` (backend) + `VITE_DEV_MOCK_AUTH=true` (frontend, seeded mock users). Don't duplicate login/account logic elsewhere.
+- **Rostering owns auth/users.** maintenance + sakti consume rostering identity. maintenance bypasses SSO in dev with `DEV_MOCK_AUTH=true` (backend `mockauth` middleware) + `VITE_DEV_MOCK_AUTH=true` (frontend, seeded mock roles → sends `mock-token-{id}`). sakti has its own Fortify login (seeded `admin@sakti.local` / `teknisi@sakti.local`, see `sakti/README.md`) and also accepts the handoff at `/sso?tokenfix=mock-token-{id}`. Don't duplicate login/account logic elsewhere.
 - **Design system (shared, light-mode only):** AirNav navy + single amber accent, fonts `Plus Jakarta Sans` / `IBM Plex Mono` (self-hosted in `/fonts/`). maintenance frontend uses `brand-*` tokens, rostering uses `navy-*`/`accent-*` (each in its `tailwind.config.js`). Follow existing tokens; never introduce dark mode or a new palette.
 - **Backends are separate apps:** frontend/backend pairs are sibling dirs (e.g. `frontend_atoms-maintenance` vs `backend_atoms-maintenance`). JSON responses use `{success, message, data, errors?}`; endpoints validate via Form Request.
-- **Secrets:** `.gitignore` excludes `.env*` (root `.env`, `.env.local`, etc.). Only commit `.env.example` / `.env.local.example` / `.env.prod.example`.
-- **Tests:** backend PHPUnit; sakti Pest (`php artisan test`). Seeders reset/duplicate data on a non-empty DB — reseed only on fresh DBs.
+- **Secrets:** `.gitignore` excludes `.env`, `.env.local`, `.env.prod`, `.env.save*`, `*.bckp`, `*.xlsx`, `backups/`. Only commit `.env*.example` templates (`.env.local.example`, `.env.prod.example`, `sakti/.env.docker.example`) — copy them to `.env` locally before running.
+- **Tests:** maintenance/rostering use PHPUnit; sakti uses Pest (`php artisan test`). Seeders reset/duplicate data on a non-empty DB — reseed only on fresh DBs.
 
-## Deploy
+## Gotchas (easy to get wrong)
 
-- `DEPLOYMENT.md` — prod flow (`.env.prod`, migrate-on-start, seed once, volume backups).
-- `deploy/Caddyfile` — Caddy reverse proxy for the two domains.
+- **No root `package.json`.** There's a tracked orphan `package-lock.json` at the repo root — never run `npm install` there.
+- **`composer dev` needs `pcntl`** (Laravel Pail): works on the WSL server, fails on native Windows. For Windows-without-Docker dev, follow `docs/DEVELOPMENT_SETUP_NATIVE.md` (Laragon; native ports `8000`/`8001`/`8002`, Vite `5173`/`5174`/`5175`) and run `php artisan serve` / `queue:listen` / `npm run dev` manually.
+- **sakti tooling:** `npm run lint` runs ESLint `--fix` (mutates files) — use `npm run lint:check` for CI-style checks. sakti's real DB name is `airnav_db` (not `sakti`).
+- **maintenance API lives entirely under `/api/v1/`**, organized as per-module groups (`cnsd/*-meter` ×16, `tfp/*`, `ground-check`, `logbook`, `public/monitor`, `statistics`, `dashboard`). The `mockauth` middleware guards the protected group in dev, with `role:...` middleware for per-role gates.
+
+## Deploy (prod — NOT for local dev)
+
+- `docs/DEPLOYMENT.md` + `docs/DOCKER_PROD_PLAN.md` — prod flow: `.env.prod`, `docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build`, migrate-on-start, seed once, volume backups.
+- `deploy/Caddyfile` — Caddy reverse proxy: intranet self-signed (`tls internal`, no ACME), exposes only ports 80/443. `{$MAIN_DOMAIN}` = rostering (entry), `{$MAINTENANCE_DOMAIN}`, `{$SAKTI_DOMAIN}`; plain-HTTP fallback → rostering frontend.
+- `.env.prod.example` is the prod env template (namespaced `MAIN_*` / `MAINTENANCE_*` / `SAKTI_*` vars); legacy `ATOMS_*` aliases still resolve in `docker-compose.prod.yml`.

@@ -4,6 +4,7 @@ export { default as Input } from './common/Input';
 export { default as LoadingOverlay } from './common/LoadingOverlay';
 export { default as LoadingScreen } from './common/LoadingScreen';
 export { default as Modal } from './common/Modal';
+export { default as RatingTags } from './common/RatingTags';
 export { default as Select } from './common/Select';
 export { default as Table } from './common/Table';
 
@@ -29,7 +30,9 @@ export { default as ConfirmModal } from './modals/ConfirmModal';
 export { default as CreateUserModal } from './modals/user/CreateUserModal';
 export { default as EditUserModal } from './modals/user/EditUserModal';
 export { default as ProfileModal } from './modals/user/ProfileModal';
+export { default as EmployeeProfileModal } from './modals/user/EmployeeProfileModal';
 export { default as TokenModal } from './modals/user/TokenModal';
+export { default as ResetPasswordModal } from './modals/user/ResetPasswordModal';
 
 // Auth Modal Components (from modals/auth/)
 export { default as ChangePasswordModal } from './modals/auth/ChangePasswordModal';

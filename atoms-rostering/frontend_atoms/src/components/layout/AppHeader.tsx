@@ -46,6 +46,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onProfileClick, onLogoutClick }) 
     }
   };
 
+  const handleViewProfileClick = () => {
+    setIsUserMenuOpen(false);
+    const id = user?.employee?.id ?? user?.id;
+    if (id) {
+      navigate(`/personnel/${id}`);
+    }
+  };
+
   return (
     <div className="bg-white shadow-card border-b border-navy-100/60 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -105,6 +113,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onProfileClick, onLogoutClick }) 
                     <p className="text-sm font-semibold text-navy-900">{user?.name}</p>
                     <p className="text-xs text-slate-500">{user?.email}</p>
                   </div>
+                  <button
+                    onClick={() => handleViewProfileClick()}
+                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-navy-50 flex items-center gap-3 transition-colors"
+                  >
+                    <UserIcon className="h-4 w-4" />
+                    Lihat Profil Saya
+                  </button>
                   <button
                     onClick={handleProfileClick}
                     className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-navy-50 flex items-center gap-3 transition-colors"

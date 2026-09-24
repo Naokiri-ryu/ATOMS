@@ -18,6 +18,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
   const [formData, setFormData] = useState<CreateUserRequest>({
     name: '',
     email: '',
+    username: '',
     role: 'Cns',
     employee_type: 'CNS',
     grade: undefined,
@@ -44,6 +45,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       id: tempId,
       name: formData.name,
       email: formData.email,
+      username: formData.username,
       role: formData.role,
       grade: formData.grade,
       is_active: formData.is_active,
@@ -90,6 +92,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
       setFormData({
         name: '',
         email: '',
+        username: '',
         role: 'Cns',
         employee_type: 'CNS',
         grade: undefined,
@@ -163,6 +166,17 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
               }
             />
             <Input
+              label="Username (for login)"
+              value={formData.username || ''}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, username: e.target.value })}
+              placeholder="e.g. johndoe"
+              leftIcon={
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              }
+            />
+            <Input
               label="Grade"
               type="number"
               value={formData.grade?.toString() || ''}
@@ -175,34 +189,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
                 </svg>
               }
             />
-            <div className="col-span-2">
-              <Select
-                label="Role"
-                options={[
-                  { value: 'Admin', label: 'Administrator' },
-                  { value: 'Cns', label: 'CNS' },
-                  { value: 'Support', label: 'Support' },
-                  { value: 'Manager Teknik', label: 'Manager Teknik' },
-                  { value: 'General Manager', label: 'General Manager' },
-                ]}
-                value={formData.role}
-                onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-                  const role = e.target.value;
-                  const employeeTypeMap: Record<string, string> = {
-                    'Admin': 'Administrator',
-                    'Cns': 'CNS',
-                    'Support': 'Support',
-                    'Manager Teknik': 'Manager Teknik',
-                    'General Manager': 'General Manager',
-                  };
-                  setFormData({ 
-                    ...formData, 
-                    role: role as any, 
-                    employee_type: employeeTypeMap[role] as any 
-                  });
-                }}
-              />
-            </div>
           </div>
         </div>
 

@@ -39,6 +39,13 @@ const SHIFT_TIME_LABELS: Record<string, string> = {
 
 const CCT_OPTIONS = ['TnRn', 'TnRf', 'TfRn', 'TfRf'] as const;
 
+/**
+ * Records created at/after this timestamp get the adaptive toggle cells for
+ * HASIL A / HASIL B (FRONT PANEL). Older records keep their plain text inputs
+ * so previously entered values stay visible and untouched.
+ */
+const AMSC_TOGGLE_CUTOFF = '2026-09-08T00:00:00';
+
 // ─── Main component ───────────────────────────────────────────
 
 /**
@@ -126,6 +133,12 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
       map[code].push(it);
     });
     return map;
+  }, [record]);
+
+  const useFrontPanelToggles = useMemo(() => {
+    if (!record?.created_at) return false;
+    const created = new Date(record.created_at).getTime();
+    return !Number.isNaN(created) && created >= new Date(AMSC_TOGGLE_CUTOFF).getTime();
   }, [record]);
 
   const isCompleted = record?.status === 'completed';
@@ -360,6 +373,7 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
           sectionMeta={activeSectionMeta}
           items={itemsBySection[activeSectionMeta.code] ?? []}
           isReadOnly={isReadOnly}
+          useFrontPanelToggles={useFrontPanelToggles}
           getValue={getValue}
           onChange={updateField}
         />
@@ -394,12 +408,13 @@ interface AmscSectionPanelProps {
   sectionMeta: CnsdAmscMeterSectionMeta;
   items: CnsdAmscMeterItem[];
   isReadOnly: boolean;
+  useFrontPanelToggles: boolean;
   getValue: (item: CnsdAmscMeterItem, field: keyof CnsdAmscMeterItem) => string;
   onChange: (itemId: number, field: keyof CnsdAmscMeterItem, value: string | null) => void;
 }
 
 const AmscSectionPanel: React.FC<AmscSectionPanelProps> = ({
-  sectionMeta, items, isReadOnly, getValue, onChange,
+  sectionMeta, items, isReadOnly, useFrontPanelToggles, getValue, onChange,
 }) => {
   const layout = sectionMeta.inputs_layout;
   const isDualAB = layout === 'dual_ab';
@@ -481,6 +496,7 @@ const AmscSectionPanel: React.FC<AmscSectionPanelProps> = ({
                   item={item}
                   layout={layout}
                   isReadOnly={isReadOnly}
+                  useFrontPanelToggles={useFrontPanelToggles}
                   getValue={getValue}
                   onChange={onChange}
                 />
@@ -499,12 +515,13 @@ interface AmscItemRowProps {
   item: CnsdAmscMeterItem;
   layout: string;
   isReadOnly: boolean;
+  useFrontPanelToggles: boolean;
   getValue: (item: CnsdAmscMeterItem, field: keyof CnsdAmscMeterItem) => string;
   onChange: (itemId: number, field: keyof CnsdAmscMeterItem, value: string | null) => void;
 }
 
 const AmscItemRow: React.FC<AmscItemRowProps> = ({
-  item, layout, isReadOnly, getValue, onChange,
+  item, layout, isReadOnly, useFrontPanelToggles, getValue, onChange,
 }) => {
   const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
   const selectClass = inputClass + ' appearance-none cursor-pointer';
@@ -553,24 +570,44 @@ const AmscItemRow: React.FC<AmscItemRowProps> = ({
             {item.nominal || '—'}
           </td>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
-              value={getValue(item, 'hasil_a')}
-              onChange={(e) => onChange(item.id, 'hasil_a', e.target.value)}
-              disabled={disabled}
-            />
+            {useFrontPanelToggles ? (
+              <AdaptiveCell
+                nominal={item.nominal}
+                value={getValue(item, 'hasil_a')}
+                onChange={(v) => onChange(item.id, 'hasil_a', v)}
+                disabled={disabled}
+                inputClass={inputClass}
+              />
+            ) : (
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="..."
+                value={getValue(item, 'hasil_a')}
+                onChange={(e) => onChange(item.id, 'hasil_a', e.target.value)}
+                disabled={disabled}
+              />
+            )}
           </td>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
-              value={getValue(item, 'hasil_b')}
-              onChange={(e) => onChange(item.id, 'hasil_b', e.target.value)}
-              disabled={disabled}
-            />
+            {useFrontPanelToggles ? (
+              <AdaptiveCell
+                nominal={item.nominal}
+                value={getValue(item, 'hasil_b')}
+                onChange={(v) => onChange(item.id, 'hasil_b', v)}
+                disabled={disabled}
+                inputClass={inputClass}
+              />
+            ) : (
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="..."
+                value={getValue(item, 'hasil_b')}
+                onChange={(e) => onChange(item.id, 'hasil_b', e.target.value)}
+                disabled={disabled}
+              />
+            )}
           </td>
         </>
       ) : layout === 'single_hasil' ? (
@@ -618,6 +655,129 @@ const AmscItemRow: React.FC<AmscItemRowProps> = ({
         />
       </td>
     </tr>
+  );
+};
+
+// ─── Adaptive HASIL A / HASIL B cell (FRONT PANEL) ────────────
+
+/**
+ * Adaptive shape parser, mirrors ASMGCS / Recorder:
+ *   "Normal / Alrm" → toggle NORMAL / ALARM
+ *   "√ / -" variants → toggle √ / -
+ *   "OK / Not" → toggle OK / NOT
+ *   numeric / other → free-text input
+ */
+type AdaptiveShape = { kind: 'toggle'; options: [string, string] } | { kind: 'text' };
+
+const parseAdaptiveShape = (nominal: string | null): AdaptiveShape => {
+  if (!nominal) return { kind: 'text' };
+  const u = nominal.trim().toUpperCase().replace(/\s+/g, ' ');
+  if (u === 'NORMAL / ALRM' || u === 'NORMAL/ALRM' || u === 'NORMAL / ALARM' || u === 'NORMAL/ALARM') {
+    return { kind: 'toggle', options: ['NORMAL', 'ALARM'] };
+  }
+  if (u === '√ / -' || u === '√/-' || u === '√ /-' || u === '√/ -') {
+    return { kind: 'toggle', options: ['√', '-'] };
+  }
+  if (u === 'OK / NOT' || u === 'OK/NOT') {
+    return { kind: 'toggle', options: ['OK', 'NOT'] };
+  }
+  return { kind: 'text' };
+};
+
+/**
+ * Normalize a stored/legacy value to the canonical toggle option so old
+ * records still render as active instead of looking empty.
+ *   √ / ✓ / v / V → '√'; ok / OK → 'ok'; else lowercased trim.
+ */
+const toggleAliasFor = (value: string): string => {
+  const v = value.trim();
+  if (v === '√' || v === '✓' || v.toLowerCase() === 'v') return '√';
+  if (v.toLowerCase() === 'ok') return 'ok';
+  return v.toLowerCase();
+};
+
+/** Whether a stored value matches a toggle option (alias-aware). */
+const toggleMatches = (option: string, value: string): boolean => {
+  if (!option || !value) return false;
+  const o = option.trim().toLowerCase();
+  const v = toggleAliasFor(value);
+  if (v === o) return true;
+  if (o === 'normal' && (v === '√' || v === 'ok')) return true;
+  if (o === '√' && v === 'ok') return true;
+  return false;
+};
+
+interface AdaptiveCellProps {
+  nominal: string | null;
+  value: string;
+  onChange: (v: string | null) => void;
+  disabled: boolean;
+  inputClass: string;
+}
+
+const AdaptiveCell: React.FC<AdaptiveCellProps> = ({ nominal, value, onChange, disabled, inputClass }) => {
+  const shape = parseAdaptiveShape(nominal);
+
+  if (shape.kind === 'toggle') {
+    return <BinaryToggle options={shape.options} value={value} onChange={onChange} disabled={disabled} />;
+  }
+
+  return (
+    <input
+      type="text"
+      className={cn(inputClass, 'text-center')}
+      placeholder={nominal ?? '...'}
+      value={value}
+      onChange={(e) => onChange(e.target.value || null)}
+      disabled={disabled}
+    />
+  );
+};
+
+interface BinaryToggleProps {
+  options: [string, string];
+  value: string;
+  onChange: (v: string | null) => void;
+  disabled: boolean;
+}
+
+const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, disabled }) => {
+  const [leftOpt, rightOpt] = options;
+  const isLeft = toggleMatches(leftOpt, value);
+  const isRight = toggleMatches(rightOpt, value);
+
+  const leftActive = 'bg-emerald-600 text-white border-emerald-600';
+  const rightActive = rightOpt === 'ALARM' || rightOpt === 'NOT'
+    ? 'bg-red-600 text-white border-red-600'
+    : 'bg-slate-600 text-white border-slate-600';
+  const idle = 'bg-white text-slate-600 border-slate-300 hover:border-slate-400';
+
+  const click = (opt: string) => {
+    if (disabled) return;
+    onChange(toggleMatches(opt, value) ? null : opt);
+  };
+
+  return (
+    <div className="inline-flex rounded-md overflow-hidden border border-slate-300 select-none w-full justify-center">
+      <button
+        type="button"
+        title="Klik untuk memilih"
+        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300', isLeft ? leftActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        onClick={() => click(leftOpt)}
+        disabled={disabled}
+      >
+        {leftOpt}
+      </button>
+      <button
+        type="button"
+        title="Klik untuk memilih"
+        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors', isRight ? rightActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        onClick={() => click(rightOpt)}
+        disabled={disabled}
+      >
+        {rightOpt}
+      </button>
+    </div>
   );
 };
 

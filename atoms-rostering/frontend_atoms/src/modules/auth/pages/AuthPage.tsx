@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { authService } from '../repository/authService';
 import { ChevronLeft, Eye, EyeOff, Mail, CheckCircle, KeyRound } from 'lucide-react';
 
-type AuthView = 'login' | 'activate' | 'forgot-password' | 'forgot-password-success' | 'reset-code' | 'set-password';
+type AuthView = 'login' | 'activate' | 'forgot-password' | 'forgot-password-success' | 'reset-code' | 'set-password' | 'force-change-password';
 
 const AuthPage: React.FC = () => {
   const [currentView, setCurrentView] = useState<AuthView>('login');
@@ -35,7 +35,7 @@ const AuthPage: React.FC = () => {
   
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, clearMustChangePassword, logout, isAuthenticated, mustChangePassword } = useAuth();
   
   const navigate = useNavigate();
 
@@ -50,9 +50,52 @@ const AuthPage: React.FC = () => {
     try {
       await login({ email, password });
       toast.success('Login successful!');
-      navigate('/home');
     } catch (error: any) {
       const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Redirect after login based on mustChangePassword
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      if (mustChangePassword) {
+        setCurrentView('force-change-password');
+      } else if (currentView === 'login') {
+        navigate('/home');
+      }
+    }
+  }, [isLoading, isAuthenticated, mustChangePassword, currentView, navigate]);
+
+  // Force Change Password Handler (after admin reset)
+  const handleForceChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || !confirmPassword) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await authService.changePassword({
+        current_password: password,
+        new_password: newPassword,
+        new_password_confirmation: confirmPassword,
+      });
+      clearMustChangePassword();
+      toast.success('Password changed successfully! Welcome to ATOMS.');
+      navigate('/home');
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to change password';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -194,6 +237,10 @@ const AuthPage: React.FC = () => {
     } else if (currentView === 'set-password') {
       setCurrentView('login');
       setActiveTab('login');
+    } else if (currentView === 'force-change-password') {
+      // Force change password - logout instead of going back
+      clearMustChangePassword();
+      logout();
     }
   };
 
@@ -215,6 +262,8 @@ const AuthPage: React.FC = () => {
         return 'Enter Reset Code';
       case 'set-password':
         return isNewUser ? 'Set Your Password' : 'Reset Your Password';
+      case 'force-change-password':
+        return 'Change Your Password';
       default:
         return 'Welcome Back!';
     }
@@ -223,7 +272,7 @@ const AuthPage: React.FC = () => {
   const getSubtitle = () => {
     switch (currentView) {
       case 'login':
-        return 'Sign in to access your account.';
+        return 'Sign in with your email/username and password.';
       case 'activate':
         return 'Enter your admin-generated activation code.';
       case 'forgot-password':
@@ -234,6 +283,8 @@ const AuthPage: React.FC = () => {
         return `Enter the 6-digit code we sent to ${forgotEmail}`;
       case 'set-password':
         return isNewUser ? 'Create a secure password for your account.' : 'Enter your new password.';
+      case 'force-change-password':
+        return 'Your admin has set a temporary password. Please change it now for security.';
       default:
         return '';
     }
@@ -320,14 +371,14 @@ const AuthPage: React.FC = () => {
         {currentView === 'login' && (
           <form onSubmit={handleLogin} className="space-y-5 animate-slide-in-left">
             <div>
-              <label className="block text-sm font-semibold text-navy-900 mb-2">Email</label>
+              <label className="block text-sm font-semibold text-navy-900 mb-2">Email or Username</label>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="example@airnav.com"
+                placeholder="email or username"
                 className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy-600/30 focus:border-navy-600 text-navy-900 placeholder:text-slate-400 shadow-sm"
-                autoComplete="email"
+                autoComplete="username"
               />
             </div>
             <div>
@@ -602,6 +653,72 @@ const AuthPage: React.FC = () => {
               className="w-full bg-navy-700 hover:bg-navy-800 text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Setting Password...' : isNewUser ? 'Activate Account' : 'Reset Password'}
+            </button>
+          </form>
+        )}
+
+        {/* Force Change Password Form (after admin reset) */}
+        {currentView === 'force-change-password' && (
+          <form onSubmit={handleForceChangePassword} className="space-y-5 animate-fade-scale-up">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-2">
+              <p className="text-xs text-amber-800 font-semibold">
+                ⚠️ Your admin has set a temporary password. You must change it before continuing.
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-navy-900 mb-2">New Password</label>
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy-600/30 focus:border-navy-600 text-navy-900 placeholder:text-slate-400 pr-12 shadow-sm"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-navy-800 transition-colors"
+                >
+                  {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-navy-900 mb-2">Confirm Password</label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter password"
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-navy-600/30 focus:border-navy-600 text-navy-900 placeholder:text-slate-400 pr-12 shadow-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-navy-800 transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+            <div className="bg-navy-50 border border-navy-100 rounded-xl p-4">
+              <p className="text-xs text-navy-800 font-semibold mb-2">Password Requirements:</p>
+              <ul className="text-xs text-navy-800 space-y-1">
+                <li className={newPassword.length >= 8 ? 'text-green-600' : ''}>• At least 8 characters</li>
+                <li className={/[A-Z]/.test(newPassword) ? 'text-green-600' : ''}>• Contains uppercase letter</li>
+                <li className={/[a-z]/.test(newPassword) ? 'text-green-600' : ''}>• Contains lowercase letter</li>
+                <li className={/[0-9]/.test(newPassword) ? 'text-green-600' : ''}>• Contains number</li>
+              </ul>
+            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-navy-700 hover:bg-navy-800 text-white font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Changing Password...' : 'Change Password & Continue'}
             </button>
           </form>
         )}

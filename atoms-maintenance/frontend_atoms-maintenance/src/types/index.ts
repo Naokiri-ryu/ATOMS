@@ -86,6 +86,14 @@ export interface ShiftScheduleResponse {
  * Real shift context sourced from atoms-rostering (read-only DB).
  * Used by Work Order creation to auto-populate MT, supervisor, and personnel.
  */
+
+/** A single rating/certification attached to an employee (sourced from rostering). */
+export interface RosteringRating {
+  rating: string;
+  valid_until?: string | null;
+  keterangan?: string | null;
+}
+
 export interface RosteringShiftPersonnel {
   user_id: number;       // rostering users.id (maps to local_users.rostering_user_id)
   name: string;
@@ -93,6 +101,7 @@ export interface RosteringShiftPersonnel {
   grade?: number | null;
   employee_type: string; // 'CNS' | 'Support' | 'Manager Teknik'
   group_number?: number | null;
+  ratings?: RosteringRating[];
 }
 
 export interface RosteringShiftTimes {
@@ -105,6 +114,7 @@ export interface RosteringShiftManager {
   name: string;
   role: string;
   employee_type: string;
+  ratings?: RosteringRating[];
 }
 
 export interface RosteringShiftSupervisor {
@@ -112,6 +122,7 @@ export interface RosteringShiftSupervisor {
   name: string;
   role: string;
   grade: number;
+  ratings?: RosteringRating[];
 }
 
 /**

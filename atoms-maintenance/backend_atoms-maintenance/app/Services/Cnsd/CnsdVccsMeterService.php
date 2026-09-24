@@ -97,8 +97,8 @@ class CnsdVccsMeterService
         $shiftType     = $data['shift_type'];
         $location      = $data['location']       ?? 'Kantor Cabang Surabaya / Cabang Surabaya';
         $merk          = array_key_exists('merk', $data) ? $data['merk'] : 'LES';
-        $type          = array_key_exists('type', $data) ? $data['type'] : null;
-        $serialNumber  = array_key_exists('serial_number', $data) ? $data['serial_number'] : null;
+        $type          = array_key_exists('type', $data) ? $data['type'] : 'FUJITSU';
+        $serialNumber  = array_key_exists('serial_number', $data) ? $data['serial_number'] : 'ST1903000525';
 
         $existing = $this->findExistingRecord($formType, $facility, $date, $shiftType);
         if ($existing) {

@@ -35,9 +35,11 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'username',
         'role',
         'grade',
         'password',
+        'must_change_password',
         'is_active',
         'last_login',
     ];
@@ -50,6 +52,7 @@ class User extends Authenticatable
     {
         return [
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
             'password' => 'hashed',
             'last_login' => 'datetime',
         ];

@@ -50,11 +50,18 @@ class AdminUserController extends Controller
         $users = Cache::remember($cacheKey, 300, function () use ($request, $isAdmin) {
             if ($isAdmin) {
                 $query = User::with(['employee' => function($q) {
-                    $q->withTrashed();
+                    // A user may transiently have more than one employee row (one soft-deleted,
+                    // one active) when the record was previously reactivated. Prefer the ACTIVE row
+                    // so profile edits and rating tags always bind to the employee rostering uses.
+                    $q->withTrashed()->with('ratings')
+                        ->orderByRaw('deleted_at IS NOT NULL')
+                        ->orderBy('id');
                 }])->withTrashed();
             } else {
                 // Non-admin users can only view existing active users (no trashed records)
-                $query = User::with('employee')->whereNull('deleted_at')->where('is_active', true);
+                $query = User::with(['employee' => function($q) {
+                    $q->with('ratings');
+                }])->whereNull('deleted_at')->where('is_active', true);
             }
 
             // Filter by role
@@ -137,21 +144,38 @@ class AdminUserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'username' => 'sometimes|nullable|string|max:255|unique:users,username',
             'role' => 'required|in:Admin,Cns,Support,Manager Teknik,General Manager',
             'employee_type' => 'required|in:Administrator,CNS,Support,Manager Teknik,General Manager',
             'grade' => 'sometimes|integer|min:1',
             'is_active' => 'sometimes|boolean',
+            'must_change_password' => 'sometimes|boolean',
+            'password' => 'sometimes|string|min:8',
         ]);
 
         DB::beginTransaction();
         try {
-            $user = User::create([
+            $userData = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'role' => $request->role,
                 'grade' => $request->grade,
                 'is_active' => $request->get('is_active', true),
-            ]);
+                'must_change_password' => $request->get('must_change_password', true),
+            ];
+
+            // Set optional username
+            if ($request->filled('username')) {
+                $userData['username'] = $request->username;
+            }
+
+            // Set password if provided (temporary password), otherwise no password yet
+            if ($request->filled('password')) {
+                $userData['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+                $userData['must_change_password'] = true;
+            }
+
+            $user = User::create($userData);
 
             // Create employee record for all roles
             Employee::create([
@@ -197,28 +221,53 @@ class AdminUserController extends Controller
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $id,
+            'username' => 'sometimes|nullable|string|max:255|unique:users,username,' . $id,
             'role' => 'sometimes|in:Admin,Cns,Support,Manager Teknik,General Manager',
             'employee_type' => 'sometimes|in:Administrator,CNS,Support,Manager Teknik,General Manager',
             'grade' => 'sometimes|integer|min:1',
             'is_active' => 'sometimes|boolean',
+            'must_change_password' => 'sometimes|boolean',
+            'password' => 'sometimes|string|min:8',
         ]);
 
         DB::beginTransaction();
         try {
-            $user->update($request->only(['name', 'email', 'role', 'grade', 'is_active']));
+            $updateData = $request->only(['name', 'email', 'username', 'role', 'grade', 'is_active', 'must_change_password']);
 
-            // Update or create employee record for all roles
-            if ($user->employee) {
-                $user->employee->update([
-                    'employee_type' => $request->employee_type,
-                    'is_active' => $request->get('is_active', $user->is_active),
-                ]);
-            } else {
-                Employee::create([
-                    'user_id' => $user->id,
-                    'employee_type' => $request->employee_type,
-                    'is_active' => $request->get('is_active', true),
-                ]);
+            // Set password if provided (temporary password)
+            if ($request->filled('password')) {
+                $updateData['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+                $updateData['must_change_password'] = true;
+            }
+
+            $user->update($updateData);
+
+            // Revoke all Sanctum tokens when user is deactivated
+            if ($request->has('is_active') && !$request->input('is_active')) {
+                $user->tokens()->delete();
+            }
+
+            // Update or restore the linked employee record. Never create a duplicate:
+            // the user may have a soft-deleted employee (from a previous delete + reactivate)
+            // and creating a new row here would split ratings/licences/profile across two rows.
+            $employee = $user->employee ?? $user->employee()->withTrashed()->first();
+            if (!$employee) {
+                $employee = new Employee(['user_id' => $user->id]);
+            }
+
+            if ($employee->trashed()) {
+                $employee->restore();
+            }
+
+            $employeeData = [];
+            if ($request->has('employee_type')) {
+                $employeeData['employee_type'] = $request->input('employee_type');
+            }
+            if ($request->has('is_active')) {
+                $employeeData['is_active'] = (bool) $request->input('is_active');
+            }
+            if ($employeeData) {
+                $employee->fill($employeeData)->save();
             }
 
             ActivityLog::create([
@@ -256,6 +305,9 @@ class AdminUserController extends Controller
 
         $user->delete();
 
+        // Revoke all Sanctum tokens on soft-delete
+        $user->tokens()->delete();
+
         if ($user->employee) {
             $user->employee->delete();
         }
@@ -283,8 +335,10 @@ class AdminUserController extends Controller
 
         $user->restore();
 
-        if ($user->employee) {
-            $user->employee->restore();
+        // Restore the linked employee even if it was soft-deleted too.
+        $employee = $user->employee ?? $user->employee()->withTrashed()->first();
+        if ($employee && $employee->trashed()) {
+            $employee->restore();
         }
 
         ActivityLog::create([
@@ -307,7 +361,7 @@ class AdminUserController extends Controller
     /**
      * Helper method to clear users cache more efficiently
      */
-    private function clearUsersCache()
+    public static function clearUsersCache()
     {
         // Clear all users list cache variations
         $patterns = ['users_list_*'];
@@ -487,5 +541,42 @@ class AdminUserController extends Controller
             // Always release the lock
             $lock->release();
         }
+    }
+
+    /**
+     * POST /admin/users/{id}/reset-password
+     * Admin set temporary password for user. User must change on next login.
+     */
+    public function resetPassword(Request $request, $id)
+    {
+        $request->validate([
+            'password' => 'sometimes|string|min:8',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        // Generate random temporary password if none provided
+        $password = $request->input('password') ?: strtoupper(Str::random(3) . '-' . Str::random(4) . rand(10, 99));
+
+        $user->password = \Illuminate\Support\Facades\Hash::make($password);
+        $user->must_change_password = true;
+        $user->save();
+
+        // Revoke all tokens so user must re-login
+        $user->tokens()->delete();
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'reset_password',
+            'module' => 'user',
+            'reference_id' => $user->id,
+            'description' => 'Admin reset password for: ' . $user->email,
+        ]);
+
+        return response()->json([
+            'message' => 'Password has been reset successfully',
+            'password' => $password,
+            'must_change_password' => true,
+        ]);
     }
 }

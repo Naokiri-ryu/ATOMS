@@ -22,6 +22,7 @@ import AuthPage from './modules/auth/pages/AuthPage';
 
 // Pages
 import UsersPage from './modules/admin/pages/UsersPage';
+import EmployeeProfilePage from './modules/employee/pages/EmployeeProfilePage';
 import RostersPage from './modules/roster/pages/RostersPage';
 import RosterDetailPage from './modules/roster/pages/RosterDetailPage';
 import LeaveRequestsPage from './modules/roster/pages/LeaveRequestsPage';
@@ -85,6 +86,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Personnel Profile (viewable by all authenticated users) */}
+          <Route
+            path="/personnel/:id"
+            element={
+              <ProtectedRoute>
+                <EmployeeProfilePage />
               </ProtectedRoute>
             }
           />

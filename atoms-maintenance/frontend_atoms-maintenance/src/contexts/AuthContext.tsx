@@ -255,9 +255,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Ignore errors — clear local state regardless
     } finally {
       clearSession();
-      setToken(null);
-      setUser(null);
-      window.location.href = ROSTERING_LOGIN_URL;
+      window.location.href = `${ROSTERING_LOGIN_URL}?logout=1`;
     }
   };
 
