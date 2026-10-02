@@ -116,7 +116,7 @@ class DashboardModuleRegistry
              'route' => '/cnsd/transmitter-er-meter','model' => CnsdTransmitterMeterRecord::class,
              'form_type' => 'TRANSMITTER-ER', 'daily_only' => true],
 
-            // ─── TFP Performance Check (9 modul) ────────────────────────
+            // ─── TFP Performance Check (10 modul) ───────────────────
             ['key' => 'tfp-aob-ground',     'label' => 'Performance Check AOB Lantai Ground',
              'division' => 'TFP', 'group' => 'TFP Performance',
              'route' => '/tfp/aob-ground',    'model' => TfpAobGroundRecord::class],
@@ -143,7 +143,7 @@ class DashboardModuleRegistry
              'route' => '/tfp/glidepath',     'model' => TfpGlidepathRecord::class],
             ['key' => 'tfp-genset-dvor',    'label' => 'Performance Check Genset DVOR',
              'division' => 'TFP', 'group' => 'TFP Performance',
-             'route' => '/tfp/genset-dvor',   'model' => TfpGensetDvorRecord::class],
+             'route' => '/tfp/dvor-genset',  'model' => TfpGensetDvorRecord::class],
             ['key' => 'tfp-genset-radar',   'label' => 'Performance Check Genset Radar',
              'division' => 'TFP', 'group' => 'TFP Performance',
              'route' => '/tfp/genset-radar',  'model' => TfpGensetRadarRecord::class],

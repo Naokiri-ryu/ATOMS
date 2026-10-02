@@ -1473,7 +1473,7 @@ class ShiftRequestController extends Controller
         }
 
         // Minimum H-3 from now
-        $minDate = Carbon::now()->addDays(3)->startOfDay()->toDateString();
+        $minDate = Carbon::now()->addDays(1)->startOfDay()->toDateString();
 
         // Get from published rosters only
         $rosterPeriods = RosterPeriod::where('status', 'published')
@@ -1600,7 +1600,7 @@ class ShiftRequestController extends Controller
         }
 
         // Minimum H-3 from now
-        $minDate = Carbon::now()->addDays(3)->startOfDay()->toDateString();
+        $minDate = Carbon::now()->addDays(1)->startOfDay()->toDateString();
 
         $rosterPeriodFilter = function ($query) use ($rosterMonth, $rosterYear) {
             $query->where('status', 'published');
@@ -1673,7 +1673,7 @@ class ShiftRequestController extends Controller
             }
         }
 
-        // Build query for partners: same day, different working shift.
+        // Build query for partners: same day, different supported shift category.
         $query = ShiftAssignment::with(['employee.user', 'rosterDay', 'shift'])
             ->where('employee_id', '!=', $currentEmployee->id)
             ->whereNotNull('notes')
@@ -1707,7 +1707,7 @@ class ShiftRequestController extends Controller
         $assignments = $query->get()->map(function ($assignment) {
             $normalizedNotes = strtolower(trim((string) $assignment->notes));
 
-            if ($this->isOffDayNotes($normalizedNotes)) {
+            if ($this->getSwapShiftType($normalizedNotes) === null) {
                 return null;
             }
 
@@ -1800,6 +1800,17 @@ class ShiftRequestController extends Controller
         return str_starts_with($notesLower, 'libur')
             || str_starts_with($notesLower, 'cuti')
             || str_starts_with($notesLower, 'off');
+    }
+
+    private function getSwapShiftType(string $notes): ?string
+    {
+        return match (strtolower(trim($notes))) {
+            'p', 'pagi' => 'pagi',
+            's', 'siang' => 'siang',
+            'm', 'malam' => 'malam',
+            'l', 'l1', 'l2', 'libur' => 'libur',
+            default => null,
+        };
     }
 
     /**

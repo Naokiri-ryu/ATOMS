@@ -44,7 +44,7 @@
 1. **Read First:** Always read `AGENTS.md` and `BACKEND_CONTEXT.md` before starting tasks.
 2. **Check Frontend Needs:** Before implementing any backend logic, review `frontend_atoms-maintenance/src/types/index.ts` and `src/data/mockData.ts` to understand expected data shapes.
 3. **Reference Only:** The `atoms-rostering/backend_atoms` repository is a **reference only** for AirNav data patterns. See `ROSTERING_REFERENCE.md`.
-4. **Never Modify atoms-rostering:** Do not write, edit, or commit any files inside `atoms-rostering/`.
+4. **Rarely Modify atoms-rostering:** Treat `atoms-rostering/` as read-only by default — especially `backend_atoms/`, which stays reference-only. The one sanctioned exception is a **read-only frontend port of a maintenance API into rostering** (statistics, reports) when rostering is the intranet entry point; rostering then consumes the maintenance API through its own `maintenanceStatisticsService`-style bridge and never duplicates backend logic. Keep any such port on rostering's `navy-*`/`accent-*` tokens.
 5. **Never Hardcode Secrets:** Always use `.env` variables for database connections, JWT secrets, API keys, etc. Only commit `.env.example`.
 6. **Incremental Changes:** Make small, focused changes. One feature or module per task.
 7. **Document First:** Update `API_PLAN.md` and `DATABASE_PLAN.md` before or alongside implementation.

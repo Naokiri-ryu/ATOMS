@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { DashboardPage } from "@/pages/dashboard/DashboardPage";
 import { StatisticsPage } from "@/pages/statistics/StatisticsPage";
+import { TfpEquipmentStatisticsPage } from "@/pages/statistics/TfpEquipmentStatisticsPage";
 import { SettingsChecklistPage } from "@/pages/settings/SettingsChecklistPage";
 import { WorkOrderListPage } from "@/pages/work-order/WorkOrderListPage";
 import { WorkOrderDetailPage } from "@/pages/work-order/WorkOrderDetailPage";
@@ -310,6 +311,7 @@ export const router = createBrowserRouter([
           { path: "/reporting/damage-reports/new", element: <ReportingDamageFormPage /> },
           { path: "/reporting/damage-reports/:id", element: <ReportingDamageFormPage /> },
           { path: "/statistics", element: <StatisticsPage /> },
+          { path: "/statistics/tfp/:moduleKey", element: <TfpEquipmentStatisticsPage /> },
           // Backward-compat: legacy /reports placeholder still works
           { path: "/reports", element: <Navigate to="/reporting" replace /> },
           { path: "/reports/create", element: <Navigate to="/reporting/damage-reports/new" replace /> },

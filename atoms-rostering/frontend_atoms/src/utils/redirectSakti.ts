@@ -2,7 +2,7 @@ import { getStoredToken } from "../modules/auth/core/authStorage";
 
 export function redirectToSakti(openInNewTab = false): void {
   const token = getStoredToken();
-  const userStr = localStorage.getItem("user");
+  const userStr = sessionStorage.getItem("user");
   const userObject = userStr ? JSON.parse(userStr) : null;
   const tokenfix = userObject ? `mock-token-${userObject.id}` : "";
 

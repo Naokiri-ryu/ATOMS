@@ -73,16 +73,16 @@ const MenuGrid: React.FC<MenuGridProps> = ({ isInitialized = true }) => {
             }}
             className={`group flex justify-center ${isInitialized ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
           >
-            {/* Wrapper for 3D effect */}
+            {/* Wrapper for the lift / 3D effect */}
             <div className="flex items-end">
-              <div className={`transform transition-all duration-200 group-hover:translate-y-[2px] group-active:translate-y-[4px] ${isInitialized ? "" : "pointer-events-none"}`}>
+              <div className={`transform transition-all duration-300 ease-out group-hover:-translate-y-2 group-active:translate-y-[4px] ${isInitialized ? "" : "pointer-events-none"}`}>
                 {/* Fixed Size Square Card with Primary Border */}
-                <div className="bg-white rounded-xl shadow-sm group-hover:shadow-lg border-2 border-navy-700 border-b-[6px] border-b-navy-700 group-hover:border-b-[3px] group-active:border-b-[1px] transition-all duration-200 w-[170px]">
+                <div className="bg-white rounded-xl shadow-sm border-2 border-navy-700 border-b-[6px] border-b-navy-700 transition-all duration-300 ease-out w-[170px] group-hover:border-accent-500 group-hover:border-b-accent-600 group-hover:bg-accent-50 group-hover:shadow-[0_18px_38px_-10px_rgba(217,138,15,0.55)] group-active:border-b-[1px]">
                   <div className="flex flex-col items-center justify-center p-5 h-[170px]">
                     <div className="w-24 h-24 flex items-center justify-center mb-3">
-                      <img src={item.icon} alt={item.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200" width={96} height={96} loading="lazy" decoding="async" />
+                      <img src={item.icon} alt={item.title} className="w-full h-full object-contain transition-transform duration-300 ease-out group-hover:scale-125" width={96} height={96} loading="lazy" decoding="async" />
                     </div>
-                    <h3 className="text-sm font-semibold text-navy-700 text-center leading-tight">{item.title}</h3>
+                    <h3 className="text-sm font-semibold text-navy-700 text-center leading-tight transition-colors duration-300 group-hover:text-accent-700">{item.title}</h3>
                   </div>
                 </div>
               </div>

@@ -22,7 +22,7 @@ export interface AvailablePartner {
   available_shifts: {
     roster_day_id: number;
     work_date: string;
-    shift_id: number;
+    shift_id: number | null;
     shift_name: string;
     notes: string;
     has_pending_request?: boolean;

@@ -28,6 +28,27 @@ const SHIFT_SWAP_REQUEST_CONFIRMED_EVENT = 'shift-swap-request:create-confirmed'
 const SHIFT_SWAP_REQUEST_ROLLED_BACK_EVENT = 'shift-swap-request:create-rolled-back';
 const waitForNextPaint = () => new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
 
+type SwapShiftType = 'pagi' | 'siang' | 'malam' | 'libur';
+
+const swapShiftOptions: { value: SwapShiftType; label: string }[] = [
+  { value: 'pagi', label: 'P - Pagi' },
+  { value: 'siang', label: 'S - Siang' },
+  { value: 'malam', label: 'M - Malam' },
+  { value: 'libur', label: 'L - Libur' },
+];
+
+const getSwapShiftType = (notes?: string, shiftName?: string): SwapShiftType | null => {
+  const normalizedNotes = (notes || '').trim().toLowerCase();
+  const normalizedName = (shiftName || '').trim().toLowerCase();
+  const value = normalizedNotes || normalizedName;
+
+  if (value === 'p' || value === 'pagi') return 'pagi';
+  if (value === 's' || value === 'siang') return 'siang';
+  if (value === 'm' || value === 'malam') return 'malam';
+  if (['l', 'l1', 'l2', 'libur'].includes(value)) return 'libur';
+  return null;
+};
+
 const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSuccess, rosterMonth, rosterYear }) => {
   const { user } = useAuth();
   const [myShifts, setMyShifts] = useState<MyShift[]>([]);
@@ -36,7 +57,7 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
   // Form state
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedShiftNotes, setSelectedShiftNotes] = useState<string>('');
-  const [newShiftId, setNewShiftId] = useState<number | ''>('');
+  const [newShiftType, setNewShiftType] = useState<SwapShiftType | ''>('');
   const [selectedPartnerId, setSelectedPartnerId] = useState<number | ''>('');
   const [reason, setReason] = useState('');
   
@@ -51,11 +72,6 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
   const [isLoadingPartners, setIsLoadingPartners] = useState(false);
   const [partnerLoadMessage, setPartnerLoadMessage] = useState<string>('');
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  const rosterMonthKey = useMemo(() => {
-    if (!rosterMonth || !rosterYear) return null;
-    return `${rosterYear}-${String(rosterMonth).padStart(2, '0')}`;
-  }, [rosterMonth, rosterYear]);
 
   // Load data when modal opens
   useEffect(() => {
@@ -117,7 +133,7 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
   const resetForm = () => {
     setSelectedDate('');
     setSelectedShiftNotes('');
-    setNewShiftId('');
+    setNewShiftType('');
     setSelectedPartnerId('');
     setReason('');
     setMyShifts([]);
@@ -140,39 +156,18 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
     return roleNormalized === 'manager teknik' || employeeTypeNormalized === 'manager teknik';
   }, [user?.role, user?.employee?.employee_type]);
 
-  // Date options are constrained by roster period and selected partner/shift context.
+  // Show every remaining calendar day in the roster period, even without an available shift.
   const availableDates = useMemo(() => {
-    const baseDates = [...new Set(
-      myShifts
-        .map((s) => s.work_date)
-        .filter((date) => !rosterMonthKey || date.startsWith(rosterMonthKey))
-    )].sort();
+    const now = new Date();
+    const month = rosterMonth ?? now.getMonth() + 1;
+    const year = rosterYear ?? now.getFullYear();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const daysInMonth = new Date(year, month, 0).getDate();
 
-    if (!selectedPartner) {
-      return baseDates;
-    }
-
-    return baseDates.filter((date) => {
-      const myShiftsOnDate = myShifts.filter((s) => s.work_date === date);
-      const partnerShiftsOnDate = selectedPartner.available_shifts.filter(
-        (s) => s.work_date === date && !s.has_pending_request
-      );
-
-      if (myShiftsOnDate.length === 0 || partnerShiftsOnDate.length === 0) {
-        return false;
-      }
-
-      if (newShiftId) {
-        const partnerHasRequestedShift = partnerShiftsOnDate.some((s) => s.shift_id === newShiftId);
-        if (!partnerHasRequestedShift) return false;
-        return myShiftsOnDate.some((s) => s.shift_id !== newShiftId);
-      }
-
-      return myShiftsOnDate.some((myShift) =>
-        partnerShiftsOnDate.some((partnerShift) => partnerShift.shift_id !== myShift.shift_id)
-      );
-    });
-  }, [myShifts, rosterMonthKey, selectedPartner, newShiftId]);
+    return Array.from({ length: daysInMonth }, (_, index) =>
+      `${year}-${String(month).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`
+    ).filter((date) => date >= today);
+  }, [rosterMonth, rosterYear]);
 
   useEffect(() => {
     if (selectedDate && !availableDates.includes(selectedDate)) {
@@ -185,13 +180,13 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
     const shifts = myShifts.filter((s) => {
       if (s.work_date !== selectedDate) return false;
 
-      if (newShiftId && s.shift_id === newShiftId) return false;
+      if (newShiftType && getSwapShiftType(s.notes, s.shift_name) === newShiftType) return false;
 
       if (!selectedPartner) return true;
 
       const partnerHasDifferentShiftOnSameDate = selectedPartner.available_shifts.some((partnerShift) => {
         if (partnerShift.work_date !== selectedDate || partnerShift.has_pending_request) return false;
-        if (newShiftId) return partnerShift.shift_id === newShiftId;
+        if (newShiftType) return getSwapShiftType(partnerShift.notes, partnerShift.shift_name) === newShiftType;
         return partnerShift.shift_id !== s.shift_id;
       });
 
@@ -203,61 +198,52 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
       index === self.findIndex(s => s.notes === shift.notes)
     );
     return uniqueShifts;
-  }, [myShifts, selectedDate, selectedPartner, newShiftId]);
+  }, [myShifts, selectedDate, selectedPartner, newShiftType]);
 
   // Get selected shift details
   const selectedShift = useMemo(() => {
     return myShifts.find(s => s.notes === selectedShiftNotes && s.work_date === selectedDate);
   }, [myShifts, selectedShiftNotes, selectedDate]);
 
-  // Requested shift options are constrained by selected partner/date/current shift.
+  // Keep the roster shift template visible while disabling categories not available for this date.
   const availableRequestedShifts = useMemo(() => {
-    const shiftsMap = new Map<number, { shift_id: number; shift_name: string; notes: string; has_pending_request: boolean }>();
-
     const sourceShifts = selectedPartner
       ? selectedPartner.available_shifts
       : availablePartners.flatMap((partner) => partner.available_shifts);
 
-    sourceShifts
+    const availableTypes = new Set(
+      sourceShifts
       .filter((s) => !s.has_pending_request)
       .filter((s) => !selectedDate || s.work_date === selectedDate)
-      .forEach((s) => {
-        if (!shiftsMap.has(s.shift_id)) {
-          shiftsMap.set(s.shift_id, {
-            shift_id: s.shift_id,
-            shift_name: s.shift_name,
-            notes: s.notes,
-            has_pending_request: false,
-          });
-        }
-      });
+      .map((s) => getSwapShiftType(s.notes, s.shift_name))
+      .filter((type): type is SwapShiftType => type !== null)
+    );
+    const currentShiftType = getSwapShiftType(selectedShift?.notes, selectedShift?.shift_name);
 
-    let options = Array.from(shiftsMap.values());
-    if (selectedShift) {
-      options = options.filter((s) => s.shift_id !== selectedShift.shift_id);
-    }
-    return options;
+    return swapShiftOptions.map((option) => ({
+      ...option,
+      unavailable: !availableTypes.has(option.value) || option.value === currentShiftType,
+    }));
   }, [availablePartners, selectedPartner, selectedDate, selectedShift]);
 
   const selectedRequestedShift = useMemo(() => {
-    if (!selectedDate || !newShiftId) return null;
+    if (!selectedDate || !newShiftType) return null;
+
+    const matchesRequestedShift = (shift: AvailablePartner['available_shifts'][number]) =>
+      shift.work_date === selectedDate
+      && !shift.has_pending_request
+      && getSwapShiftType(shift.notes, shift.shift_name) === newShiftType;
 
     if (selectedPartner) {
-      return (
-        selectedPartner.available_shifts.find(
-          (s) => s.work_date === selectedDate && s.shift_id === newShiftId && !s.has_pending_request
-        ) || null
-      );
+      return selectedPartner.available_shifts.find(matchesRequestedShift) || null;
     }
 
     for (const partner of availablePartners) {
-      const found = partner.available_shifts.find(
-        (s) => s.work_date === selectedDate && s.shift_id === newShiftId && !s.has_pending_request
-      );
+      const found = partner.available_shifts.find(matchesRequestedShift);
       if (found) return found;
     }
     return null;
-  }, [availablePartners, selectedPartner, selectedDate, newShiftId]);
+  }, [availablePartners, selectedPartner, selectedDate, newShiftType]);
 
   // Partner options follow chosen date and requested shift context.
   const partnerOptions = useMemo(() => {
@@ -265,8 +251,10 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
 
     return availablePartners.filter((partner) => {
       if (!activeDate) {
-        if (!newShiftId) return true;
-        return partner.available_shifts.some((s) => s.shift_id === newShiftId && !s.has_pending_request);
+        if (!newShiftType) return true;
+        return partner.available_shifts.some((s) =>
+          getSwapShiftType(s.notes, s.shift_name) === newShiftType && !s.has_pending_request
+        );
       }
 
       const partnerShiftsOnDate = partner.available_shifts.filter(
@@ -277,17 +265,19 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
       const myShiftsOnDate = myShifts.filter((s) => s.work_date === activeDate);
       if (myShiftsOnDate.length === 0) return false;
 
-      if (newShiftId) {
-        const partnerHasRequestedShift = partnerShiftsOnDate.some((s) => s.shift_id === newShiftId);
+      if (newShiftType) {
+        const partnerHasRequestedShift = partnerShiftsOnDate.some(
+          (s) => getSwapShiftType(s.notes, s.shift_name) === newShiftType
+        );
         if (!partnerHasRequestedShift) return false;
-        return myShiftsOnDate.some((s) => s.shift_id !== newShiftId);
+        return myShiftsOnDate.some((s) => getSwapShiftType(s.notes, s.shift_name) !== newShiftType);
       }
 
       return myShiftsOnDate.some((myShift) =>
         partnerShiftsOnDate.some((partnerShift) => partnerShift.shift_id !== myShift.shift_id)
       );
     });
-  }, [availablePartners, myShifts, selectedDate, newShiftId]);
+  }, [availablePartners, myShifts, selectedDate, newShiftType]);
 
   // Fetch manager for current shift when selected (with retry logic)
   useEffect(() => {
@@ -360,15 +350,15 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
   }, [selectedShift?.roster_day_id, selectedShift?.notes]);
 
   useEffect(() => {
-    if (newShiftId && !availableRequestedShifts.some((s) => s.shift_id === newShiftId)) {
-      setNewShiftId('');
+    if (newShiftType && !availableRequestedShifts.some((s) => s.value === newShiftType && !s.unavailable)) {
+      setNewShiftType('');
     }
-  }, [newShiftId, availableRequestedShifts]);
+  }, [newShiftType, availableRequestedShifts]);
 
   // Fetch manager for requested shift when selected (with retry logic)
   useEffect(() => {
     const fetchRequestedManager = async (retryCount = 0) => {
-      if (!selectedRequestedShift) {
+      if (!selectedRequestedShift || getSwapShiftType(selectedRequestedShift.notes, selectedRequestedShift.shift_name) === 'libur') {
         setRequestedShiftManager(null);
         setLoadingRequestedManager(false);
         return;
@@ -435,7 +425,7 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
 
   useEffect(() => {
     // When date changes, reset selected requested shift and revalidate selected partner.
-    setNewShiftId('');
+    setNewShiftType('');
   }, [selectedDate]);
 
   useEffect(() => {
@@ -564,16 +554,6 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
       return `${name} (${shift.shift_start.slice(0,5)}-${shift.shift_end.slice(0,5)})`;
     }
     return name;
-  };
-
-  const formatPartnerShiftTime = (shift: { shift_name: string }) => {
-    const name = shift.shift_name.charAt(0).toUpperCase() + shift.shift_name.slice(1);
-    const timeMap: Record<string, string> = {
-      'pagi': '(07.00-13.00)',
-      'siang': '(13.00-19.00)',
-      'malam': '(19.00-07.00)',
-    };
-    return `${name} ${timeMap[shift.shift_name.toLowerCase()] || ''}`;
   };
 
   const isFormValid = selectedShift && selectedRequestedShift && selectedPartnerId;
@@ -772,19 +752,19 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
                       <Clock className="w-4 h-4" />
                     </div>
                     <select
-                      value={newShiftId}
-                      onChange={(e) => setNewShiftId(e.target.value ? Number(e.target.value) : '')}
+                      value={newShiftType}
+                      onChange={(e) => setNewShiftType(e.target.value as SwapShiftType | '')}
                       disabled={!selectedDate}
                       className="w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-navy-700 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed"
                     >
                       <option value="">Select Shift</option>
-                      {availableRequestedShifts.map(shift => (
-                        <option 
-                          key={shift.shift_id} 
-                          value={shift.shift_id}
-                          disabled={shift.has_pending_request}
+                      {availableRequestedShifts.map((shift) => (
+                        <option
+                          key={shift.value}
+                          value={shift.value}
+                          disabled={shift.unavailable}
                         >
-                          {formatPartnerShiftTime(shift)} {shift.has_pending_request ? '(pending)' : ''}
+                          {shift.label}{shift.unavailable ? ' (tidak tersedia)' : ''}
                         </option>
                       ))}
                     </select>
@@ -797,7 +777,7 @@ const SwapShiftModal: React.FC<SwapShiftModalProps> = ({ isOpen, onClose, onSucc
                 </div>
 
                 {/* Manager on Duty for Requested Shift */}
-                {selectedRequestedShift && (
+                {selectedRequestedShift && getSwapShiftType(selectedRequestedShift.notes, selectedRequestedShift.shift_name) !== 'libur' && (
                   <div className="mt-3 p-3 bg-green-50 border border-green-100 rounded-lg">
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-green-600" />

@@ -106,7 +106,7 @@ class StoreShiftRequestRequest extends FormRequest
         }
 
         // 7. Check H-3 rule (minimum 3 days before)
-        $minDate = Carbon::now()->addDays(3)->startOfDay();
+        $minDate = Carbon::now()->addDays(1)->startOfDay();
         
         if (Carbon::parse($fromRosterDay->work_date)->lt($minDate)) {
             $validator->errors()->add('from_roster_day_id', 'Tukar shift harus diajukan minimal H-3 sebelum tanggal shift.');
@@ -132,12 +132,21 @@ class StoreShiftRequestRequest extends FormRequest
         }
 
         // 9. Requested shift must be different from current shift on the same date.
-        if ($requesterNotesLower === $targetNotesLower) {
+        $requesterShiftType = $this->getSwapShiftType($requesterNotesLower);
+        $targetShiftType = $this->getSwapShiftType($targetNotesLower);
+
+        if ($requesterNotesLower === $targetNotesLower
+            || ($requesterShiftType !== null && $requesterShiftType === $targetShiftType)) {
             $validator->errors()->add('target_notes', 'Shift request harus berbeda dari shift Anda di hari tersebut.');
             return;
         }
 
-        // 10. Target partner must have requested WORKING shift on the same date.
+        // 10. Target partner must have a supported shift, including a regular day off.
+        if ($targetShiftType === null) {
+            $validator->errors()->add('target_notes', 'Shift tujuan harus Pagi, Siang, Malam, atau Libur.');
+            return;
+        }
+
         $targetAssignment = ShiftAssignment::where('roster_day_id', $fromRosterDayId)
             ->where('employee_id', $targetEmployeeId)
             ->whereRaw('LOWER(TRIM(notes)) = ?', [$targetNotesLower])
@@ -145,11 +154,6 @@ class StoreShiftRequestRequest extends FormRequest
 
         if (!$targetAssignment) {
             $validator->errors()->add('target_notes', 'Rekan persetujuan tidak memiliki shift tersebut pada tanggal yang dipilih.');
-            return;
-        }
-
-        if ($this->isOffDayNotes($targetNotesLower)) {
-            $validator->errors()->add('target_notes', 'Rekan persetujuan harus memiliki shift kerja (bukan libur/cuti/off) pada tanggal yang dipilih.');
             return;
         }
 
@@ -241,6 +245,17 @@ class StoreShiftRequestRequest extends FormRequest
         ];
 
         return in_array($targetGrade, $crossGradePairs[$requesterGrade] ?? [], true);
+    }
+
+    private function getSwapShiftType(string $notes): ?string
+    {
+        return match (strtolower(trim($notes))) {
+            'p', 'pagi' => 'pagi',
+            's', 'siang' => 'siang',
+            'm', 'malam' => 'malam',
+            'l', 'l1', 'l2', 'libur' => 'libur',
+            default => null,
+        };
     }
 
     private function isOffDayNotes(string $notesLower): bool

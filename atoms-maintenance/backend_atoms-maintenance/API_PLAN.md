@@ -68,11 +68,17 @@
 
 ## Statistik Endpoints
 
-Recap of **completed** CNSD + TFP form submissions for the `/statistics`
-page. Modules come from `DashboardModuleRegistry` groups `CNSD Readiness`,
-`CNSD Meter Reading`, and `TFP Performance`; Ground Check / Grounding are
-out of scope. Implemented by `StatisticsController` +
-`StatisticsOverviewService`.
+Two surfaces live here. `/statistics` in the UI is now **TFP-only**: it lists
+the 10 Performance Check equipment and drills into one of them for measurement
+trends. The legacy `overview` endpoint below is kept for existing API
+consumers but the UI no longer calls it.
+
+### 1. Overview gabungan (legacy)
+
+Recap of **completed** CNSD + TFP form submissions. Modules come from
+`DashboardModuleRegistry` groups `CNSD Readiness`, `CNSD Meter Reading`, and
+`TFP Performance`; Ground Check / Grounding are out of scope. Implemented by
+`StatisticsController` + `StatisticsOverviewService`.
 
 | Method | Endpoint | Description | Auth | Roles |
 |--------|----------|-------------|------|-------|
@@ -102,6 +108,81 @@ Response `data` shape:
   ]
 }
 ```
+
+### 2. Statistik TFP per alat (dipakai UI)
+
+Recap per equipment beserta **tren nilai pengukuran** tiap bulan. Implemented
+by `TfpParameterStatisticsService`. `moduleKey` harus salah satu key berawalan
+`tfp-` di `DashboardModuleRegistry` group `TFP Performance`; selain itu `404`.
+
+| Method | Endpoint | Description | Auth | Roles |
+|--------|----------|-------------|------|-------|
+| `GET` | `/api/v1/statistics/tfp/equipment?year=YYYY` | Daftar 10 alat TFP: total form, form completed, completion rate, sparkline bulanan, tanggal terakhir. | Bearer | All |
+| `GET` | `/api/v1/statistics/tfp/{moduleKey}?year=YYYY` | Ringkasan satu alat + `available_points` (titik ukur yang ada datanya tahun itu). | Bearer | All |
+| `GET` | `/api/v1/statistics/tfp/{moduleKey}?year=YYYY&parameter_number=&parameter_name=&cell_key=` | Sama seperti di atas, ditambah `series`: min/maks/rata-rata 12 bulan untuk satu titik ukur. Ketiga param wajib diisi bersamaan (partial → `422`). | Bearer | All |
+
+Response `data` (endpoint per alat, ringkas):
+
+```json
+{
+  "year": 2026,
+  "module_key": "tfp-radar",
+  "label": "Performance Check Gedung Radar",
+  "route": "/tfp/radar-tfp",
+  "records_total": 77,
+  "records_completed": 69,
+  "completion_rate": 89.6,
+  "monthly_completed": [0, 0, 0, 0, 0, 1, 21, 27, 20, 0, 0, 0],
+  "status_counts": { "ongoing": 5, "on_hold": 3, "completed": 69 },
+  "last_date": "2026-10-01",
+  "available_points": [
+    {
+      "point_id": "<parameter_number><US><parameter_name><US><cell_key>",
+      "parameter_number": "1",
+      "parameter_name": "L1 - N",
+      "cell_key": "panel_rd01.value",
+      "cell_label": "Panel RD 01 · Nilai",
+      "unit": "Volt",
+      "samples": 64
+    }
+  ],
+  "series": {
+    "parameter_name": "L1 - N",
+    "unit": "Volt",
+    "cell_label": "Panel RD 01 · Nilai",
+    "total_samples": 64,
+    "samples_excluded": 1,
+    "points": [
+      { "month": 7, "label": "Jul", "count": 20, "min": 226, "max": 234, "avg": 229.15 },
+      { "month": 8, "label": "Agu", "count": 25, "min": 223, "max": 232, "avg": 229.76 }
+    ]
+  }
+}
+```
+
+#### Catatan kontrak
+
+- **Satu "titik ukur" = satu parameter pada satu sel.** Nilai TFP disimpan di
+  `items.values` dengan key datar yang dibangun dari `columns_config` tiap
+  record (`panel_rd01.value`, `ups_topaz.input`, …). Nama parameter saja tidak
+  unik: form Genset memakai `parameter_number` 17 untuk `V R-N`/`V S-N`/`V T-N`
+  sekaligus. Karena itu `available_points` memakai tripel
+  `parameter_number` + `parameter_name` + `cell_key`, dan `point_id` (internal,
+  dipisah karakter `US` 0x1F) tidak dikirim sebagai query param.
+- **`available_points` ditemukan dari data, bukan dari template.**
+  `columns_config` berbeda antar record (template Radar mendeklarasikan 9 panel,
+  record terbaru hanya membawa 7), sehingga daftar titik ukur yang dikembalikan
+  adalah yang benar-benar terisi pada tahun tersebut.
+- **Nilai non-numerik diabaikan.** Sel kosong tersimpan sebagai `"-"`, dan
+  penulisan koma Indonesia (`"220,5"`) dinormalkan ke `220.5`.
+- **Nilai di luar rentang wajar disaring dan dilaporkan.** Pembacaan di luar
+  `[median x 0.5, median x 1.5]` tidak dihitung (maks. 10% per titik ukur) agar
+  salah ketik tidak merusak grafik. Jumlah yang disaring dikembalikan sebagai
+  `samples_excluded` — tidak pernah diam-diam membuang data.
+- **Bulan tanpa pembacaan bernilai `null`, bukan `0`**, supaya grafik
+  menampilkan celah, bukan titik data palsu.
+- Hanya record `status = 'completed'` yang nilai pengukurannya ikut dihitung;
+  rekap jumlah form (`monthly_total`, `status_counts`) menghitung semua status.
 
 ---
 

@@ -115,6 +115,14 @@ Route::prefix('v1')->group(function () {
         Route::get('/statistics/overview',
             [\App\Http\Controllers\Api\V1\Statistics\StatisticsController::class, 'overview']);
 
+        // Per-equipment TFP statistics (measurement values per month).
+        // "equipment" must stay registered before "{moduleKey}" or Laravel
+        // would treat the literal as a module key.
+        Route::get('/statistics/tfp/equipment',
+            [\App\Http\Controllers\Api\V1\Statistics\StatisticsController::class, 'tfpEquipmentIndex']);
+        Route::get('/statistics/tfp/{moduleKey}',
+            [\App\Http\Controllers\Api\V1\Statistics\StatisticsController::class, 'tfpEquipment']);
+
         // ─── Work Orders ───────────────────────────────────────
         // All authenticated users can read (Teknisi visibility filtered in service)
         Route::get('/work-orders', [WorkOrderController::class, 'index']);

@@ -34,6 +34,7 @@ import SupportTicketsAdminPage from './pages/SupportTicketsAdminPage';
 import DashboardPage from './modules/dashboard/pages/DashboardPage';
 
 import StatisticsPage from './pages/StatisticsPage';
+import TfpEquipmentStatisticsPage from './pages/statistics/TfpEquipmentStatisticsPage';
 
 function App() {
   return (
@@ -70,12 +71,20 @@ function App() {
             }
           />
 
-          {/* ── Statistik: rekap setoran form CNSD & TFP dari aplikasi Maintenance ── */}
+          {/* ── Statistik: Performance Check TFP per peralatan dari aplikasi Maintenance ── */}
               <Route
                 path="/statistics"
                 element={
                   <ProtectedRoute>
                     <StatisticsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/statistics/tfp/:moduleKey"
+                element={
+                  <ProtectedRoute>
+                    <TfpEquipmentStatisticsPage />
                   </ProtectedRoute>
                 }
               />

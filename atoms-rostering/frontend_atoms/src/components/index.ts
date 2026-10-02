@@ -1,5 +1,6 @@
 // Common Components (from common/)
 export { default as Breadcrumbs } from './common/Breadcrumbs';
+export { default as FloatingField } from './common/FloatingField';
 export { default as Input } from './common/Input';
 export { default as LoadingOverlay } from './common/LoadingOverlay';
 export { default as LoadingScreen } from './common/LoadingScreen';
