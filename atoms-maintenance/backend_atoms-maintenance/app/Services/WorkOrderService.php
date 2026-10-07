@@ -429,9 +429,9 @@ class WorkOrderService
 
             // Determine shift end time for the note timestamp
             $shiftEndTimes = [
-                'pagi'  => '13:00',
-                'siang' => '19:00',
-                'malam' => '07:00',
+                'pagi'  => '13:15',
+                'siang' => '19:15',
+                'malam' => '07:15',
             ];
             $noteTime = $shiftEndTimes[$shift] ?? now()->format('H:i');
 

@@ -50,6 +50,7 @@ export interface Employee {
   birth_date?: string | null;
   unit_kerja?: 'CNSD' | 'TFP' | null;
   jabatan?: string | null;
+  avatar_path?: string | null;
   licenses?: License[];
   ratings?: EmployeeRating[];
   user?: User;

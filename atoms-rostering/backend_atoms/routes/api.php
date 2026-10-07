@@ -56,6 +56,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // =======================================
     Route::get('/employees/{id}/profile', [EmployeeProfileController::class, 'show']);
     Route::put('/employees/{id}/profile', [EmployeeProfileController::class, 'update']);
+    Route::post('/employees/{id}/avatar', [EmployeeProfileController::class, 'uploadAvatar']);
+    Route::delete('/employees/{id}/avatar', [EmployeeProfileController::class, 'deleteAvatar']);
 
     // =======================================
     // ADMIN - USER & EMPLOYEE MANAGEMENT
@@ -75,6 +77,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Employee profile (data pribadi, license, rating/kewenangan)
         Route::get('/employees/{employee}/profile', [EmployeeProfileController::class, 'show']);
         Route::put('/employees/{employee}/profile', [EmployeeProfileController::class, 'update']);
+        Route::post('/employees/{employee}/avatar', [EmployeeProfileController::class, 'uploadAvatar']);
+        Route::delete('/employees/{employee}/avatar', [EmployeeProfileController::class, 'deleteAvatar']);
     });
 
     // =======================================

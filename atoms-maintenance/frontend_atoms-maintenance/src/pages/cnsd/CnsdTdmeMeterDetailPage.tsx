@@ -1,47 +1,34 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import {
-  AlertCircle,
-  ArrowLeft,
-  Calendar,
-  Clock,
-  MapPin,
-  Printer,
-  Save,
-  Satellite as TdmeIcon,
-  Users,
-} from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { ShiftBadge } from '@/components/common/ShiftBadge';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { Skeleton } from '@/components/common/Skeleton';
-import { Tabs } from '@/components/common/Tabs';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
-import { canEditCnsd } from '@/lib/roles';
-import { cnsdTdmeMeterService } from '@/services/cnsdTdmeMeterService';
-import { CnsdTdmeMeterSignaturePanel } from './components/CnsdTdmeMeterSignaturePanel';
-import type { ShiftType } from '@/types';
-import type {
-  CnsdTdmeMeterItem,
-  CnsdTdmeMeterRecordDetail,
-} from '@/types/cnsdTdme';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { AlertCircle, ArrowLeft, Calendar, Clock, MapPin, Printer, Save, Satellite as TdmeIcon, Users } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { ShiftBadge } from "@/components/common/ShiftBadge";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { Skeleton } from "@/components/common/Skeleton";
+import { Tabs } from "@/components/common/Tabs";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { canEditCnsd } from "@/lib/roles";
+import { cnsdTdmeMeterService } from "@/services/cnsdTdmeMeterService";
+import { CnsdTdmeMeterSignaturePanel } from "./components/CnsdTdmeMeterSignaturePanel";
+import type { ShiftType } from "@/types";
+import type { CnsdTdmeMeterItem, CnsdTdmeMeterRecordDetail } from "@/types/cnsdTdme";
 
 const SHIFT_TIME_LABELS: Record<string, string> = {
-  pagi:  '07:00 — 13:00',
-  siang: '13:00 — 19:00',
-  malam: '19:00 — 07:00',
+  pagi: "07:15 — 13:15",
+  siang: "13:15 — 19:15",
+  malam: "19:15 — 07:15",
 };
 
-const TX_MODE_OPTIONS = ['MAIN', 'STANDBY'];
+const TX_MODE_OPTIONS = ["MAIN", "STANDBY"];
 
 /**
  * Records created at/after this timestamp get the adaptive toggle cells for
  * FRONT PANEL (TX1 / TX2). Older records keep their plain text inputs so
  * previously entered values stay visible and untouched.
  */
-const TDME_TOGGLE_CUTOFF = '2026-09-08T00:00:00';
+const TDME_TOGGLE_CUTOFF = "2026-09-08T00:00:00";
 
 interface SectionMeta {
   code: string;
@@ -71,17 +58,17 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [merk, setMerk] = useState('');
-  const [type, setType] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
-  const [tx1Mode, setTx1Mode] = useState('');
-  const [tx2Mode, setTx2Mode] = useState('');
+  const [merk, setMerk] = useState("");
+  const [type, setType] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
+  const [tx1Mode, setTx1Mode] = useState("");
+  const [tx2Mode, setTx2Mode] = useState("");
 
   const canEditMetadata = canEditCnsd(user);
 
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
-      setErrorMessage('ID form tidak valid.');
+      setErrorMessage("ID form tidak valid.");
       setIsLoading(false);
       return;
     }
@@ -90,33 +77,35 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
       const data = await cnsdTdmeMeterService.getRecord(recordId);
       setRecord(data);
       setEditedItems({});
-      setMerk(data.merk ?? '');
-      setType(data.type ?? '');
-      setSerialNumber(data.serial_number ?? '');
-      setTx1Mode(data.tx1_mode ?? '');
-      setTx2Mode(data.tx2_mode ?? '');
+      setMerk(data.merk ?? "");
+      setType(data.type ?? "");
+      setSerialNumber(data.serial_number ?? "");
+      setTx1Mode(data.tx1_mode ?? "");
+      setTx2Mode(data.tx2_mode ?? "");
       if (data.sections_meta.length > 0) {
         const stillExists = activeSectionCode && data.sections_meta.some((s) => s.code === activeSectionCode);
         if (!stillExists) setActiveSectionCode(data.sections_meta[0].code);
       }
       setErrorMessage(null);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 404) setErrorMessage('Form tidak ditemukan.');
-      else setErrorMessage('Gagal memuat data form.');
+      if (axios.isAxiosError(err) && err.response?.status === 404) setErrorMessage("Form tidak ditemukan.");
+      else setErrorMessage("Gagal memuat data form.");
       setRecord(null);
     } finally {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
-  useEffect(() => { void fetchRecord(); }, [recordId]);
+  useEffect(() => {
+    void fetchRecord();
+  }, [recordId]);
 
   const itemsBySection = useMemo(() => {
     const map: Record<string, CnsdTdmeMeterItem[]> = {};
     if (!record) return map;
     record.items.forEach((it) => {
-      const code = it.section_code ?? 'A';
+      const code = it.section_code ?? "A";
       if (!map[code]) map[code] = [];
       map[code].push(it);
     });
@@ -129,21 +118,15 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
     return !Number.isNaN(created) && created >= new Date(TDME_TOGGLE_CUTOFF).getTime();
   }, [record]);
 
-  const isReadOnly = record?.status === 'completed' || !canEditCnsd(user);
-  const metadataDirty = !!record && (
-    merk !== (record.merk ?? '') ||
-    type !== (record.type ?? '') ||
-    serialNumber !== (record.serial_number ?? '') ||
-    tx1Mode !== (record.tx1_mode ?? '') ||
-    tx2Mode !== (record.tx2_mode ?? '')
-  );
+  const isReadOnly = record?.status === "completed" || !canEditCnsd(user);
+  const metadataDirty = !!record && (merk !== (record.merk ?? "") || type !== (record.type ?? "") || serialNumber !== (record.serial_number ?? "") || tx1Mode !== (record.tx1_mode ?? "") || tx2Mode !== (record.tx2_mode ?? ""));
   const hasChanges = Object.keys(editedItems).length > 0 || metadataDirty;
 
   const updateField = (itemId: number, field: keyof CnsdTdmeMeterItem, value: string | null) => {
     if (isReadOnly) return;
     setEditedItems((prev) => ({
       ...prev,
-      [itemId]: { ...(prev[itemId] ?? {}), [field]: value === '' ? null : value },
+      [itemId]: { ...(prev[itemId] ?? {}), [field]: value === "" ? null : value },
     }));
   };
 
@@ -151,10 +134,10 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
     const edited = editedItems[item.id];
     if (edited && field in edited) {
       const v = edited[field];
-      return v == null ? '' : String(v);
+      return v == null ? "" : String(v);
     }
     const original = item[field];
-    return original == null ? '' : String(original);
+    return original == null ? "" : String(original);
   };
 
   const handleSave = async () => {
@@ -164,9 +147,9 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
     setSuccessMessage(null);
     const items = Object.entries(editedItems).map(([rawId, patch]) => ({
       id: Number(rawId),
-      hasil_1:    'hasil_1'    in patch ? patch.hasil_1    ?? null : undefined,
-      hasil_2:    'hasil_2'    in patch ? patch.hasil_2    ?? null : undefined,
-      keterangan: 'keterangan' in patch ? patch.keterangan ?? null : undefined,
+      hasil_1: "hasil_1" in patch ? (patch.hasil_1 ?? null) : undefined,
+      hasil_2: "hasil_2" in patch ? (patch.hasil_2 ?? null) : undefined,
+      keterangan: "keterangan" in patch ? (patch.keterangan ?? null) : undefined,
     }));
     try {
       const updated = await cnsdTdmeMeterService.updateRecord(record.id, {
@@ -181,15 +164,15 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
       setEditedItems({});
       const parts: string[] = [];
       if (items.length > 0) parts.push(`${items.length} item`);
-      if (metadataDirty) parts.push('metadata peralatan');
-      setSuccessMessage(`${parts.join(' + ')} disimpan.`);
+      if (metadataDirty) parts.push("metadata peralatan");
+      setSuccessMessage(`${parts.join(" + ")} disimpan.`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menyimpan perubahan.');
+        setErrorMessage(data.message ?? "Gagal menyimpan perubahan.");
       } else {
-        setErrorMessage('Koneksi gagal, coba lagi.');
+        setErrorMessage("Koneksi gagal, coba lagi.");
       }
     } finally {
       setIsSaving(false);
@@ -210,24 +193,24 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
     return (
       <div className="max-w-3xl mx-auto py-20 text-center space-y-4">
         <AlertCircle className="mx-auto h-12 w-12 text-slate-400" />
-        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? 'Form tidak ditemukan.'}</h2>
-        <Button variant="outline" onClick={() => navigate('/cnsd/tdme-meter')} className="gap-2">
+        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? "Form tidak ditemukan."}</h2>
+        <Button variant="outline" onClick={() => navigate("/cnsd/tdme-meter")} className="gap-2">
           <ArrowLeft size={16} /> Kembali ke Daftar
         </Button>
       </div>
     );
   }
 
-  const activeSectionMeta = activeSectionCode ? record.sections_meta.find((s) => s.code === activeSectionCode) ?? null : null;
+  const activeSectionMeta = activeSectionCode ? (record.sections_meta.find((s) => s.code === activeSectionCode) ?? null) : null;
 
   return (
     <div className="max-w-full space-y-5 animate-fade-in pb-12">
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <button type="button" onClick={() => navigate('/cnsd')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
+        <button type="button" onClick={() => navigate("/cnsd")} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
           <ArrowLeft size={14} /> CNSD
         </button>
         <span>/</span>
-        <button type="button" onClick={() => navigate('/cnsd/tdme-meter')} className="hover:text-slate-700 transition-colors">
+        <button type="button" onClick={() => navigate("/cnsd/tdme-meter")} className="hover:text-slate-700 transition-colors">
           T-DME Meter Reading
         </button>
         <span>/</span>
@@ -247,7 +230,12 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 CNSD &nbsp;·&nbsp;<span className="font-mono">{record.form_number}</span>
-                {record.form_code && <> &nbsp;·&nbsp; <span className="font-mono">{record.form_code}</span></>}
+                {record.form_code && (
+                  <>
+                    {" "}
+                    &nbsp;·&nbsp; <span className="font-mono">{record.form_code}</span>
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -259,7 +247,7 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg" title="Rentang waktu shift">
               <Clock size={13} className="text-slate-400" />
-              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? '—'}</span>
+              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? "—"}</span>
             </div>
             <ShiftBadge shift={record.shift_type as ShiftType} />
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
@@ -292,19 +280,19 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Teknisi CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(', ')}>
-              {record.technicians.map((t) => t.technician_name).join(', ') || <span className="text-slate-400 italic">—</span>}
+            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(", ")}>
+              {record.technicians.map((t) => t.technician_name).join(", ") || <span className="text-slate-400 italic">—</span>}
             </p>
           </div>
         </div>
       </div>
 
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{errorMessage}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {errorMessage}
+        </div>
       )}
-      {successMessage && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>
-      )}
+      {successMessage && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>}
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
         <h2 className="text-sm font-bold text-slate-800">Informasi Peralatan</h2>
@@ -323,30 +311,13 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
           <EditableSelectField label="Tx 1 Mode" value={tx1Mode} onChange={setTx1Mode} options={TX_MODE_OPTIONS} disabled={!!isReadOnly || !canEditMetadata} />
           <EditableSelectField label="Tx 2 Mode" value={tx2Mode} onChange={setTx2Mode} options={TX_MODE_OPTIONS} disabled={!!isReadOnly || !canEditMetadata} />
         </div>
-        {!canEditMetadata && !isReadOnly && (
-          <p className="text-[10px] text-slate-400 italic">
-            Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.
-          </p>
-        )}
+        {!canEditMetadata && !isReadOnly && <p className="text-[10px] text-slate-400 italic">Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.</p>}
       </div>
 
-      {record.sections_meta.length > 0 && (
-        <Tabs
-          items={record.sections_meta.map((s) => ({ key: s.code, label: `${s.code}. ${s.name}` }))}
-          defaultKey={activeSectionCode ?? record.sections_meta[0]?.code}
-          onChange={setActiveSectionCode}
-        />
-      )}
+      {record.sections_meta.length > 0 && <Tabs items={record.sections_meta.map((s) => ({ key: s.code, label: `${s.code}. ${s.name}` }))} defaultKey={activeSectionCode ?? record.sections_meta[0]?.code} onChange={setActiveSectionCode} />}
 
       {activeSectionMeta && (
-        <TdmeSectionPanel
-          sectionMeta={activeSectionMeta}
-          items={itemsBySection[activeSectionMeta.code] ?? []}
-          isReadOnly={!!isReadOnly}
-          useFrontPanelToggles={useFrontPanelToggles}
-          getValue={getValue}
-          onChange={updateField}
-        />
+        <TdmeSectionPanel sectionMeta={activeSectionMeta} items={itemsBySection[activeSectionMeta.code] ?? []} isReadOnly={!!isReadOnly} useFrontPanelToggles={useFrontPanelToggles} getValue={getValue} onChange={updateField} />
       )}
 
       {!isReadOnly && (
@@ -354,9 +325,9 @@ export const CnsdTdmeMeterDetailPage: React.FC = () => {
           {hasChanges && (
             <span className="text-xs text-amber-600 font-medium">
               {Object.keys(editedItems).length > 0 && `${Object.keys(editedItems).length} item`}
-              {Object.keys(editedItems).length > 0 && metadataDirty && ' + '}
-              {metadataDirty && 'metadata'}
-              {' belum disimpan'}
+              {Object.keys(editedItems).length > 0 && metadataDirty && " + "}
+              {metadataDirty && "metadata"}
+              {" belum disimpan"}
             </span>
           )}
           <Button onClick={() => void handleSave()} disabled={!hasChanges} isLoading={isSaving} className="gap-2">
@@ -379,25 +350,26 @@ interface TdmeSectionPanelProps {
   onChange: (itemId: number, field: keyof CnsdTdmeMeterItem, value: string | null) => void;
 }
 
-const TdmeSectionPanel: React.FC<TdmeSectionPanelProps> = ({
-  sectionMeta, items, isReadOnly, useFrontPanelToggles, getValue, onChange,
-}) => {
+const TdmeSectionPanel: React.FC<TdmeSectionPanelProps> = ({ sectionMeta, items, isReadOnly, useFrontPanelToggles, getValue, onChange }) => {
   const groups = useMemo(() => {
     const order: string[] = [];
     const map: Record<string, CnsdTdmeMeterItem[]> = {};
     items.forEach((it) => {
       if (it.is_header) return;
-      const key = `${it.group_number ?? '0'}::${it.group_name ?? '__'}`;
-      if (!map[key]) { map[key] = []; order.push(key); }
+      const key = `${it.group_number ?? "0"}::${it.group_name ?? "__"}`;
+      if (!map[key]) {
+        map[key] = [];
+        order.push(key);
+      }
       map[key].push(it);
     });
     return order.map((key) => {
-      const first = items.find((i) => `${i.group_number ?? '0'}::${i.group_name ?? '__'}` === key);
+      const first = items.find((i) => `${i.group_number ?? "0"}::${i.group_name ?? "__"}` === key);
       return { number: first?.group_number ?? null, name: first?.group_name ?? null, items: map[key] };
     });
   }, [items]);
 
-  const isMeterReading = sectionMeta.inputs_layout === 'meter_reading';
+  const isMeterReading = sectionMeta.inputs_layout === "meter_reading";
   const colCount = 6;
   const editableItems = useMemo(() => items.filter((it) => !it.is_header), [items]);
 
@@ -410,8 +382,8 @@ const TdmeSectionPanel: React.FC<TdmeSectionPanelProps> = ({
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
             {isMeterReading
-              ? 'FRONT PANEL → TX1/TX2. PARAMETER / Pulse Shape / Frequency → M1/M2. POWER SUPPLY → single HASIL. Gunakan ↑↓←→ atau Enter untuk navigasi.'
-              : 'Isi kolom HASIL PEMERIKSAAN untuk tiap kegiatan lingkungan. Gunakan ↑↓←→ atau Enter untuk navigasi.'}
+              ? "FRONT PANEL → TX1/TX2. PARAMETER / Pulse Shape / Frequency → M1/M2. POWER SUPPLY → single HASIL. Gunakan ↑↓←→ atau Enter untuk navigasi."
+              : "Isi kolom HASIL PEMERIKSAAN untuk tiap kegiatan lingkungan. Gunakan ↑↓←→ atau Enter untuk navigasi."}
           </p>
         </div>
         <span className="text-xs font-medium text-slate-400">{editableItems.length} item</span>
@@ -422,15 +394,9 @@ const TdmeSectionPanel: React.FC<TdmeSectionPanelProps> = ({
           <thead>
             <tr className="bg-slate-50 text-slate-700">
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-12 text-[11px] uppercase tracking-wider">No</th>
-              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[240px] text-[11px] uppercase tracking-wider">
-                {isMeterReading ? 'Pembacaan Meter Reading' : 'Kegiatan'}
-              </th>
-              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[100px] text-[11px] uppercase tracking-wider">
-                {isMeterReading ? 'Standart' : 'Nominal'}
-              </th>
-              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">
-                {isMeterReading ? 'TX1 / M1 / Hasil' : 'Hasil'}
-              </th>
+              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[240px] text-[11px] uppercase tracking-wider">{isMeterReading ? "Pembacaan Meter Reading" : "Kegiatan"}</th>
+              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[100px] text-[11px] uppercase tracking-wider">{isMeterReading ? "Standart" : "Nominal"}</th>
+              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">{isMeterReading ? "TX1 / M1 / Hasil" : "Hasil"}</th>
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">TX2 / M2</th>
               <th className="px-2 py-2 text-left font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">Keterangan</th>
             </tr>
@@ -448,7 +414,8 @@ const TdmeSectionPanel: React.FC<TdmeSectionPanelProps> = ({
                   {group.name && isMeterReading && (
                     <tr className="bg-slate-100">
                       <td colSpan={colCount} className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200">
-                        {group.number ? `${group.number}. ` : ''}{group.name}
+                        {group.number ? `${group.number}. ` : ""}
+                        {group.name}
                       </td>
                     </tr>
                   )}
@@ -485,25 +452,19 @@ interface TdmeItemRowProps {
 }
 
 const TdmeItemRow: React.FC<TdmeItemRowProps> = ({ item, rowIndex, totalRows, isReadOnly, useFrontPanelToggles, getValue, onChange }) => {
-  const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
-  const isDual = item.hasil_layout === 'dual';
+  const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
+  const isDual = item.hasil_layout === "dual";
   const isFrontPanel = item.group_number === 1;
   const isReadOnlyAll = isReadOnly || item.is_header;
   const toggleEnabled = isFrontPanel && useFrontPanelToggles && isDual;
   const disabled = isReadOnlyAll;
 
-  const availableFields = isDual
-    ? (['hasil_1', 'hasil_2', 'keterangan'] as const)
-    : (['hasil_1', 'keterangan'] as const);
+  const availableFields = isDual ? (["hasil_1", "hasil_2", "keterangan"] as const) : (["hasil_1", "keterangan"] as const);
 
   const focusInput = (targetRow: number, preferredField: string) => {
-    let el = document.querySelector(
-      `input[data-row="${targetRow}"][data-field="${preferredField}"]`,
-    ) as HTMLInputElement | null;
+    let el = document.querySelector(`input[data-row="${targetRow}"][data-field="${preferredField}"]`) as HTMLInputElement | null;
     if (!el) {
-      el = document.querySelector(
-        `button[data-row="${targetRow}"][data-field="${preferredField}"]`,
-      ) as HTMLInputElement | null;
+      el = document.querySelector(`button[data-row="${targetRow}"][data-field="${preferredField}"]`) as HTMLInputElement | null;
     }
     if (el) {
       el.focus();
@@ -511,34 +472,31 @@ const TdmeItemRow: React.FC<TdmeItemRowProps> = ({ item, rowIndex, totalRows, is
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, currentField: typeof availableFields[number]) => {
+  const handleKeyDown = (e: React.KeyboardEvent, currentField: (typeof availableFields)[number]) => {
     if (isReadOnly) return;
 
     const currentFieldIdx = (availableFields as readonly string[]).indexOf(currentField);
 
-    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+    if (e.key === "ArrowDown" || e.key === "Enter") {
       e.preventDefault();
       const nextRow = rowIndex + 1;
       if (nextRow < totalRows) {
         focusInput(nextRow, currentField);
       }
-    }
-    else if (e.key === 'ArrowUp') {
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
       const prevRow = rowIndex - 1;
       if (prevRow >= 0) {
         focusInput(prevRow, currentField);
       }
-    }
-    else if (e.key === 'ArrowRight') {
+    } else if (e.key === "ArrowRight") {
       e.preventDefault();
       if (currentFieldIdx < availableFields.length - 1) {
         focusInput(rowIndex, availableFields[currentFieldIdx + 1]);
       } else if (rowIndex + 1 < totalRows) {
         focusInput(rowIndex + 1, availableFields[0]);
       }
-    }
-    else if (e.key === 'ArrowLeft') {
+    } else if (e.key === "ArrowLeft") {
       e.preventDefault();
       if (currentFieldIdx > 0) {
         focusInput(rowIndex, availableFields[currentFieldIdx - 1]);
@@ -550,63 +508,100 @@ const TdmeItemRow: React.FC<TdmeItemRowProps> = ({ item, rowIndex, totalRows, is
 
   // Toggle buttons keep native Enter (fires the click / toggles the pair);
   // arrows still navigate between cells/rows.
-  const handleToggleKeyDown = (currentField: typeof availableFields[number]) =>
-    (e: React.KeyboardEvent<HTMLButtonElement>) => {
-      if (e.key === 'Enter') return;
-      handleKeyDown(e, currentField);
-    };
+  const handleToggleKeyDown = (currentField: (typeof availableFields)[number]) => (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "Enter") return;
+    handleKeyDown(e, currentField);
+  };
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
       <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">&nbsp;</td>
       <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.item_name}</td>
-      <td className={cn('px-2 py-2 align-middle text-center text-slate-600 text-[11px]', !item.nominal && 'text-slate-300')}>
-        {item.nominal || '—'}
-      </td>
+      <td className={cn("px-2 py-2 align-middle text-center text-slate-600 text-[11px]", !item.nominal && "text-slate-300")}>{item.nominal || "—"}</td>
       {isDual ? (
         <>
           <td className="px-2 py-2 align-middle">
             {toggleEnabled ? (
               <AdaptiveCell
                 nominal={item.nominal}
-                value={getValue(item, 'hasil_1')}
-                onChange={(v) => onChange(item.id, 'hasil_1', v)}
+                value={getValue(item, "hasil_1")}
+                onChange={(v) => onChange(item.id, "hasil_1", v)}
                 disabled={disabled}
                 inputClass={inputClass}
                 dataRow={rowIndex}
                 dataField="hasil_1"
-                onKeyDown={(e) => handleKeyDown(e, 'hasil_1')}
-                onToggleKeyDown={handleToggleKeyDown('hasil_1')}
+                onKeyDown={(e) => handleKeyDown(e, "hasil_1")}
+                onToggleKeyDown={handleToggleKeyDown("hasil_1")}
               />
             ) : (
-              <input type="text" className={inputClass} placeholder="TX1 / M1" value={getValue(item, 'hasil_1')} onChange={(e) => onChange(item.id, 'hasil_1', e.target.value)} disabled={disabled} data-row={rowIndex} data-field="hasil_1" onKeyDown={(e) => handleKeyDown(e, 'hasil_1')} />
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="TX1 / M1"
+                value={getValue(item, "hasil_1")}
+                onChange={(e) => onChange(item.id, "hasil_1", e.target.value)}
+                disabled={disabled}
+                data-row={rowIndex}
+                data-field="hasil_1"
+                onKeyDown={(e) => handleKeyDown(e, "hasil_1")}
+              />
             )}
           </td>
           <td className="px-2 py-2 align-middle">
             {toggleEnabled ? (
               <AdaptiveCell
                 nominal={item.nominal}
-                value={getValue(item, 'hasil_2')}
-                onChange={(v) => onChange(item.id, 'hasil_2', v)}
+                value={getValue(item, "hasil_2")}
+                onChange={(v) => onChange(item.id, "hasil_2", v)}
                 disabled={disabled}
                 inputClass={inputClass}
                 dataRow={rowIndex}
                 dataField="hasil_2"
-                onKeyDown={(e) => handleKeyDown(e, 'hasil_2')}
-                onToggleKeyDown={handleToggleKeyDown('hasil_2')}
+                onKeyDown={(e) => handleKeyDown(e, "hasil_2")}
+                onToggleKeyDown={handleToggleKeyDown("hasil_2")}
               />
             ) : (
-              <input type="text" className={inputClass} placeholder="TX2 / M2" value={getValue(item, 'hasil_2')} onChange={(e) => onChange(item.id, 'hasil_2', e.target.value)} disabled={disabled} data-row={rowIndex} data-field="hasil_2" onKeyDown={(e) => handleKeyDown(e, 'hasil_2')} />
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="TX2 / M2"
+                value={getValue(item, "hasil_2")}
+                onChange={(e) => onChange(item.id, "hasil_2", e.target.value)}
+                disabled={disabled}
+                data-row={rowIndex}
+                data-field="hasil_2"
+                onKeyDown={(e) => handleKeyDown(e, "hasil_2")}
+              />
             )}
           </td>
         </>
       ) : (
         <td colSpan={2} className="px-2 py-2 align-middle">
-          <input type="text" className={inputClass} placeholder="..." value={getValue(item, 'hasil_1')} onChange={(e) => onChange(item.id, 'hasil_1', e.target.value)} disabled={disabled} data-row={rowIndex} data-field="hasil_1" onKeyDown={(e) => handleKeyDown(e, 'hasil_1')} />
+          <input
+            type="text"
+            className={inputClass}
+            placeholder="..."
+            value={getValue(item, "hasil_1")}
+            onChange={(e) => onChange(item.id, "hasil_1", e.target.value)}
+            disabled={disabled}
+            data-row={rowIndex}
+            data-field="hasil_1"
+            onKeyDown={(e) => handleKeyDown(e, "hasil_1")}
+          />
         </td>
       )}
       <td className="px-2 py-2 align-middle">
-        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, 'keterangan')} onChange={(e) => onChange(item.id, 'keterangan', e.target.value)} disabled={isReadOnly} data-row={rowIndex} data-field="keterangan" onKeyDown={(e) => handleKeyDown(e, 'keterangan')} />
+        <input
+          type="text"
+          className={inputClass}
+          placeholder="Catatan"
+          value={getValue(item, "keterangan")}
+          onChange={(e) => onChange(item.id, "keterangan", e.target.value)}
+          disabled={isReadOnly}
+          data-row={rowIndex}
+          data-field="keterangan"
+          onKeyDown={(e) => handleKeyDown(e, "keterangan")}
+        />
       </td>
     </tr>
   );
@@ -621,21 +616,21 @@ const TdmeItemRow: React.FC<TdmeItemRowProps> = ({ item, rowIndex, totalRows, is
  *   "local / Remote" → toggle Local / Remote
  *   numeric / other → free-text input
  */
-type AdaptiveShape = { kind: 'toggle'; options: [string, string] } | { kind: 'text' };
+type AdaptiveShape = { kind: "toggle"; options: [string, string] } | { kind: "text" };
 
 const parseAdaptiveShape = (nominal: string | null): AdaptiveShape => {
-  if (!nominal) return { kind: 'text' };
-  const u = nominal.trim().toUpperCase().replace(/\s+/g, ' ');
-  if (u === 'NORMAL / ALRM' || u === 'NORMAL/ALRM' || u === 'NORMAL / ALARM' || u === 'NORMAL/ALARM') {
-    return { kind: 'toggle', options: ['NORMAL', 'ALARM'] };
+  if (!nominal) return { kind: "text" };
+  const u = nominal.trim().toUpperCase().replace(/\s+/g, " ");
+  if (u === "NORMAL / ALRM" || u === "NORMAL/ALRM" || u === "NORMAL / ALARM" || u === "NORMAL/ALARM") {
+    return { kind: "toggle", options: ["NORMAL", "ALARM"] };
   }
-  if (u === '√ / -' || u === '√/-' || u === '√ /-' || u === '√/ -') {
-    return { kind: 'toggle', options: ['√', '-'] };
+  if (u === "√ / -" || u === "√/-" || u === "√ /-" || u === "√/ -") {
+    return { kind: "toggle", options: ["√", "-"] };
   }
-  if (u === 'LOCAL / REMOTE' || u === 'LOCAL/REMOTE') {
-    return { kind: 'toggle', options: ['Local', 'Remote'] };
+  if (u === "LOCAL / REMOTE" || u === "LOCAL/REMOTE") {
+    return { kind: "toggle", options: ["Local", "Remote"] };
   }
-  return { kind: 'text' };
+  return { kind: "text" };
 };
 
 /**
@@ -645,8 +640,8 @@ const parseAdaptiveShape = (nominal: string | null): AdaptiveShape => {
  */
 const toggleAliasFor = (value: string): string => {
   const v = value.trim();
-  if (v === '√' || v === '✓' || v.toLowerCase() === 'v') return '√';
-  if (v.toLowerCase() === 'ok') return 'ok';
+  if (v === "√" || v === "✓" || v.toLowerCase() === "v") return "√";
+  if (v.toLowerCase() === "ok") return "ok";
   return v.toLowerCase();
 };
 
@@ -656,8 +651,8 @@ const toggleMatches = (option: string, value: string): boolean => {
   const o = option.trim().toLowerCase();
   const v = toggleAliasFor(value);
   if (v === o) return true;
-  if (o === 'normal' && (v === '√' || v === 'ok')) return true;
-  if (o === '√' && v === 'ok') return true;
+  if (o === "normal" && (v === "√" || v === "ok")) return true;
+  if (o === "√" && v === "ok") return true;
   return false;
 };
 
@@ -676,15 +671,15 @@ interface AdaptiveCellProps {
 const AdaptiveCell: React.FC<AdaptiveCellProps> = ({ nominal, value, onChange, disabled, inputClass, dataRow, dataField, onKeyDown, onToggleKeyDown }) => {
   const shape = parseAdaptiveShape(nominal);
 
-  if (shape.kind === 'toggle') {
+  if (shape.kind === "toggle") {
     return <BinaryToggle options={shape.options} value={value} onChange={onChange} disabled={disabled} dataRow={dataRow} dataField={dataField} onKeyDown={onToggleKeyDown} />;
   }
 
   return (
     <input
       type="text"
-      className={cn(inputClass, 'text-center')}
-      placeholder={nominal ?? '...'}
+      className={cn(inputClass, "text-center")}
+      placeholder={nominal ?? "..."}
       value={value}
       onChange={(e) => onChange(e.target.value || null)}
       disabled={disabled}
@@ -710,11 +705,9 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
   const isLeft = toggleMatches(leftOpt, value);
   const isRight = toggleMatches(rightOpt, value);
 
-  const leftActive = 'bg-emerald-600 text-white border-emerald-600';
-  const rightActive = rightOpt === 'ALARM' || rightOpt === 'NOT'
-    ? 'bg-red-600 text-white border-red-600'
-    : 'bg-slate-600 text-white border-slate-600';
-  const idle = 'bg-white text-slate-600 border-slate-300 hover:border-slate-400';
+  const leftActive = "bg-emerald-600 text-white border-emerald-600";
+  const rightActive = rightOpt === "ALARM" || rightOpt === "NOT" ? "bg-red-600 text-white border-red-600" : "bg-slate-600 text-white border-slate-600";
+  const idle = "bg-white text-slate-600 border-slate-300 hover:border-slate-400";
 
   const click = (opt: string) => {
     if (disabled) return;
@@ -726,7 +719,7 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
       <button
         type="button"
         title="Klik untuk memilih"
-        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300', isLeft ? leftActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        className={cn("flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300", isLeft ? leftActive : idle, disabled && "opacity-50 cursor-not-allowed")}
         onClick={() => click(leftOpt)}
         disabled={disabled}
         data-row={dataRow}
@@ -738,7 +731,7 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
       <button
         type="button"
         title="Klik untuk memilih"
-        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors', isRight ? rightActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        className={cn("flex-1 px-2 py-1 text-[11px] font-semibold transition-colors", isRight ? rightActive : idle, disabled && "opacity-50 cursor-not-allowed")}
         onClick={() => click(rightOpt)}
         disabled={disabled}
         data-row={dataRow}
@@ -754,7 +747,7 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
 const InfoCell: React.FC<{ label: string; value: string | null }> = ({ label, value }) => (
   <div>
     <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">{label}</span>
-    <p className="mt-0.5 font-medium text-slate-700">{value ?? '—'}</p>
+    <p className="mt-0.5 font-medium text-slate-700">{value ?? "—"}</p>
   </div>
 );
 
@@ -770,11 +763,16 @@ const EditableMetaField: React.FC<EditableMetaFieldProps> = ({ label, value, onC
   <div>
     <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</label>
     {disabled ? (
-      <p className="text-xs text-slate-700 font-medium">{value || '—'}</p>
+      <p className="text-xs text-slate-700 font-medium">{value || "—"}</p>
     ) : (
-      <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
         className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 bg-white focus:ring-2 focus:ring-brand-primary focus:border-transparent focus:outline-none placeholder:text-slate-300"
-        maxLength={60} />
+        maxLength={60}
+      />
     )}
   </div>
 );
@@ -791,13 +789,14 @@ const EditableSelectField: React.FC<EditableSelectFieldProps> = ({ label, value,
   <div>
     <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</label>
     {disabled ? (
-      <p className="text-xs text-slate-700 font-medium">{value || '—'}</p>
+      <p className="text-xs text-slate-700 font-medium">{value || "—"}</p>
     ) : (
-      <select value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 bg-white focus:ring-2 focus:ring-brand-primary focus:border-transparent focus:outline-none">
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 bg-white focus:ring-2 focus:ring-brand-primary focus:border-transparent focus:outline-none">
         <option value="">—</option>
         {options.map((opt) => (
-          <option key={opt} value={opt}>{opt}</option>
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
         ))}
       </select>
     )}

@@ -164,6 +164,15 @@ const ShiftEditorToolbar: React.FC<ShiftEditorToolbarProps> = ({
           ))}
         </div>
 
+        {/* TPO Button - Tim Pemeriksa Orang */}
+        <button
+          key="tpo"
+          onClick={() => onShiftSelect('tpo')}
+          className="px-3 py-2 text-xs font-medium bg-gray-100 hover:bg-navy-700 hover:text-white rounded transition-colors text-center"
+        >
+          TPO
+        </button>
+
         {/* Custom Text Input */}
         <div className="border-t pt-3">
           <input

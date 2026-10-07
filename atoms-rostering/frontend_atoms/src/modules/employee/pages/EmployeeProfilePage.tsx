@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/core/AuthContext';
 import { adminService } from '../../../services/adminService';
@@ -12,11 +12,13 @@ import {
   Building2,
   CalendarDays,
   Fingerprint,
+  Loader2,
   LogIn,
   Mail,
   MapPin,
   Pencil,
   Users,
+  X,
 } from 'lucide-react';
 
 function formatDate(value?: string | null): string {
@@ -48,6 +50,30 @@ function getInitials(name?: string): string {
   return (name || '?').substring(0, 2).toUpperCase();
 }
 
+function getBackendBaseUrl(): string {
+  const configured = import.meta.env.VITE_BACKEND_URL;
+  if (configured) return configured.replace(/\/$/, '');
+
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+  try {
+    const parsed = new URL(apiUrl);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return 'http://localhost:8000';
+  }
+}
+
+function getAvatarUrl(avatarPath?: string | null): string | null {
+  if (!avatarPath) return null;
+  if (/^https?:\/\//i.test(avatarPath)) return avatarPath;
+
+  const normalized = avatarPath.replace(/^\/+/, '');
+  if (normalized.startsWith('storage/')) {
+    return `${getBackendBaseUrl()}/${normalized}`;
+  }
+  return `${getBackendBaseUrl()}/storage/${normalized}`;
+}
+
 function formatLastLogin(value?: string | null): string {
   if (!value) return 'Belum pernah login';
   const date = new Date(value);
@@ -71,6 +97,54 @@ const EmployeeProfilePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarBroken, setAvatarBroken] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+
+  const isOwnProfile = !!sessionUser && !!profile && profile.user_id === sessionUser.id;
+  const avatarUrl = getAvatarUrl(profile?.avatar_path);
+
+  useEffect(() => {
+    setAvatarBroken(false);
+  }, [avatarUrl]);
+
+  const handleAvatarFile = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file || !profile) return;
+
+      setIsUploadingAvatar(true);
+      setAvatarError(null);
+      try {
+        const result = await adminService.uploadAvatar(profile.id, file);
+        setProfile((prev) => (prev ? { ...prev, avatar_path: result.avatar_path } : prev));
+      } catch {
+        setAvatarError('Gagal mengunggah foto. Coba lagi.');
+      } finally {
+        setIsUploadingAvatar(false);
+      }
+    },
+    [profile]
+  );
+
+  const handleDeleteAvatar = useCallback(async () => {
+    if (!profile) return;
+
+    setIsDeletingAvatar(true);
+    setAvatarError(null);
+    try {
+      await adminService.deleteAvatar(profile.id);
+      setProfile((prev) => (prev ? { ...prev, avatar_path: null } : prev));
+      setAvatarBroken(false);
+    } catch {
+      setAvatarError('Gagal menghapus foto. Coba lagi.');
+    } finally {
+      setIsDeletingAvatar(false);
+    }
+  }, [profile]);
 
   const canEdit = useCallback(
     (employee: Employee) =>
@@ -178,27 +252,100 @@ const EmployeeProfilePage: React.FC = () => {
         <div className="absolute -right-4 -top-4 w-40 h-40 rounded-full bg-amber-400/10"></div>
 
         <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-2xl sm:text-3xl font-bold text-navy-900 shadow-lg flex-shrink-0">
-            {getInitials(name)}
-          </div>
+          <div className="relative flex-shrink-0">
+            <div
+              onClick={() => isOwnProfile && !isUploadingAvatar && avatarInputRef.current?.click()}
+              title={isOwnProfile ? 'Klik untuk mengganti foto' : undefined}
+              className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-2xl sm:text-3xl font-bold text-navy-900 shadow-lg ${
+                isOwnProfile ? 'cursor-pointer hover:ring-2 hover:ring-amber-200 transition' : ''
+              }`}
+            >
+              {avatarUrl && !avatarBroken ? (
+                <img
+                  src={avatarUrl}
+                  alt={name}
+                  className="w-full h-full object-cover"
+                  onError={() => setAvatarBroken(true)}
+                />
+              ) : (
+                <span>{getInitials(name)}</span>
+              )}
+              {isUploadingAvatar && (
+                <span className="absolute inset-0 flex items-center justify-center bg-navy-900/60 text-white">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </span>
+              )}
+               {isDeletingAvatar && (
+                 <span className="absolute inset-0 z-10 flex items-center justify-center bg-navy-900/60 text-white">
+                   <Loader2 className="h-6 w-6 animate-spin" />
+                 </span>
+               )}
+             </div>
+             {isOwnProfile && (
+               <input
+                 ref={avatarInputRef}
+                 type="file"
+                 accept="image/jpeg,image/png,image/webp"
+                 className="hidden"
+                 onChange={handleAvatarFile}
+               />
+             )}
+           </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-bold break-words">{name}</h1>
-              {userName?.role && (
-                <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${roleBadgeColor[userName.role] || 'bg-white/15 text-white border-white/25'}`}>
-                  {userName.role}
-                </span>
-              )}
-              {unitKerja !== '—' && (
-                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-navy-500/60 text-white border border-white/15">
-                  {unitKerja}
-                </span>
-              )}
-            </div>
-            {p.jabatan && <p className="mt-1.5 text-white/80 text-sm sm:text-base">{p.jabatan}</p>}
-            {userName?.email && <p className="mt-1 text-white/60 text-sm">{userName.email}</p>}
-          </div>
+           <div className="flex-1 min-w-0">
+             <div className="flex flex-wrap items-center gap-2">
+               <h1 className="text-2xl sm:text-3xl font-bold break-words">{name}</h1>
+               {userName?.role && (
+                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${roleBadgeColor[userName.role] || 'bg-white/15 text-white border-white/25'}`}>
+                   {userName.role}
+                 </span>
+               )}
+               {unitKerja !== '—' && (
+                 <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-navy-500/60 text-white border border-white/15">
+                   {unitKerja}
+                 </span>
+               )}
+             </div>
+             {p.jabatan && <p className="mt-1.5 text-white/80 text-sm sm:text-base">{p.jabatan}</p>}
+             {userName?.email && <p className="mt-1 text-white/60 text-sm">{userName.email}</p>}
+             {isOwnProfile && (
+               <div className="mt-3 flex flex-wrap items-center gap-2">
+                 <button
+                   type="button"
+                   onClick={() => avatarInputRef.current?.click()}
+                   disabled={isUploadingAvatar || isDeletingAvatar}
+                   className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-2 sm:text-sm"
+                 >
+                   {isUploadingAvatar ? (
+                     <>
+                       <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
+                       Mengunggah...
+                     </>
+                   ) : (
+                     <>Upload Foto</>
+                   )}
+                 </button>
+                 {avatarUrl && !avatarBroken && (
+                   <button
+                     type="button"
+                     onClick={handleDeleteAvatar}
+                     disabled={isUploadingAvatar || isDeletingAvatar}
+                     className="inline-flex items-center gap-1.5 rounded-lg border border-red-300/40 bg-red-500/20 px-3 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-red-500/25 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-2 sm:text-sm"
+                   >
+                     {isDeletingAvatar ? (
+                       <>
+                         <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
+                         Menghapus...
+                       </>
+                     ) : (
+                       <>Hapus Foto</>
+                     )}
+                   </button>
+                 )}
+                 {avatarError && <p className="w-full text-[11px] text-red-300 sm:text-xs">{avatarError}</p>}
+               </div>
+             )}
+           </div>
 
           {editable && (
             <button

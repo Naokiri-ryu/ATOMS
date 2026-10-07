@@ -13,22 +13,25 @@ import type { ShiftType } from '@/types';
  *   pass them explicitly to /api/v1/personnel/shift-today.
  *
  * The three shift windows match atoms-rostering's `shifts` table:
- *   pagi  : 07:00 - 13:00
- *   siang : 13:00 - 19:00
- *   malam : 19:00 - 07:00 (wraps to next day)
+ *   pagi  : 07:15 - 13:15
+ *   siang : 13:15 - 19:15
+ *   malam : 19:15 - 07:15 (wraps to next day)
  */
 
 export function getCurrentShiftType(now: Date = new Date()): ShiftType {
-  const h = now.getHours();
-  if (h >= 7 && h < 13) return 'pagi';
-  if (h >= 13 && h < 19) return 'siang';
+  const m = now.getHours() * 60 + now.getMinutes();
+  const PAGI_START = 7 * 60 + 15; // 07:15
+  const SIANG_START = 13 * 60 + 15; // 13:15
+  const MALAM_START = 19 * 60 + 15; // 19:15
+  if (m >= PAGI_START && m < SIANG_START) return 'pagi';
+  if (m >= SIANG_START && m < MALAM_START) return 'siang';
   return 'malam';
 }
 
 /**
  * Get the work date the active shift belongs to.
  *
- * For shift `malam` running 19:00-07:00, hours 00:00-06:59 belong to the
+ * For shift `malam` running 19:15-07:15, hours 00:00-06:59 belong to the
  * previous calendar day's malam shift. All other hours belong to the
  * current calendar day.
  *
@@ -36,8 +39,10 @@ export function getCurrentShiftType(now: Date = new Date()): ShiftType {
  */
 export function getCurrentShiftDate(now: Date = new Date()): string {
   const d = new Date(now);
-  if (d.getHours() < 7) {
-    // Early-morning hours belong to yesterday's malam shift
+  const mNow = d.getHours() * 60 + d.getMinutes();
+  const PAGI_START = 7 * 60 + 15;
+  if (mNow < PAGI_START) {
+    // Early-morning hours (before 07:15) belong to yesterday's malam shift
     d.setDate(d.getDate() - 1);
   }
   const yyyy = d.getFullYear();
@@ -52,18 +57,18 @@ export function getShiftLabel(shift: ShiftType): {
   end: string;
   emoji: string;
 } {
-  if (shift === 'pagi') return { label: 'Shift Pagi', start: '07:00', end: '13:00', emoji: '☀️' };
-  if (shift === 'siang') return { label: 'Shift Siang', start: '13:00', end: '19:00', emoji: '🌤️' };
-  return { label: 'Shift Malam', start: '19:00', end: '07:00', emoji: '🌙' };
+  if (shift === 'pagi') return { label: 'Shift Pagi', start: '07:15', end: '13:15', emoji: '☀️' };
+  if (shift === 'siang') return { label: 'Shift Siang', start: '13:15', end: '19:15', emoji: '🌤️' };
+  return { label: 'Shift Malam', start: '19:15', end: '07:15', emoji: '🌙' };
 }
 
 /**
  * Effective sort minutes for a logbook note time inside its shift.
  *
- * The malam shift (19:00-07:00) wraps past midnight, so a note logged at
- * 00:45 actually happens AFTER one at 19:05 and must sort at the BOTTOM of
+ * The malam shift (19:15-07:15) wraps past midnight, so a note logged at
+ * 00:45 actually happens AFTER one at 19:15 and must sort at the BOTTOM of
  * the malam list — not at the top. Any malam time earlier than the shift
- * start (19:00) is therefore treated as belonging to the next day (+24h).
+ * start (19:15) is therefore treated as belonging to the next day (+24h).
  * Returns null when there is no parseable time so callers can sort those
  * last.
  */
@@ -72,7 +77,7 @@ export function noteSortMinutes(shift: ShiftType, time: string | null): number |
   const m = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
   if (!m) return null;
   const minutes = Number(m[1]) * 60 + Number(m[2]);
-  if (shift === 'malam' && minutes < 19 * 60) {
+  if (shift === 'malam' && minutes < 19 * 60 + 15) {
     return minutes + 24 * 60;
   }
   return minutes;

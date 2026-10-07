@@ -9,9 +9,9 @@ import type {
 } from '@/types/cnsdAtcSystem';
 
 const SHIFT_TIME_LABELS: Record<string, string> = {
-  pagi:  '07:00 — 13:00',
-  siang: '13:00 — 19:00',
-  malam: '19:00 — 07:00',
+  pagi:  '07:15 — 13:15',
+  siang: '13:15 — 19:15',
+  malam: '19:15 — 07:15',
 };
 
 const CPU_STATUS_FLAGS = ['C', 'M', 'F', 'O', 'A', 'N', 'L'] as const;

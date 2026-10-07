@@ -65,13 +65,13 @@ class RosteringIntegrationService
     {
         // Hardcoded fallback (same as current WorkOrder::isShiftEnded)
         $fallback = [
-            'pagi'  => '13:00',
-            'siang' => '19:00',
-            'malam' => '07:00',
+            'pagi'  => '13:15',
+            'siang' => '19:15',
+            'malam' => '07:15',
         ];
 
         $shiftTimes = $this->getShiftTimes($shiftType);
-        $endTimeStr = $shiftTimes['end_time'] ?? ($fallback[strtolower($shiftType)] ?? '13:00');
+        $endTimeStr = $shiftTimes['end_time'] ?? ($fallback[strtolower($shiftType)] ?? '13:15');
 
         // Parse end time — strip seconds if present (e.g. "13:00:00" → "13:00")
         $endTimeStr = substr($endTimeStr, 0, 5);

@@ -165,11 +165,11 @@ class GroundCheckAdcRecord extends Model
         }
 
         if ($recordDate === $today) {
-            $hour = (int) $now->format('H');
+            $minutes = $now->hour * 60 + $now->minute;
             return match ($this->shift_type) {
-                'pagi'  => $hour >= 13,
-                'siang' => $hour >= 19,
-                'malam' => $hour >= 7 && $hour < 19,
+                'pagi'  => $minutes >= 7 * 60 + 15,
+                'siang' => $minutes >= 13 * 60 + 15,
+                'malam' => $minutes >= 7 * 60 + 15 && $minutes < 19 * 60 + 15,
                 default => false,
             };
         }

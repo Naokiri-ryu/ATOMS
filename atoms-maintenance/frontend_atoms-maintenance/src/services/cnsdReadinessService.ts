@@ -1,5 +1,6 @@
 import { API_URL_PROD } from '@/config';
 import axios from 'axios';
+import { normalizeReadinessRecord } from '@/lib/cnsdReadinessValues';
 import type { ShiftType } from '@/types';
 import type {
   CnsdReadinessRecordDetail,
@@ -34,6 +35,14 @@ interface PaginatedApiResponse<T> {
   total: number;
 }
 
+/**
+ * Every endpoint that returns a full record goes through here so pick-list cells
+ * (STATUS / DUAL STATUS / DUAL STATE) always hold canonical values — including
+ * rows created before those columns became pick-lists.
+ */
+const asRecordDetail = <T extends CnsdReadinessRecordDetail>(data: T): T =>
+  normalizeReadinessRecord(data);
+
 export const cnsdReadinessService = {
   async listRecords(params: CnsdReadinessListParams = {}): Promise<PaginatedApiResponse<CnsdReadinessRecordSummary>> {
     const response = await axios.get(`${API_URL}/v1/cnsd/readiness`, {
@@ -47,7 +56,7 @@ export const cnsdReadinessService = {
     const response = await axios.get(`${API_URL}/v1/cnsd/readiness/${id}`, {
       headers: getAuthHeaders(),
     });
-    return response.data.data;
+    return asRecordDetail(response.data.data);
   },
 
   async getTemplate(): Promise<{ form_type: string; sections: CnsdReadinessTemplateSection[] }> {
@@ -79,14 +88,14 @@ export const cnsdReadinessService = {
     const response = await axios.post(`${API_URL}/v1/cnsd/readiness`, payload, {
       headers: getAuthHeaders(),
     });
-    return response.data.data;
+    return asRecordDetail(response.data.data);
   },
 
   async updateRecord(id: number, payload: CnsdReadinessUpdatePayload): Promise<CnsdReadinessRecordDetail> {
     const response = await axios.put(`${API_URL}/v1/cnsd/readiness/${id}`, payload, {
       headers: getAuthHeaders(),
     });
-    return response.data.data;
+    return asRecordDetail(response.data.data);
   },
 
   async signRecord(
@@ -101,7 +110,10 @@ export const cnsdReadinessService = {
     const response = await axios.post(`${API_URL}/v1/cnsd/readiness/${id}/sign`, body, {
       headers: getAuthHeaders(),
     });
-    return response.data.data;
+    return {
+      ...response.data.data,
+      record: asRecordDetail(response.data.data.record),
+    };
   },
 
   async deleteRecord(id: number): Promise<void> {
@@ -116,7 +128,7 @@ export const cnsdReadinessService = {
     const response = await axios.post(`${API_URL}/v1/cnsd/readiness/${id}/items`, payload, {
       headers: getAuthHeaders(),
     });
-    return response.data.data;
+    return asRecordDetail(response.data.data);
   },
 
   async updateItemStructure(
@@ -127,14 +139,14 @@ export const cnsdReadinessService = {
     const response = await axios.put(`${API_URL}/v1/cnsd/readiness/${id}/items/${itemId}`, payload, {
       headers: getAuthHeaders(),
     });
-    return response.data.data;
+    return asRecordDetail(response.data.data);
   },
 
   async deleteItem(id: number, itemId: number): Promise<CnsdReadinessRecordDetail> {
     const response = await axios.delete(`${API_URL}/v1/cnsd/readiness/${id}/items/${itemId}`, {
       headers: getAuthHeaders(),
     });
-    return response.data.data;
+    return asRecordDetail(response.data.data);
   },
 
   async renameSection(
@@ -144,6 +156,6 @@ export const cnsdReadinessService = {
     const response = await axios.put(`${API_URL}/v1/cnsd/readiness/${id}/sections`, payload, {
       headers: getAuthHeaders(),
     });
-    return response.data.data;
+    return asRecordDetail(response.data.data);
   },
 };

@@ -216,11 +216,12 @@ class DashboardController extends Controller
 
         // Fallback: derive from current local time (Asia/Jakarta) — pagi 07:00-13:00,
         // siang 13:00-19:00, malam 19:00-07:00.
-        $hour = (int) Carbon::now()->format('G');
+        $now = Carbon::now();
+        $minutes = $now->hour * 60 + $now->minute;
         return match (true) {
-            $hour >= 7  && $hour < 13 => 'pagi',
-            $hour >= 13 && $hour < 19 => 'siang',
-            default                   => 'malam',
+            $minutes >= 7 * 60 + 15  && $minutes < 13 * 60 + 15 => 'pagi',
+            $minutes >= 13 * 60 + 15 && $minutes < 19 * 60 + 15 => 'siang',
+            default                                             => 'malam',
         };
     }
 }

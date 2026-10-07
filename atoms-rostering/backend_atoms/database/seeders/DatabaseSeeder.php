@@ -18,9 +18,9 @@ class DatabaseSeeder extends Seeder
     {
         // Create default shifts with time ranges
         $shiftsData = [
-            ['name' => 'pagi', 'start_time' => '07:00:00', 'end_time' => '13:00:00'],
-            ['name' => 'siang', 'start_time' => '13:00:00', 'end_time' => '19:00:00'],
-            ['name' => 'malam', 'start_time' => '19:00:00', 'end_time' => '07:00:00'],
+            ['name' => 'pagi', 'start_time' => '07:15:00', 'end_time' => '13:15:00'],
+            ['name' => 'siang', 'start_time' => '13:15:00', 'end_time' => '19:15:00'],
+            ['name' => 'malam', 'start_time' => '19:15:00', 'end_time' => '07:15:00'],
             ['name' => 'libur', 'start_time' => null, 'end_time' => null],
             ['name' => 'cuti_tahunan', 'start_time' => null, 'end_time' => null],
             ['name' => 'cuti_sakit', 'start_time' => null, 'end_time' => null],

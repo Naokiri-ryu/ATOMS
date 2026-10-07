@@ -9,6 +9,7 @@ import {
   type TfpEquipmentSummary,
 } from '../services/maintenanceStatisticsService';
 import { EmptyState, Skeleton } from './statistics/parts';
+import { formatTanggal } from './statistics/chartParts';
 
 const FIRST_YEAR = 2020;
 
@@ -16,14 +17,6 @@ const numberFormat = new Intl.NumberFormat('id-ID');
 
 const selectClass =
   'h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-navy-700 focus:border-transparent min-w-0';
-
-const formatTanggal = (iso: string | null): string => {
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-').map(Number);
-  if (!y || !m || !d) return '—';
-  const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-  return `${d} ${bulan[m - 1]} ${y}`;
-};
 
 /** Tinggi bar mini 12 bulan, relatif terhadap puncak bulan itu sendiri. */
 const Sparkbars: React.FC<{ monthly: number[] }> = ({ monthly }) => {
@@ -87,7 +80,9 @@ const EquipmentCard: React.FC<{
 );
 
 /**
- * /statistics di rostering = daftar peralatan TFP Performance Check.
+ * Daftar peralatan TFP Performance Check. Ini sub-menu pertama di bawah
+ * /statistics; sub-menu kedua adalah Ground Check.
+ *
  * Halaman ini memanggil backend atoms-maintenance lewat
  * maintenanceStatisticsService (lihat catatan di sana soal auth).
  */
@@ -133,9 +128,25 @@ const StatisticsPage: React.FC = () => {
 
   return (
     <PageHeader
-      title="Statistik"
+      title="Performance Check"
       subtitle="Pilih peralatan untuk melihat tren nilai pengukuran per bulan"
     >
+      <nav
+        className="bg-white rounded-2xl border border-slate-200 shadow-sm p-1.5 flex gap-1.5"
+        aria-label="Sub-menu statistik"
+      >
+        <span className="flex-1 h-10 flex items-center justify-center rounded-lg text-sm font-semibold bg-navy-700 text-white shadow-sm">
+          Performance Check
+        </span>
+        <button
+          type="button"
+          onClick={() => navigate('/statistics/ground-check')}
+          className="flex-1 h-10 flex items-center justify-center rounded-lg text-sm font-semibold text-slate-600 hover:bg-navy-50 hover:text-navy-700 transition-colors"
+        >
+          Ground Check
+        </button>
+      </nav>
+
       <div className="flex flex-wrap items-center gap-3">
         <select
           value={String(year)}
@@ -157,8 +168,8 @@ const StatisticsPage: React.FC = () => {
           <span className="hidden sm:inline">Muat Ulang</span>
         </button>
         <span className="text-xs text-slate-400 ml-1">
-          <strong className="font-mono text-slate-600">{numberFormat.format(grandTotal)}</strong> form
-          Performance Check tercatat, <strong className="font-mono text-slate-600">{numberFormat.format(grandCompleted)}</strong> completed
+          <strong className="font-mono text-slate-600">{numberFormat.format(grandTotal)}</strong> form recorded,
+          <strong className="font-mono text-slate-600 ml-1">{numberFormat.format(grandCompleted)}</strong> completed
           pada tahun {year}.
         </span>
       </div>
@@ -196,7 +207,7 @@ const StatisticsPage: React.FC = () => {
             <EquipmentCard
               key={item.module_key}
               item={item}
-              onOpen={(key) => navigate(`/statistics/tfp/${key}`)}
+              onOpen={(key) => navigate(`/statistics/performance-check/${key}`)}
             />
           ))}
         </div>

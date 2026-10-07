@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Bell, LogOut, Menu, X, Clock, LayoutDashboard, FileText, CheckSquare, Activity, Plane, Zap, Users, ClipboardList, BookOpen, Inbox, Monitor as MonitorIcon, ChevronDown, Home, BarChart3, User as UserIcon } from "lucide-react";
+import { Bell, LogOut, Menu, X, Clock, LayoutDashboard, FileText, CheckSquare, Activity, Plane, Zap, Users, ClipboardList, BookOpen, Inbox, Monitor as MonitorIcon, ChevronDown, Home, BarChart3, User as UserIcon, Building2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotification } from "@/hooks/useNotification";
 import { cn } from "@/lib/utils";
@@ -43,6 +43,7 @@ const navItems: NavItem[] = [
   { name: "Reporting", path: "/reporting", icon: ClipboardList, roles: ["Admin", "General Manager", "Manager Teknik", "Supervisor CNSD", "Supervisor TFP", "Teknisi CNSD", "Teknisi TFP"] },
   { name: "Statistik", path: "/statistics", icon: BarChart3, roles: ["Admin", "General Manager", "Manager Teknik", "Supervisor CNSD", "Supervisor TFP", "Teknisi CNSD", "Teknisi TFP"] },
   { name: "Logbook", path: "/logbooks", icon: BookOpen, roles: ["Admin", "General Manager", "Manager Teknik", "Supervisor CNSD", "Supervisor TFP", "Teknisi CNSD", "Teknisi TFP"] },
+  { name: "Kantor Cabang", path: "/branches", icon: Building2, roles: ["Admin", "General Manager", "Manager Teknik", "Supervisor CNSD", "Supervisor TFP", "Teknisi CNSD", "Teknisi TFP"] },
   { name: "User Mgmt", path: "/admin/users", icon: Users, roles: ["Admin"] },
 ];
 

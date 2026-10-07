@@ -1,50 +1,35 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import {
-  AlertCircle,
-  ArrowLeft,
-  Calendar,
-  Clock,
-  Lock as LockIcon,
-  MapPin,
-  Network as AmscIcon,
-  Printer,
-  Save,
-  Users,
-} from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { ShiftBadge } from '@/components/common/ShiftBadge';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { Skeleton } from '@/components/common/Skeleton';
-import { Tabs } from '@/components/common/Tabs';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
-import { canEditCnsd } from '@/lib/roles';
-import { cnsdAmscMeterService } from '@/services/cnsdAmscMeterService';
-import { CnsdAmscMeterSignaturePanel } from './components/CnsdAmscMeterSignaturePanel';
-import type {
-  CnsdAmscMeterItem,
-  CnsdAmscMeterRecordDetail,
-  CnsdAmscMeterSectionMeta,
-} from '@/types/cnsdAmsc';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { AlertCircle, ArrowLeft, Calendar, Clock, Lock as LockIcon, MapPin, Network as AmscIcon, Printer, Save, Users } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { ShiftBadge } from "@/components/common/ShiftBadge";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { Skeleton } from "@/components/common/Skeleton";
+import { Tabs } from "@/components/common/Tabs";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { canEditCnsd } from "@/lib/roles";
+import { cnsdAmscMeterService } from "@/services/cnsdAmscMeterService";
+import { CnsdAmscMeterSignaturePanel } from "./components/CnsdAmscMeterSignaturePanel";
+import type { CnsdAmscMeterItem, CnsdAmscMeterRecordDetail, CnsdAmscMeterSectionMeta } from "@/types/cnsdAmsc";
 
 // ─── Constants ────────────────────────────────────────────────
 
 const SHIFT_TIME_LABELS: Record<string, string> = {
-  pagi:  '07:00 — 13:00',
-  siang: '13:00 — 19:00',
-  malam: '19:00 — 07:00',
+  pagi: "07:15 — 13:15",
+  siang: "13:15 — 19:15",
+  malam: "19:15 — 07:15",
 };
 
-const CCT_OPTIONS = ['TnRn', 'TnRf', 'TfRn', 'TfRf'] as const;
+const CCT_OPTIONS = ["TnRn", "TnRf", "TfRn", "TfRf"] as const;
 
 /**
  * Records created at/after this timestamp get the adaptive toggle cells for
  * HASIL A / HASIL B (FRONT PANEL). Older records keep their plain text inputs
  * so previously entered values stay visible and untouched.
  */
-const AMSC_TOGGLE_CUTOFF = '2026-09-08T00:00:00';
+const AMSC_TOGGLE_CUTOFF = "2026-09-08T00:00:00";
 
 // ─── Main component ───────────────────────────────────────────
 
@@ -77,16 +62,16 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [merk, setMerk] = useState('');
-  const [type, setType] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
+  const [merk, setMerk] = useState("");
+  const [type, setType] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
 
   const canEditMetadata = canEditCnsd(user);
 
   // ─── Fetch ──────────────────────────────────────────────────
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
-      setErrorMessage('ID form tidak valid.');
+      setErrorMessage("ID form tidak valid.");
       setIsLoading(false);
       return;
     }
@@ -95,9 +80,9 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
       const data = await cnsdAmscMeterService.getRecord(recordId);
       setRecord(data);
       setEditedItems({});
-      setMerk(data.merk ?? '');
-      setType(data.type ?? '');
-      setSerialNumber(data.serial_number ?? '');
+      setMerk(data.merk ?? "");
+      setType(data.type ?? "");
+      setSerialNumber(data.serial_number ?? "");
       if (data.sections_meta.length > 0) {
         const stillExists = activeSectionCode && data.sections_meta.some((s) => s.code === activeSectionCode);
         if (!stillExists) {
@@ -107,20 +92,20 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
       setErrorMessage(null);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
-        setErrorMessage('Form tidak ditemukan.');
+        setErrorMessage("Form tidak ditemukan.");
       } else {
-        setErrorMessage('Gagal memuat data form.');
+        setErrorMessage("Gagal memuat data form.");
       }
       setRecord(null);
     } finally {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   useEffect(() => {
     void fetchRecord();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   // ─── Derived ────────────────────────────────────────────────
@@ -128,7 +113,7 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
     const map: Record<string, CnsdAmscMeterItem[]> = {};
     if (!record) return map;
     record.items.forEach((it) => {
-      const code = it.section_code ?? '1';
+      const code = it.section_code ?? "1";
       if (!map[code]) map[code] = [];
       map[code].push(it);
     });
@@ -141,13 +126,9 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
     return !Number.isNaN(created) && created >= new Date(AMSC_TOGGLE_CUTOFF).getTime();
   }, [record]);
 
-  const isCompleted = record?.status === 'completed';
+  const isCompleted = record?.status === "completed";
   const isReadOnly = isCompleted || !canEditCnsd(user);
-  const metadataDirty =
-    !!record &&
-    (merk !== (record.merk ?? '') ||
-      type !== (record.type ?? '') ||
-      serialNumber !== (record.serial_number ?? ''));
+  const metadataDirty = !!record && (merk !== (record.merk ?? "") || type !== (record.type ?? "") || serialNumber !== (record.serial_number ?? ""));
   const hasChanges = Object.keys(editedItems).length > 0 || metadataDirty;
 
   const updateField = (itemId: number, field: keyof CnsdAmscMeterItem, value: string | null) => {
@@ -156,7 +137,7 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
       ...prev,
       [itemId]: {
         ...(prev[itemId] ?? {}),
-        [field]: value === '' ? null : value,
+        [field]: value === "" ? null : value,
       },
     }));
   };
@@ -165,10 +146,10 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
     const edited = editedItems[item.id];
     if (edited && field in edited) {
       const v = edited[field];
-      return v == null ? '' : String(v);
+      return v == null ? "" : String(v);
     }
     const original = item[field];
-    return original == null ? '' : String(original);
+    return original == null ? "" : String(original);
   };
 
   // ─── Save ───────────────────────────────────────────────────
@@ -181,12 +162,12 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
 
     const items = Object.entries(editedItems).map(([rawId, patch]) => ({
       id: Number(rawId),
-      hasil_a:      'hasil_a'      in patch ? patch.hasil_a      ?? null : undefined,
-      hasil_b:      'hasil_b'      in patch ? patch.hasil_b      ?? null : undefined,
-      hasil:        'hasil'        in patch ? patch.hasil        ?? null : undefined,
-      status_value: 'status_value' in patch ? patch.status_value ?? null : undefined,
-      cct:          'cct'          in patch ? patch.cct          ?? null : undefined,
-      keterangan:   'keterangan'   in patch ? patch.keterangan   ?? null : undefined,
+      hasil_a: "hasil_a" in patch ? (patch.hasil_a ?? null) : undefined,
+      hasil_b: "hasil_b" in patch ? (patch.hasil_b ?? null) : undefined,
+      hasil: "hasil" in patch ? (patch.hasil ?? null) : undefined,
+      status_value: "status_value" in patch ? (patch.status_value ?? null) : undefined,
+      cct: "cct" in patch ? (patch.cct ?? null) : undefined,
+      keterangan: "keterangan" in patch ? (patch.keterangan ?? null) : undefined,
     }));
 
     try {
@@ -200,15 +181,15 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
       setEditedItems({});
       const parts: string[] = [];
       if (items.length > 0) parts.push(`${items.length} item`);
-      if (metadataDirty) parts.push('metadata peralatan');
-      setSuccessMessage(`${parts.join(' + ')} disimpan.`);
+      if (metadataDirty) parts.push("metadata peralatan");
+      setSuccessMessage(`${parts.join(" + ")} disimpan.`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menyimpan perubahan.');
+        setErrorMessage(data.message ?? "Gagal menyimpan perubahan.");
       } else {
-        setErrorMessage('Koneksi gagal, coba lagi.');
+        setErrorMessage("Koneksi gagal, coba lagi.");
       }
     } finally {
       setIsSaving(false);
@@ -230,8 +211,8 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
     return (
       <div className="max-w-3xl mx-auto py-20 text-center space-y-4">
         <AlertCircle className="mx-auto h-12 w-12 text-slate-400" />
-        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? 'Form tidak ditemukan.'}</h2>
-        <Button variant="outline" onClick={() => navigate('/cnsd/amsc-meter')} className="gap-2">
+        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? "Form tidak ditemukan."}</h2>
+        <Button variant="outline" onClick={() => navigate("/cnsd/amsc-meter")} className="gap-2">
           <ArrowLeft size={16} />
           Kembali ke Daftar
         </Button>
@@ -239,19 +220,17 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
     );
   }
 
-  const activeSectionMeta = activeSectionCode
-    ? record.sections_meta.find((s) => s.code === activeSectionCode) ?? null
-    : null;
+  const activeSectionMeta = activeSectionCode ? (record.sections_meta.find((s) => s.code === activeSectionCode) ?? null) : null;
 
   return (
     <div className="max-w-full space-y-5 animate-fade-in pb-12">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <button type="button" onClick={() => navigate('/cnsd')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
+        <button type="button" onClick={() => navigate("/cnsd")} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
           <ArrowLeft size={14} /> CNSD
         </button>
         <span>/</span>
-        <button type="button" onClick={() => navigate('/cnsd/amsc-meter')} className="hover:text-slate-700 transition-colors">
+        <button type="button" onClick={() => navigate("/cnsd/amsc-meter")} className="hover:text-slate-700 transition-colors">
           AMSC Meter Reading
         </button>
         <span>/</span>
@@ -284,7 +263,7 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg" title="Rentang waktu shift">
               <Clock size={13} className="text-slate-400" />
-              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? '—'}</span>
+              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? "—"}</span>
             </div>
             <ShiftBadge shift={record.shift_type} />
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
@@ -310,20 +289,16 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
         <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Manager Teknik</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Supervisor CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Teknisi CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(', ')}>
-              {record.technicians.map((t) => t.technician_name).join(', ') || <span className="text-slate-400 italic">—</span>}
+            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(", ")}>
+              {record.technicians.map((t) => t.technician_name).join(", ") || <span className="text-slate-400 italic">—</span>}
             </p>
           </div>
         </div>
@@ -331,11 +306,11 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
 
       {/* Messages */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{errorMessage}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {errorMessage}
+        </div>
       )}
-      {successMessage && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>
-      )}
+      {successMessage && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>}
 
       {/* Info Peralatan card */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
@@ -351,32 +326,15 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
           <EditableMetaField label="Type" value={type} onChange={setType} disabled={isReadOnly || !canEditMetadata} placeholder="1003Qi+" />
           <EditableMetaField label="Serial Number" value={serialNumber} onChange={setSerialNumber} disabled={isReadOnly || !canEditMetadata} placeholder="—" />
         </div>
-        {!canEditMetadata && !isReadOnly && (
-          <p className="text-[10px] text-slate-400 italic">
-            Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.
-          </p>
-        )}
+        {!canEditMetadata && !isReadOnly && <p className="text-[10px] text-slate-400 italic">Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.</p>}
       </div>
 
       {/* Tabs */}
-      {record.sections_meta.length > 0 && (
-        <Tabs
-          items={record.sections_meta.map((s) => ({ key: s.code, label: `${s.code}. ${s.name}` }))}
-          defaultKey={activeSectionCode ?? record.sections_meta[0]?.code}
-          onChange={setActiveSectionCode}
-        />
-      )}
+      {record.sections_meta.length > 0 && <Tabs items={record.sections_meta.map((s) => ({ key: s.code, label: `${s.code}. ${s.name}` }))} defaultKey={activeSectionCode ?? record.sections_meta[0]?.code} onChange={setActiveSectionCode} />}
 
       {/* Section content */}
       {activeSectionMeta && (
-        <AmscSectionPanel
-          sectionMeta={activeSectionMeta}
-          items={itemsBySection[activeSectionMeta.code] ?? []}
-          isReadOnly={isReadOnly}
-          useFrontPanelToggles={useFrontPanelToggles}
-          getValue={getValue}
-          onChange={updateField}
-        />
+        <AmscSectionPanel sectionMeta={activeSectionMeta} items={itemsBySection[activeSectionMeta.code] ?? []} isReadOnly={isReadOnly} useFrontPanelToggles={useFrontPanelToggles} getValue={getValue} onChange={updateField} />
       )}
 
       {/* Pending-changes indicator */}
@@ -385,9 +343,9 @@ export const CnsdAmscMeterDetailPage: React.FC = () => {
           {hasChanges && (
             <span className="text-xs text-amber-600 font-medium">
               {Object.keys(editedItems).length > 0 && `${Object.keys(editedItems).length} item`}
-              {Object.keys(editedItems).length > 0 && metadataDirty && ' + '}
-              {metadataDirty && 'metadata'}
-              {' belum disimpan'}
+              {Object.keys(editedItems).length > 0 && metadataDirty && " + "}
+              {metadataDirty && "metadata"}
+              {" belum disimpan"}
             </span>
           )}
           <Button onClick={() => void handleSave()} disabled={!hasChanges} isLoading={isSaving} className="gap-2">
@@ -413,25 +371,28 @@ interface AmscSectionPanelProps {
   onChange: (itemId: number, field: keyof CnsdAmscMeterItem, value: string | null) => void;
 }
 
-const AmscSectionPanel: React.FC<AmscSectionPanelProps> = ({
-  sectionMeta, items, isReadOnly, useFrontPanelToggles, getValue, onChange,
-}) => {
+const AmscSectionPanel: React.FC<AmscSectionPanelProps> = ({ sectionMeta, items, isReadOnly, useFrontPanelToggles, getValue, onChange }) => {
   const layout = sectionMeta.inputs_layout;
-  const isDualAB = layout === 'dual_ab';
-  const isChannel = layout === 'channel';
-  const isSingleHasil = layout === 'single_hasil';
-  const isEnv = layout === 'environment';
+  const isDualAB = layout === "dual_ab";
+  const isChannel = layout === "channel";
+  const isSingleHasil = layout === "single_hasil";
+  const isEnv = layout === "environment";
 
   // Column count depends on layout
   const colCount = isEnv ? 5 : 6;
 
   const description = (() => {
     switch (layout) {
-      case 'dual_ab':      return 'Isi nilai HASIL A dan HASIL B untuk masing-masing item front panel.';
-      case 'single_hasil': return 'Isi nilai HASIL untuk masing-masing tegangan. Kolom NOMINAL tidak digunakan.';
-      case 'channel':      return 'Isi STATUS dan CCT untuk tiap channel. ADDRESS dan keterangan default sudah terisi dari template.';
-      case 'environment':  return 'Isi kolom HASIL PEMERIKSAAN untuk tiap kegiatan lingkungan.';
-      default:             return '';
+      case "dual_ab":
+        return "Isi nilai HASIL A dan HASIL B untuk masing-masing item front panel.";
+      case "single_hasil":
+        return "Isi nilai HASIL untuk masing-masing tegangan. Kolom NOMINAL tidak digunakan.";
+      case "channel":
+        return "Isi STATUS dan CCT untuk tiap channel. ADDRESS dan keterangan default sudah terisi dari template.";
+      case "environment":
+        return "Isi kolom HASIL PEMERIKSAAN untuk tiap kegiatan lingkungan.";
+      default:
+        return "";
     }
   })();
 
@@ -452,9 +413,7 @@ const AmscSectionPanel: React.FC<AmscSectionPanelProps> = ({
           <thead>
             <tr className="bg-slate-50 text-slate-700">
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-24 text-[11px] uppercase tracking-wider">No</th>
-              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[200px] text-[11px] uppercase tracking-wider">
-                {isEnv ? 'Kegiatan' : 'Pembacaan Meter Reading'}
-              </th>
+              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[200px] text-[11px] uppercase tracking-wider">{isEnv ? "Kegiatan" : "Pembacaan Meter Reading"}</th>
               {isChannel ? (
                 <>
                   <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">Address</th>
@@ -470,7 +429,9 @@ const AmscSectionPanel: React.FC<AmscSectionPanelProps> = ({
               ) : isSingleHasil ? (
                 <>
                   <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[100px] text-[11px] uppercase tracking-wider bg-slate-700/10">Nominal</th>
-                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider" colSpan={2}>Hasil</th>
+                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider" colSpan={2}>
+                    Hasil
+                  </th>
                 </>
               ) : (
                 // environment
@@ -490,17 +451,7 @@ const AmscSectionPanel: React.FC<AmscSectionPanelProps> = ({
                 </td>
               </tr>
             ) : (
-              items.map((item) => (
-                <AmscItemRow
-                  key={item.id}
-                  item={item}
-                  layout={layout}
-                  isReadOnly={isReadOnly}
-                  useFrontPanelToggles={useFrontPanelToggles}
-                  getValue={getValue}
-                  onChange={onChange}
-                />
-              ))
+              items.map((item) => <AmscItemRow key={item.id} item={item} layout={layout} isReadOnly={isReadOnly} useFrontPanelToggles={useFrontPanelToggles} getValue={getValue} onChange={onChange} />)
             )}
           </tbody>
         </table>
@@ -520,139 +471,70 @@ interface AmscItemRowProps {
   onChange: (itemId: number, field: keyof CnsdAmscMeterItem, value: string | null) => void;
 }
 
-const AmscItemRow: React.FC<AmscItemRowProps> = ({
-  item, layout, isReadOnly, useFrontPanelToggles, getValue, onChange,
-}) => {
-  const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
-  const selectClass = inputClass + ' appearance-none cursor-pointer';
+const AmscItemRow: React.FC<AmscItemRowProps> = ({ item, layout, isReadOnly, useFrontPanelToggles, getValue, onChange }) => {
+  const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
+  const selectClass = inputClass + " appearance-none cursor-pointer";
   const disabled = isReadOnly || item.is_blocked;
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
-      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">
-        {item.item_number ?? ''}
-      </td>
-      <td className="px-3 py-2 align-middle text-slate-800 font-medium">
-        {item.item_name}
-      </td>
-      {layout === 'channel' ? (
+      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{item.item_number ?? ""}</td>
+      <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.item_name}</td>
+      {layout === "channel" ? (
         <>
-          <td className="px-2 py-2 align-middle text-center text-slate-600 text-[11px]">
-            {item.address ?? '—'}
+          <td className="px-2 py-2 align-middle text-center text-slate-600 text-[11px]">{item.address ?? "—"}</td>
+          <td className="px-2 py-2 align-middle">
+            <input type="text" className={inputClass} placeholder="..." value={getValue(item, "status_value")} onChange={(e) => onChange(item.id, "status_value", e.target.value)} disabled={disabled} />
           </td>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
-              value={getValue(item, 'status_value')}
-              onChange={(e) => onChange(item.id, 'status_value', e.target.value)}
-              disabled={disabled}
-            />
-          </td>
-          <td className="px-2 py-2 align-middle">
-            <select
-              className={selectClass}
-              value={getValue(item, 'cct')}
-              onChange={(e) => onChange(item.id, 'cct', e.target.value || null)}
-              disabled={disabled}
-            >
+            <select className={selectClass} value={getValue(item, "cct")} onChange={(e) => onChange(item.id, "cct", e.target.value || null)} disabled={disabled}>
               <option value="">—</option>
               {CCT_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </td>
         </>
-      ) : layout === 'dual_ab' ? (
+      ) : layout === "dual_ab" ? (
         <>
-          <td className={cn('px-2 py-2 align-middle text-center text-slate-600 text-[11px]', !item.nominal && 'text-slate-300')}>
-            {item.nominal || '—'}
-          </td>
+          <td className={cn("px-2 py-2 align-middle text-center text-slate-600 text-[11px]", !item.nominal && "text-slate-300")}>{item.nominal || "—"}</td>
           <td className="px-2 py-2 align-middle">
             {useFrontPanelToggles ? (
-              <AdaptiveCell
-                nominal={item.nominal}
-                value={getValue(item, 'hasil_a')}
-                onChange={(v) => onChange(item.id, 'hasil_a', v)}
-                disabled={disabled}
-                inputClass={inputClass}
-              />
+              <AdaptiveCell nominal={item.nominal} value={getValue(item, "hasil_a")} onChange={(v) => onChange(item.id, "hasil_a", v)} disabled={disabled} inputClass={inputClass} />
             ) : (
-              <input
-                type="text"
-                className={inputClass}
-                placeholder="..."
-                value={getValue(item, 'hasil_a')}
-                onChange={(e) => onChange(item.id, 'hasil_a', e.target.value)}
-                disabled={disabled}
-              />
+              <input type="text" className={inputClass} placeholder="..." value={getValue(item, "hasil_a")} onChange={(e) => onChange(item.id, "hasil_a", e.target.value)} disabled={disabled} />
             )}
           </td>
           <td className="px-2 py-2 align-middle">
             {useFrontPanelToggles ? (
-              <AdaptiveCell
-                nominal={item.nominal}
-                value={getValue(item, 'hasil_b')}
-                onChange={(v) => onChange(item.id, 'hasil_b', v)}
-                disabled={disabled}
-                inputClass={inputClass}
-              />
+              <AdaptiveCell nominal={item.nominal} value={getValue(item, "hasil_b")} onChange={(v) => onChange(item.id, "hasil_b", v)} disabled={disabled} inputClass={inputClass} />
             ) : (
-              <input
-                type="text"
-                className={inputClass}
-                placeholder="..."
-                value={getValue(item, 'hasil_b')}
-                onChange={(e) => onChange(item.id, 'hasil_b', e.target.value)}
-                disabled={disabled}
-              />
+              <input type="text" className={inputClass} placeholder="..." value={getValue(item, "hasil_b")} onChange={(e) => onChange(item.id, "hasil_b", e.target.value)} disabled={disabled} />
             )}
           </td>
         </>
-      ) : layout === 'single_hasil' ? (
+      ) : layout === "single_hasil" ? (
         <>
           <td className="px-2 py-2 align-middle text-center bg-slate-200 text-slate-400">
             <LockIcon size={10} className="inline" />
           </td>
           <td colSpan={2} className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
-              value={getValue(item, 'hasil')}
-              onChange={(e) => onChange(item.id, 'hasil', e.target.value)}
-              disabled={disabled}
-            />
+            <input type="text" className={inputClass} placeholder="..." value={getValue(item, "hasil")} onChange={(e) => onChange(item.id, "hasil", e.target.value)} disabled={disabled} />
           </td>
         </>
       ) : (
         // environment
         <>
-          <td className="px-2 py-2 align-middle text-center text-slate-600 text-[11px]">
-            {item.nominal ?? '—'}
-          </td>
+          <td className="px-2 py-2 align-middle text-center text-slate-600 text-[11px]">{item.nominal ?? "—"}</td>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
-              value={getValue(item, 'hasil')}
-              onChange={(e) => onChange(item.id, 'hasil', e.target.value)}
-              disabled={disabled}
-            />
+            <input type="text" className={inputClass} placeholder="..." value={getValue(item, "hasil")} onChange={(e) => onChange(item.id, "hasil", e.target.value)} disabled={disabled} />
           </td>
         </>
       )}
       <td className="px-2 py-2 align-middle">
-        <input
-          type="text"
-          className={inputClass}
-          placeholder="Catatan"
-          value={getValue(item, 'keterangan')}
-          onChange={(e) => onChange(item.id, 'keterangan', e.target.value)}
-          disabled={disabled}
-        />
+        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={disabled} />
       </td>
     </tr>
   );
@@ -667,21 +549,21 @@ const AmscItemRow: React.FC<AmscItemRowProps> = ({
  *   "OK / Not" → toggle OK / NOT
  *   numeric / other → free-text input
  */
-type AdaptiveShape = { kind: 'toggle'; options: [string, string] } | { kind: 'text' };
+type AdaptiveShape = { kind: "toggle"; options: [string, string] } | { kind: "text" };
 
 const parseAdaptiveShape = (nominal: string | null): AdaptiveShape => {
-  if (!nominal) return { kind: 'text' };
-  const u = nominal.trim().toUpperCase().replace(/\s+/g, ' ');
-  if (u === 'NORMAL / ALRM' || u === 'NORMAL/ALRM' || u === 'NORMAL / ALARM' || u === 'NORMAL/ALARM') {
-    return { kind: 'toggle', options: ['NORMAL', 'ALARM'] };
+  if (!nominal) return { kind: "text" };
+  const u = nominal.trim().toUpperCase().replace(/\s+/g, " ");
+  if (u === "NORMAL / ALRM" || u === "NORMAL/ALRM" || u === "NORMAL / ALARM" || u === "NORMAL/ALARM") {
+    return { kind: "toggle", options: ["NORMAL", "ALARM"] };
   }
-  if (u === '√ / -' || u === '√/-' || u === '√ /-' || u === '√/ -') {
-    return { kind: 'toggle', options: ['√', '-'] };
+  if (u === "√ / -" || u === "√/-" || u === "√ /-" || u === "√/ -") {
+    return { kind: "toggle", options: ["√", "-"] };
   }
-  if (u === 'OK / NOT' || u === 'OK/NOT') {
-    return { kind: 'toggle', options: ['OK', 'NOT'] };
+  if (u === "OK / NOT" || u === "OK/NOT") {
+    return { kind: "toggle", options: ["OK", "NOT"] };
   }
-  return { kind: 'text' };
+  return { kind: "text" };
 };
 
 /**
@@ -691,8 +573,8 @@ const parseAdaptiveShape = (nominal: string | null): AdaptiveShape => {
  */
 const toggleAliasFor = (value: string): string => {
   const v = value.trim();
-  if (v === '√' || v === '✓' || v.toLowerCase() === 'v') return '√';
-  if (v.toLowerCase() === 'ok') return 'ok';
+  if (v === "√" || v === "✓" || v.toLowerCase() === "v") return "√";
+  if (v.toLowerCase() === "ok") return "ok";
   return v.toLowerCase();
 };
 
@@ -702,8 +584,8 @@ const toggleMatches = (option: string, value: string): boolean => {
   const o = option.trim().toLowerCase();
   const v = toggleAliasFor(value);
   if (v === o) return true;
-  if (o === 'normal' && (v === '√' || v === 'ok')) return true;
-  if (o === '√' && v === 'ok') return true;
+  if (o === "normal" && (v === "√" || v === "ok")) return true;
+  if (o === "√" && v === "ok") return true;
   return false;
 };
 
@@ -718,20 +600,11 @@ interface AdaptiveCellProps {
 const AdaptiveCell: React.FC<AdaptiveCellProps> = ({ nominal, value, onChange, disabled, inputClass }) => {
   const shape = parseAdaptiveShape(nominal);
 
-  if (shape.kind === 'toggle') {
+  if (shape.kind === "toggle") {
     return <BinaryToggle options={shape.options} value={value} onChange={onChange} disabled={disabled} />;
   }
 
-  return (
-    <input
-      type="text"
-      className={cn(inputClass, 'text-center')}
-      placeholder={nominal ?? '...'}
-      value={value}
-      onChange={(e) => onChange(e.target.value || null)}
-      disabled={disabled}
-    />
-  );
+  return <input type="text" className={cn(inputClass, "text-center")} placeholder={nominal ?? "..."} value={value} onChange={(e) => onChange(e.target.value || null)} disabled={disabled} />;
 };
 
 interface BinaryToggleProps {
@@ -746,11 +619,9 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
   const isLeft = toggleMatches(leftOpt, value);
   const isRight = toggleMatches(rightOpt, value);
 
-  const leftActive = 'bg-emerald-600 text-white border-emerald-600';
-  const rightActive = rightOpt === 'ALARM' || rightOpt === 'NOT'
-    ? 'bg-red-600 text-white border-red-600'
-    : 'bg-slate-600 text-white border-slate-600';
-  const idle = 'bg-white text-slate-600 border-slate-300 hover:border-slate-400';
+  const leftActive = "bg-emerald-600 text-white border-emerald-600";
+  const rightActive = rightOpt === "ALARM" || rightOpt === "NOT" ? "bg-red-600 text-white border-red-600" : "bg-slate-600 text-white border-slate-600";
+  const idle = "bg-white text-slate-600 border-slate-300 hover:border-slate-400";
 
   const click = (opt: string) => {
     if (disabled) return;
@@ -762,7 +633,7 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
       <button
         type="button"
         title="Klik untuk memilih"
-        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300', isLeft ? leftActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        className={cn("flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300", isLeft ? leftActive : idle, disabled && "opacity-50 cursor-not-allowed")}
         onClick={() => click(leftOpt)}
         disabled={disabled}
       >
@@ -771,7 +642,7 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
       <button
         type="button"
         title="Klik untuk memilih"
-        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors', isRight ? rightActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        className={cn("flex-1 px-2 py-1 text-[11px] font-semibold transition-colors", isRight ? rightActive : idle, disabled && "opacity-50 cursor-not-allowed")}
         onClick={() => click(rightOpt)}
         disabled={disabled}
       >
@@ -786,7 +657,7 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
 const InfoCell: React.FC<{ label: string; value: string | null }> = ({ label, value }) => (
   <div>
     <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">{label}</span>
-    <p className="mt-0.5 font-medium text-slate-700">{value ?? '—'}</p>
+    <p className="mt-0.5 font-medium text-slate-700">{value ?? "—"}</p>
   </div>
 );
 
@@ -802,7 +673,7 @@ const EditableMetaField: React.FC<EditableMetaFieldProps> = ({ label, value, onC
   <div>
     <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</label>
     {disabled ? (
-      <p className="text-xs text-slate-700 font-medium">{value || '—'}</p>
+      <p className="text-xs text-slate-700 font-medium">{value || "—"}</p>
     ) : (
       <input
         type="text"

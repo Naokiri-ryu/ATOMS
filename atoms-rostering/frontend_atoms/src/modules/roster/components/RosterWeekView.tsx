@@ -19,6 +19,7 @@ interface RosterWeekViewProps {
   isReadOnly?: boolean;
   onAddStaff?: (shiftId: number) => void;
   onRemoveStaff?: (assignmentId: number) => void;
+  notesFilter?: string; // Filter assignments by notes content (e.g., 'tpo')
 }
 
 const RosterWeekView: React.FC<RosterWeekViewProps> = ({
@@ -30,7 +31,8 @@ const RosterWeekView: React.FC<RosterWeekViewProps> = ({
   shifts,
   isReadOnly = false,
   onAddStaff,
-  onRemoveStaff
+  onRemoveStaff,
+  notesFilter
 }) => {
   const formatDayName = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'short' });
@@ -108,6 +110,10 @@ const RosterWeekView: React.FC<RosterWeekViewProps> = ({
             const allAssignments = rosterDay.shift_assignments?.filter(a => a.shift_id === shift.id) || [];
             const assignments = allAssignments.filter(a => {
               const notes = (a.notes || '').toLowerCase().trim();
+              // If notesFilter is provided, only show assignments with matching notes
+              if (notesFilter) {
+                return notes.includes(notesFilter.toLowerCase());
+              }
               // Check if notes contain any off-duty keywords
               if (!notes) return true; // Show if no notes
               return !notes.includes('libur') && 

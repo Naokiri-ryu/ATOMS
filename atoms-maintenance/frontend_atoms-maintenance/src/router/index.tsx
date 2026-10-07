@@ -7,8 +7,15 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { DashboardPage } from "@/pages/dashboard/DashboardPage";
 import { StatisticsPage } from "@/pages/statistics/StatisticsPage";
+import { PerformanceCheckStatisticsPage } from "@/pages/statistics/PerformanceCheckStatisticsPage";
+import { GroundCheckStatisticsPage } from "@/pages/statistics/GroundCheckStatisticsPage";
+import { GroundCheckModuleStatisticsPage } from "@/pages/statistics/GroundCheckModuleStatisticsPage";
 import { TfpEquipmentStatisticsPage } from "@/pages/statistics/TfpEquipmentStatisticsPage";
+import { LegacyTfpStatisticsRedirect } from "@/pages/statistics/LegacyTfpStatisticsRedirect";
 import { SettingsChecklistPage } from "@/pages/settings/SettingsChecklistPage";
+import { BranchOfficeListPage } from "@/pages/branch/BranchOfficeListPage";
+import { BranchOfficeDetailPage } from "@/pages/branch/BranchOfficeDetailPage";
+import { ReadinessDetailPage } from "@/pages/branch/ReadinessDetailPage";
 import { WorkOrderListPage } from "@/pages/work-order/WorkOrderListPage";
 import { WorkOrderDetailPage } from "@/pages/work-order/WorkOrderDetailPage";
 import { WorkOrderPrintView } from "@/pages/work-order/WorkOrderPrintView";
@@ -311,7 +318,12 @@ export const router = createBrowserRouter([
           { path: "/reporting/damage-reports/new", element: <ReportingDamageFormPage /> },
           { path: "/reporting/damage-reports/:id", element: <ReportingDamageFormPage /> },
           { path: "/statistics", element: <StatisticsPage /> },
-          { path: "/statistics/tfp/:moduleKey", element: <TfpEquipmentStatisticsPage /> },
+          { path: "/statistics/performance-check", element: <PerformanceCheckStatisticsPage /> },
+          { path: "/statistics/performance-check/:moduleKey", element: <TfpEquipmentStatisticsPage /> },
+          { path: "/statistics/ground-check", element: <GroundCheckStatisticsPage /> },
+          { path: "/statistics/ground-check/:moduleKey", element: <GroundCheckModuleStatisticsPage /> },
+          // Path lama sebelum sub-menu ditambahkan — bookmark lama tetap jalan.
+          { path: "/statistics/tfp/:moduleKey", element: <LegacyTfpStatisticsRedirect /> },
           // Backward-compat: legacy /reports placeholder still works
           { path: "/reports", element: <Navigate to="/reporting" replace /> },
           { path: "/reports/create", element: <Navigate to="/reporting/damage-reports/new" replace /> },
@@ -323,6 +335,13 @@ export const router = createBrowserRouter([
           { path: "/logbooks/cnsd/:id", element: <LogbookCnsdDetail /> },
           { path: "/logbooks/tfp", element: <LogbookTfp /> },
           { path: "/logbooks/tfp/:id", element: <LogbookTfpDetail /> },
+
+          // Kantor Cabang (branch office module availability per branch)
+          { path: "/branches", element: <BranchOfficeListPage /> },
+          { path: "/branches/:id", element: <BranchOfficeDetailPage /> },
+
+          // Readiness (Kesiapan Peralatan CNSD) per cabang
+          { path: "/branches/:id/readiness", element: <ReadinessDetailPage /> },
 
           // User management is owned by atoms-rostering. Redirect out to it.
           { path: "/admin/users", element: <RedirectToRosteringUsers /> },

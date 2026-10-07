@@ -21,9 +21,9 @@ const RosterLegend: React.FC = () => {
             Shift Kerja
           </h4>
           <div className="space-y-2">
-            <LegendItem color="bg-blue-500" textColor="text-white" label="Pagi" time="07:00 - 13:00 / 07:00 - 15:00" />
-            <LegendItem color="bg-orange-500" textColor="text-white" label="Siang" time="13:00 - 19:00 / 15:00 - 23:00" />
-            <LegendItem color="bg-emerald-600" textColor="text-white" label="Malam" time="19:00 - 07:00 / 23:00 - 07:00" />
+            <LegendItem color="bg-blue-500" textColor="text-white" label="Pagi" time="07:15 - 13:15 / 07:00 - 15:00" />
+            <LegendItem color="bg-orange-500" textColor="text-white" label="Siang" time="13:15 - 19:15 / 15:00 - 23:00" />
+            <LegendItem color="bg-emerald-600" textColor="text-white" label="Malam" time="19:15 - 07:15 / 23:00 - 07:00" />
           </div>
         </div>
 

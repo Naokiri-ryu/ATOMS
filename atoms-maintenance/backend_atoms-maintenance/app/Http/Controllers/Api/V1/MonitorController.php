@@ -408,11 +408,12 @@ class MonitorController extends Controller
         if (in_array($raw, ['pagi', 'siang', 'malam'], true)) {
             return (string) $raw;
         }
-        $hour = (int) Carbon::now()->format('G');
+        $now = Carbon::now();
+        $minutes = $now->hour * 60 + $now->minute;
         return match (true) {
-            $hour >= 7  && $hour < 13 => 'pagi',
-            $hour >= 13 && $hour < 19 => 'siang',
-            default                   => 'malam',
+            $minutes >= 7 * 60 + 15  && $minutes < 13 * 60 + 15 => 'pagi',
+            $minutes >= 13 * 60 + 15 && $minutes < 19 * 60 + 15 => 'siang',
+            default                                             => 'malam',
         };
     }
 }

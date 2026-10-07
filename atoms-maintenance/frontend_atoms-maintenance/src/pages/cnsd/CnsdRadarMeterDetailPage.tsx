@@ -1,52 +1,35 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import {
-  AlertCircle,
-  ArrowLeft,
-  Calendar,
-  Clock,
-  MapPin,
-  Printer,
-  Radar as RadarIcon,
-  Save,
-  Users,
-} from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { ShiftBadge } from '@/components/common/ShiftBadge';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { Skeleton } from '@/components/common/Skeleton';
-import { Tabs } from '@/components/common/Tabs';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
-import { canEditCnsd } from '@/lib/roles';
-import { cnsdRadarMeterService } from '@/services/cnsdRadarMeterService';
-import { CnsdRadarMeterSignaturePanel } from '@/pages/cnsd/components/CnsdRadarMeterSignaturePanel';
-import type {
-  CnsdRadarMeterItem,
-  CnsdRadarMeterRecordDetail,
-  CnsdRadarMeterSectionMeta,
-} from '@/types/cnsdRadar';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { AlertCircle, ArrowLeft, Calendar, Clock, MapPin, Printer, Radar as RadarIcon, Save, Users } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { ShiftBadge } from "@/components/common/ShiftBadge";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { Skeleton } from "@/components/common/Skeleton";
+import { Tabs } from "@/components/common/Tabs";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { canEditCnsd } from "@/lib/roles";
+import { cnsdRadarMeterService } from "@/services/cnsdRadarMeterService";
+import { CnsdRadarMeterSignaturePanel } from "@/pages/cnsd/components/CnsdRadarMeterSignaturePanel";
+import type { CnsdRadarMeterItem, CnsdRadarMeterRecordDetail, CnsdRadarMeterSectionMeta } from "@/types/cnsdRadar";
 
 // ─── Helpers / constants ──────────────────────────────────────
 
 const SHIFT_TIME_LABELS: Record<string, string> = {
-  pagi:  '07:00 — 13:00',
-  siang: '13:00 — 19:00',
-  malam: '19:00 — 07:00',
+  pagi: "07:15 — 13:15",
+  siang: "13:15 — 19:15",
+  malam: "19:15 — 07:15",
 };
 
 /** Items whose item_name starts with `*` render as sub-section header rows. */
-const isSubHeader = (item: CnsdRadarMeterItem): boolean =>
-  typeof item.item_name === 'string' && item.item_name.trim().startsWith('*');
+const isSubHeader = (item: CnsdRadarMeterItem): boolean => typeof item.item_name === "string" && item.item_name.trim().startsWith("*");
 
 /** Strip the leading `*` marker from a sub-header label. */
-const subHeaderLabel = (item: CnsdRadarMeterItem): string =>
-  item.item_name.replace(/^\*\s*/, '');
+const subHeaderLabel = (item: CnsdRadarMeterItem): string => item.item_name.replace(/^\*\s*/, "");
 
 /** Items whose standard contains "Green" render a GREEN/RED choice instead of free text. */
-const isGreenStandard = (standard: string | null): boolean =>
-  !!standard && standard.trim().toLowerCase().includes('green');
+const isGreenStandard = (standard: string | null): boolean => !!standard && standard.trim().toLowerCase().includes("green");
 
 // ─── Main component ───────────────────────────────────────────
 
@@ -83,16 +66,16 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
 
   // Editable equipment metadata (paper-form header). Local state mirrors the
   // record's persisted values; flushed on Save together with item edits.
-  const [merk, setMerk] = useState('');
-  const [type, setType] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
+  const [merk, setMerk] = useState("");
+  const [type, setType] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
 
   const canEditMetadata = canEditCnsd(user);
 
   // ─── Fetch ──────────────────────────────────────────────────
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
-      setErrorMessage('ID form tidak valid.');
+      setErrorMessage("ID form tidak valid.");
       setIsLoading(false);
       return;
     }
@@ -101,9 +84,9 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
       const data = await cnsdRadarMeterService.getRecord(recordId);
       setRecord(data);
       setEditedItems({});
-      setMerk(data.merk ?? '');
-      setType(data.type ?? '');
-      setSerialNumber(data.serial_number ?? '');
+      setMerk(data.merk ?? "");
+      setType(data.type ?? "");
+      setSerialNumber(data.serial_number ?? "");
       if (data.sections_meta.length > 0) {
         const stillExists = activeSectionCode && data.sections_meta.some((s) => s.code === activeSectionCode);
         if (!stillExists) {
@@ -113,20 +96,20 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
       setErrorMessage(null);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
-        setErrorMessage('Form tidak ditemukan.');
+        setErrorMessage("Form tidak ditemukan.");
       } else {
-        setErrorMessage('Gagal memuat data form.');
+        setErrorMessage("Gagal memuat data form.");
       }
       setRecord(null);
     } finally {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   useEffect(() => {
     void fetchRecord();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   // ─── Derived ────────────────────────────────────────────────
@@ -134,33 +117,25 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
     const map: Record<string, CnsdRadarMeterItem[]> = {};
     if (!record) return map;
     record.items.forEach((it) => {
-      const code = it.section_code ?? 'A';
+      const code = it.section_code ?? "A";
       if (!map[code]) map[code] = [];
       map[code].push(it);
     });
     return map;
   }, [record]);
 
-  const isCompleted = record?.status === 'completed';
+  const isCompleted = record?.status === "completed";
   const isReadOnly = isCompleted || !canEditCnsd(user);
-  const metadataDirty =
-    !!record &&
-    (merk !== (record.merk ?? '') ||
-      type !== (record.type ?? '') ||
-      serialNumber !== (record.serial_number ?? ''));
+  const metadataDirty = !!record && (merk !== (record.merk ?? "") || type !== (record.type ?? "") || serialNumber !== (record.serial_number ?? ""));
   const hasChanges = Object.keys(editedItems).length > 0 || metadataDirty;
 
-  const updateField = (
-    itemId: number,
-    field: keyof CnsdRadarMeterItem,
-    value: string | null,
-  ) => {
+  const updateField = (itemId: number, field: keyof CnsdRadarMeterItem, value: string | null) => {
     if (isReadOnly) return;
     setEditedItems((prev) => ({
       ...prev,
       [itemId]: {
         ...(prev[itemId] ?? {}),
-        [field]: value === '' ? null : value,
+        [field]: value === "" ? null : value,
       },
     }));
   };
@@ -169,10 +144,10 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
     const edited = editedItems[item.id];
     if (edited && field in edited) {
       const v = edited[field];
-      return v == null ? '' : String(v);
+      return v == null ? "" : String(v);
     }
     const original = item[field];
-    return original == null ? '' : String(original);
+    return original == null ? "" : String(original);
   };
 
   // ─── Save ───────────────────────────────────────────────────
@@ -185,10 +160,10 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
 
     const items = Object.entries(editedItems).map(([rawId, patch]) => ({
       id: Number(rawId),
-      kondisi_teknis_tx1: 'kondisi_teknis_tx1' in patch ? patch.kondisi_teknis_tx1 ?? null : undefined,
-      kondisi_teknis_tx2: 'kondisi_teknis_tx2' in patch ? patch.kondisi_teknis_tx2 ?? null : undefined,
-      hasil:              'hasil'              in patch ? patch.hasil              ?? null : undefined,
-      keterangan:         'keterangan'         in patch ? patch.keterangan         ?? null : undefined,
+      kondisi_teknis_tx1: "kondisi_teknis_tx1" in patch ? (patch.kondisi_teknis_tx1 ?? null) : undefined,
+      kondisi_teknis_tx2: "kondisi_teknis_tx2" in patch ? (patch.kondisi_teknis_tx2 ?? null) : undefined,
+      hasil: "hasil" in patch ? (patch.hasil ?? null) : undefined,
+      keterangan: "keterangan" in patch ? (patch.keterangan ?? null) : undefined,
     }));
 
     try {
@@ -202,15 +177,15 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
       setEditedItems({});
       const parts: string[] = [];
       if (items.length > 0) parts.push(`${items.length} item`);
-      if (metadataDirty) parts.push('metadata peralatan');
-      setSuccessMessage(`${parts.join(' + ')} disimpan.`);
+      if (metadataDirty) parts.push("metadata peralatan");
+      setSuccessMessage(`${parts.join(" + ")} disimpan.`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menyimpan perubahan.');
+        setErrorMessage(data.message ?? "Gagal menyimpan perubahan.");
       } else {
-        setErrorMessage('Koneksi gagal, coba lagi.');
+        setErrorMessage("Koneksi gagal, coba lagi.");
       }
     } finally {
       setIsSaving(false);
@@ -232,8 +207,8 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
     return (
       <div className="max-w-3xl mx-auto py-20 text-center space-y-4">
         <AlertCircle className="mx-auto h-12 w-12 text-slate-400" />
-        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? 'Form tidak ditemukan.'}</h2>
-        <Button variant="outline" onClick={() => navigate('/cnsd/radar-meter')} className="gap-2">
+        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? "Form tidak ditemukan."}</h2>
+        <Button variant="outline" onClick={() => navigate("/cnsd/radar-meter")} className="gap-2">
           <ArrowLeft size={16} />
           Kembali ke Daftar
         </Button>
@@ -241,27 +216,17 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
     );
   }
 
-  const activeSectionMeta = activeSectionCode
-    ? record.sections_meta.find((s) => s.code === activeSectionCode) ?? null
-    : null;
+  const activeSectionMeta = activeSectionCode ? (record.sections_meta.find((s) => s.code === activeSectionCode) ?? null) : null;
 
   return (
     <div className="max-w-full space-y-5 animate-fade-in pb-12">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <button
-          type="button"
-          onClick={() => navigate('/cnsd')}
-          className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors"
-        >
+        <button type="button" onClick={() => navigate("/cnsd")} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
           <ArrowLeft size={14} /> CNSD
         </button>
         <span>/</span>
-        <button
-          type="button"
-          onClick={() => navigate('/cnsd/radar-meter')}
-          className="hover:text-slate-700 transition-colors"
-        >
+        <button type="button" onClick={() => navigate("/cnsd/radar-meter")} className="hover:text-slate-700 transition-colors">
           Radar Meter Reading
         </button>
         <span>/</span>
@@ -277,9 +242,7 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg font-bold text-slate-900">
-                  Meter Reading — Radar
-                </h1>
+                <h1 className="text-lg font-bold text-slate-900">Meter Reading — Radar</h1>
                 <StatusBadge status={record.status} variant="pill" />
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -296,7 +259,7 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg" title="Rentang waktu shift">
               <Clock size={13} className="text-slate-400" />
-              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? '—'}</span>
+              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? "—"}</span>
             </div>
             <ShiftBadge shift={record.shift_type} />
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
@@ -322,20 +285,16 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
         <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Manager Teknik</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Supervisor CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Teknisi CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(', ')}>
-              {record.technicians.map((t) => t.technician_name).join(', ') || <span className="text-slate-400 italic">—</span>}
+            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(", ")}>
+              {record.technicians.map((t) => t.technician_name).join(", ") || <span className="text-slate-400 italic">—</span>}
             </p>
           </div>
         </div>
@@ -343,11 +302,11 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
 
       {/* Messages */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{errorMessage}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {errorMessage}
+        </div>
       )}
-      {successMessage && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>
-      )}
+      {successMessage && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>}
 
       {/* Info Peralatan card (with editable Merk / Type / SN for Manager/Supervisor) */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
@@ -359,33 +318,11 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
           <InfoCell label="Tanggal" value={record.date} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-2 border-t border-slate-100">
-          <EditableMetaField
-            label="Merk"
-            value={merk}
-            onChange={setMerk}
-            disabled={isReadOnly || !canEditMetadata}
-            placeholder="ELDIS"
-          />
-          <EditableMetaField
-            label="Type"
-            value={type}
-            onChange={setType}
-            disabled={isReadOnly || !canEditMetadata}
-            placeholder="5SR-N-I FL2000"
-          />
-          <EditableMetaField
-            label="Serial Number"
-            value={serialNumber}
-            onChange={setSerialNumber}
-            disabled={isReadOnly || !canEditMetadata}
-            placeholder="—"
-          />
+          <EditableMetaField label="Merk" value={merk} onChange={setMerk} disabled={isReadOnly || !canEditMetadata} placeholder="ELDIS" />
+          <EditableMetaField label="Type" value={type} onChange={setType} disabled={isReadOnly || !canEditMetadata} placeholder="5SR-N-I FL2000" />
+          <EditableMetaField label="Serial Number" value={serialNumber} onChange={setSerialNumber} disabled={isReadOnly || !canEditMetadata} placeholder="—" />
         </div>
-        {!canEditMetadata && !isReadOnly && (
-          <p className="text-[10px] text-slate-400 italic">
-            Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.
-          </p>
-        )}
+        {!canEditMetadata && !isReadOnly && <p className="text-[10px] text-slate-400 italic">Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.</p>}
       </div>
 
       {/* Tabs */}
@@ -401,15 +338,7 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
       )}
 
       {/* Section content */}
-      {activeSectionMeta && (
-        <RadarSectionPanel
-          sectionMeta={activeSectionMeta}
-          items={itemsBySection[activeSectionMeta.code] ?? []}
-          isReadOnly={isReadOnly}
-          getValue={getValue}
-          onChange={updateField}
-        />
-      )}
+      {activeSectionMeta && <RadarSectionPanel sectionMeta={activeSectionMeta} items={itemsBySection[activeSectionMeta.code] ?? []} isReadOnly={isReadOnly} getValue={getValue} onChange={updateField} />}
 
       {/* Pending-changes indicator */}
       {!isReadOnly && (
@@ -417,17 +346,12 @@ export const CnsdRadarMeterDetailPage: React.FC = () => {
           {hasChanges && (
             <span className="text-xs text-amber-600 font-medium">
               {Object.keys(editedItems).length > 0 && `${Object.keys(editedItems).length} item`}
-              {Object.keys(editedItems).length > 0 && metadataDirty && ' + '}
-              {metadataDirty && 'metadata'}
-              {' belum disimpan'}
+              {Object.keys(editedItems).length > 0 && metadataDirty && " + "}
+              {metadataDirty && "metadata"}
+              {" belum disimpan"}
             </span>
           )}
-          <Button
-            onClick={() => void handleSave()}
-            disabled={!hasChanges}
-            isLoading={isSaving}
-            className="gap-2"
-          >
+          <Button onClick={() => void handleSave()} disabled={!hasChanges} isLoading={isSaving} className="gap-2">
             <Save size={16} />
             Simpan Perubahan
           </Button>
@@ -450,15 +374,13 @@ interface RadarSectionPanelProps {
   onChange: (itemId: number, field: keyof CnsdRadarMeterItem, value: string | null) => void;
 }
 
-const RadarSectionPanel: React.FC<RadarSectionPanelProps> = ({
-  sectionMeta, items, isReadOnly, getValue, onChange,
-}) => {
+const RadarSectionPanel: React.FC<RadarSectionPanelProps> = ({ sectionMeta, items, isReadOnly, getValue, onChange }) => {
   // Group items by group_name (Section A only has subgroups; Section B has none).
   const groups = useMemo(() => {
     const order: string[] = [];
     const map: Record<string, CnsdRadarMeterItem[]> = {};
     items.forEach((it) => {
-      const key = it.group_name ?? '__ungrouped__';
+      const key = it.group_name ?? "__ungrouped__";
       if (!map[key]) {
         map[key] = [];
         order.push(key);
@@ -466,13 +388,13 @@ const RadarSectionPanel: React.FC<RadarSectionPanelProps> = ({
       map[key].push(it);
     });
     return order.map((key) => ({
-      number: items.find((i) => (i.group_name ?? '__ungrouped__') === key)?.group_number ?? null,
-      name: key === '__ungrouped__' ? null : key,
+      number: items.find((i) => (i.group_name ?? "__ungrouped__") === key)?.group_number ?? null,
+      name: key === "__ungrouped__" ? null : key,
       items: map[key],
     }));
   }, [items]);
 
-  const isTxDual = sectionMeta.inputs_layout === 'tx_dual';
+  const isTxDual = sectionMeta.inputs_layout === "tx_dual";
   const colCount = isTxDual ? 6 : 5;
   const editableItems = useMemo(() => items.filter((it) => !isSubHeader(it)), [items]);
 
@@ -485,8 +407,8 @@ const RadarSectionPanel: React.FC<RadarSectionPanelProps> = ({
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
             {isTxDual
-              ? 'Isi nilai TX I dan TX II untuk tiap parameter. Baris dengan tanda `*` adalah sub-heading (tidak diisi). Gunakan ↑↓←→ atau Enter untuk navigasi.'
-              : 'Isi kolom HASIL untuk tiap kegiatan pemeriksaan. Gunakan ↑↓←→ atau Enter untuk navigasi.'}
+              ? "Isi nilai TX I dan TX II untuk tiap parameter. Baris dengan tanda `*` adalah sub-heading (tidak diisi). Gunakan ↑↓←→ atau Enter untuk navigasi."
+              : "Isi kolom HASIL untuk tiap kegiatan pemeriksaan. Gunakan ↑↓←→ atau Enter untuk navigasi."}
           </p>
         </div>
         <span className="text-xs font-medium text-slate-400">{editableItems.length} item</span>
@@ -497,23 +419,15 @@ const RadarSectionPanel: React.FC<RadarSectionPanelProps> = ({
           <thead>
             <tr className="bg-slate-50 text-slate-700">
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-12 text-[11px] uppercase tracking-wider">No</th>
-              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[260px] text-[11px] uppercase tracking-wider">
-                {isTxDual ? 'Pemeriksaan' : 'Kegiatan'}
-              </th>
+              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[260px] text-[11px] uppercase tracking-wider">{isTxDual ? "Pemeriksaan" : "Kegiatan"}</th>
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">Standart</th>
               {isTxDual ? (
                 <>
-                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[130px] text-[11px] uppercase tracking-wider">
-                    {sectionMeta.columns_label_1 ?? 'TX I'}
-                  </th>
-                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[130px] text-[11px] uppercase tracking-wider">
-                    {sectionMeta.columns_label_2 ?? 'TX II'}
-                  </th>
+                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[130px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_1 ?? "TX I"}</th>
+                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[130px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_2 ?? "TX II"}</th>
                 </>
               ) : (
-                <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">
-                  {sectionMeta.columns_label_1 ?? 'Hasil'}
-                </th>
+                <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_1 ?? "Hasil"}</th>
               )}
               <th className="px-2 py-2 text-left font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">Keterangan</th>
             </tr>
@@ -531,7 +445,8 @@ const RadarSectionPanel: React.FC<RadarSectionPanelProps> = ({
                   {group.name && (
                     <tr className="bg-slate-100">
                       <td colSpan={colCount} className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200">
-                        {group.number ? `${group.number}. ` : ''}{group.name}
+                        {group.number ? `${group.number}. ` : ""}
+                        {group.name}
                       </td>
                     </tr>
                   )}
@@ -581,25 +496,17 @@ interface RadarItemRowProps {
   onChange: (itemId: number, field: keyof CnsdRadarMeterItem, value: string | null) => void;
 }
 
-const RadarItemRow: React.FC<RadarItemRowProps> = ({
-  item, rowIndex, totalRows, isTxDual, isReadOnly, getValue, onChange,
-}) => {
-  const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
-  const standardCell = item.standard ?? '';
+const RadarItemRow: React.FC<RadarItemRowProps> = ({ item, rowIndex, totalRows, isTxDual, isReadOnly, getValue, onChange }) => {
+  const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
+  const standardCell = item.standard ?? "";
   const isGreen = isGreenStandard(item.standard);
 
-  const availableFields = isTxDual
-    ? (['kondisi_teknis_tx1', 'kondisi_teknis_tx2', 'keterangan'] as const)
-    : (['hasil', 'keterangan'] as const);
+  const availableFields = isTxDual ? (["kondisi_teknis_tx1", "kondisi_teknis_tx2", "keterangan"] as const) : (["hasil", "keterangan"] as const);
 
   const focusInput = (targetRow: number, preferredField: string) => {
-    let el = document.querySelector(
-      `input[data-row="${targetRow}"][data-field="${preferredField}"]`,
-    ) as HTMLInputElement | null;
+    let el = document.querySelector(`input[data-row="${targetRow}"][data-field="${preferredField}"]`) as HTMLInputElement | null;
     if (!el) {
-      el = document.querySelector(
-        `button[data-row="${targetRow}"][data-field="${preferredField}"]`,
-      ) as HTMLInputElement | null;
+      el = document.querySelector(`button[data-row="${targetRow}"][data-field="${preferredField}"]`) as HTMLInputElement | null;
     }
     if (el) {
       el.focus();
@@ -607,34 +514,31 @@ const RadarItemRow: React.FC<RadarItemRowProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, currentField: typeof availableFields[number]) => {
+  const handleKeyDown = (e: React.KeyboardEvent, currentField: (typeof availableFields)[number]) => {
     if (isReadOnly) return;
 
     const currentFieldIdx = (availableFields as readonly string[]).indexOf(currentField);
 
-    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+    if (e.key === "ArrowDown" || e.key === "Enter") {
       e.preventDefault();
       const nextRow = rowIndex + 1;
       if (nextRow < totalRows) {
         focusInput(nextRow, currentField);
       }
-    }
-    else if (e.key === 'ArrowUp') {
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
       const prevRow = rowIndex - 1;
       if (prevRow >= 0) {
         focusInput(prevRow, currentField);
       }
-    }
-    else if (e.key === 'ArrowRight') {
+    } else if (e.key === "ArrowRight") {
       e.preventDefault();
       if (currentFieldIdx < availableFields.length - 1) {
         focusInput(rowIndex, availableFields[currentFieldIdx + 1]);
       } else if (rowIndex + 1 < totalRows) {
         focusInput(rowIndex + 1, availableFields[0]);
       }
-    }
-    else if (e.key === 'ArrowLeft') {
+    } else if (e.key === "ArrowLeft") {
       e.preventDefault();
       if (currentFieldIdx > 0) {
         focusInput(rowIndex, availableFields[currentFieldIdx - 1]);
@@ -646,75 +550,65 @@ const RadarItemRow: React.FC<RadarItemRowProps> = ({
 
   // Toggle buttons keep native Enter (fires the click / toggles GREEN⇄RED);
   // arrows still navigate between cells/rows.
-  const handleToggleKeyDown = (currentField: typeof availableFields[number]) =>
-    (e: React.KeyboardEvent<HTMLButtonElement>) => {
-      if (e.key === 'Enter') return;
-      handleKeyDown(e, currentField);
-    };
+  const handleToggleKeyDown = (currentField: (typeof availableFields)[number]) => (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "Enter") return;
+    handleKeyDown(e, currentField);
+  };
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
-      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">
-        {item.item_number ?? ''}
-      </td>
-      <td className="px-3 py-2 align-middle text-slate-800 font-medium">
-        {item.item_name}
-      </td>
-      <td className={cn(
-        'px-2 py-2 align-middle text-center text-slate-600 text-[11px]',
-        standardCell === '' && 'text-slate-300',
-      )}>
-        {standardCell || '—'}
-      </td>
+      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{item.item_number ?? ""}</td>
+      <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.item_name}</td>
+      <td className={cn("px-2 py-2 align-middle text-center text-slate-600 text-[11px]", standardCell === "" && "text-slate-300")}>{standardCell || "—"}</td>
       {isTxDual ? (
         <>
           <td className="px-2 py-2 align-middle">
             {isGreen ? (
               <BinaryToggle
-                options={['GREEN', 'RED']}
-                value={getValue(item, 'kondisi_teknis_tx1')}
-                onChange={(v) => onChange(item.id, 'kondisi_teknis_tx1', v)}
+                options={["GREEN", "RED"]}
+                value={getValue(item, "kondisi_teknis_tx1")}
+                onChange={(v) => onChange(item.id, "kondisi_teknis_tx1", v)}
                 disabled={isReadOnly}
                 dataRow={rowIndex}
                 dataField="kondisi_teknis_tx1"
-                onKeyDown={handleToggleKeyDown('kondisi_teknis_tx1')}
+                onKeyDown={handleToggleKeyDown("kondisi_teknis_tx1")}
               />
             ) : (
               <input
                 type="text"
                 className={inputClass}
                 placeholder="..."
-                value={getValue(item, 'kondisi_teknis_tx1')}
-                onChange={(e) => onChange(item.id, 'kondisi_teknis_tx1', e.target.value)}
+                value={getValue(item, "kondisi_teknis_tx1")}
+                onChange={(e) => onChange(item.id, "kondisi_teknis_tx1", e.target.value)}
                 disabled={isReadOnly}
                 data-row={rowIndex}
                 data-field="kondisi_teknis_tx1"
-                onKeyDown={(e) => handleKeyDown(e, 'kondisi_teknis_tx1')}
+                onKeyDown={(e) => handleKeyDown(e, "kondisi_teknis_tx1")}
               />
             )}
           </td>
           <td className="px-2 py-2 align-middle">
             {isGreen ? (
               <BinaryToggle
-                options={['GREEN', 'RED']}
-                value={getValue(item, 'kondisi_teknis_tx2')}
-                onChange={(v) => onChange(item.id, 'kondisi_teknis_tx2', v)}
+                options={["GREEN", "RED"]}
+                value={getValue(item, "kondisi_teknis_tx2")}
+                onChange={(v) => onChange(item.id, "kondisi_teknis_tx2", v)}
                 disabled={isReadOnly}
                 dataRow={rowIndex}
                 dataField="kondisi_teknis_tx2"
-                onKeyDown={handleToggleKeyDown('kondisi_teknis_tx2')}
+                onKeyDown={handleToggleKeyDown("kondisi_teknis_tx2")}
               />
             ) : (
               <input
                 type="text"
                 className={inputClass}
                 placeholder="..."
-                value={getValue(item, 'kondisi_teknis_tx2')}
-                onChange={(e) => onChange(item.id, 'kondisi_teknis_tx2', e.target.value)}
+                value={getValue(item, "kondisi_teknis_tx2")}
+                onChange={(e) => onChange(item.id, "kondisi_teknis_tx2", e.target.value)}
                 disabled={isReadOnly}
                 data-row={rowIndex}
                 data-field="kondisi_teknis_tx2"
-                onKeyDown={(e) => handleKeyDown(e, 'kondisi_teknis_tx2')}
+                onKeyDown={(e) => handleKeyDown(e, "kondisi_teknis_tx2")}
               />
             )}
           </td>
@@ -725,12 +619,12 @@ const RadarItemRow: React.FC<RadarItemRowProps> = ({
             type="text"
             className={inputClass}
             placeholder="..."
-            value={getValue(item, 'hasil')}
-            onChange={(e) => onChange(item.id, 'hasil', e.target.value)}
+            value={getValue(item, "hasil")}
+            onChange={(e) => onChange(item.id, "hasil", e.target.value)}
             disabled={isReadOnly}
             data-row={rowIndex}
             data-field="hasil"
-            onKeyDown={(e) => handleKeyDown(e, 'hasil')}
+            onKeyDown={(e) => handleKeyDown(e, "hasil")}
           />
         </td>
       )}
@@ -739,12 +633,12 @@ const RadarItemRow: React.FC<RadarItemRowProps> = ({
           type="text"
           className={inputClass}
           placeholder="Catatan"
-          value={getValue(item, 'keterangan')}
-          onChange={(e) => onChange(item.id, 'keterangan', e.target.value)}
+          value={getValue(item, "keterangan")}
+          onChange={(e) => onChange(item.id, "keterangan", e.target.value)}
           disabled={isReadOnly}
           data-row={rowIndex}
           data-field="keterangan"
-          onKeyDown={(e) => handleKeyDown(e, 'keterangan')}
+          onKeyDown={(e) => handleKeyDown(e, "keterangan")}
         />
       </td>
     </tr>
@@ -763,15 +657,13 @@ interface BinaryToggleProps {
   onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
 }
 
-const BinaryToggle: React.FC<BinaryToggleProps> = ({
-  options, value, onChange, disabled, dataRow, dataField, onKeyDown,
-}) => {
+const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, disabled, dataRow, dataField, onKeyDown }) => {
   const [leftOpt, rightOpt] = options;
   const active = (opt: string) => value.trim().toLowerCase() === opt.trim().toLowerCase();
 
-  const leftActive = 'bg-emerald-600 text-white border-emerald-600';
-  const rightActive = 'bg-red-600 text-white border-red-600';
-  const idle = 'bg-white text-slate-600 border-slate-300 hover:border-slate-400';
+  const leftActive = "bg-emerald-600 text-white border-emerald-600";
+  const rightActive = "bg-red-600 text-white border-red-600";
+  const idle = "bg-white text-slate-600 border-slate-300 hover:border-slate-400";
 
   const click = (opt: string) => {
     if (disabled) return;
@@ -782,7 +674,7 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({
     <div className="inline-flex rounded-md overflow-hidden border border-slate-300 select-none w-full justify-center">
       <button
         type="button"
-        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300', active(leftOpt) ? leftActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        className={cn("flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300", active(leftOpt) ? leftActive : idle, disabled && "opacity-50 cursor-not-allowed")}
         onClick={() => click(leftOpt)}
         disabled={disabled}
         data-row={dataRow}
@@ -793,7 +685,7 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({
       </button>
       <button
         type="button"
-        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors', active(rightOpt) ? rightActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        className={cn("flex-1 px-2 py-1 text-[11px] font-semibold transition-colors", active(rightOpt) ? rightActive : idle, disabled && "opacity-50 cursor-not-allowed")}
         onClick={() => click(rightOpt)}
         disabled={disabled}
         data-row={dataRow}
@@ -809,7 +701,7 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({
 const InfoCell: React.FC<{ label: string; value: string | null }> = ({ label, value }) => (
   <div>
     <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">{label}</span>
-    <p className="mt-0.5 font-medium text-slate-700">{value ?? '—'}</p>
+    <p className="mt-0.5 font-medium text-slate-700">{value ?? "—"}</p>
   </div>
 );
 
@@ -825,7 +717,7 @@ const EditableMetaField: React.FC<EditableMetaFieldProps> = ({ label, value, onC
   <div>
     <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</label>
     {disabled ? (
-      <p className="text-xs text-slate-700 font-medium">{value || '—'}</p>
+      <p className="text-xs text-slate-700 font-medium">{value || "—"}</p>
     ) : (
       <input
         type="text"

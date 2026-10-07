@@ -51,6 +51,7 @@ class Employee extends Model
         'birth_date',
         'unit_kerja',
         'jabatan',
+        'avatar_path',
         'group_number',
         'is_active',
         'is_fixed_manager',

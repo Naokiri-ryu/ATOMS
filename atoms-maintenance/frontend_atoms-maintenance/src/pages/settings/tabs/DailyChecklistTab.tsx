@@ -1,47 +1,23 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
-import {
-  AlertTriangle,
-  ArrowDown,
-  ArrowUp,
-  Plus,
-  Trash2,
-  Power,
-  PowerOff,
-  Sun,
-  Sunset,
-  Moon,
-} from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { Modal } from '@/components/common/Modal';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { Skeleton } from '@/components/common/Skeleton';
-import {
-  dashboardChecklistService,
-  type ChecklistItem,
-  type ChecklistModule,
-  type ChecklistCreatePayload,
-} from '@/services/dashboardChecklistService';
-import type { ShiftType } from '@/types';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import { AlertTriangle, ArrowDown, ArrowUp, Plus, Trash2, Power, PowerOff, Sun, Sunset, Moon } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { Modal } from "@/components/common/Modal";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { Skeleton } from "@/components/common/Skeleton";
+import { dashboardChecklistService, type ChecklistItem, type ChecklistModule, type ChecklistCreatePayload } from "@/services/dashboardChecklistService";
+import type { ShiftType } from "@/types";
 
-type SectionKey = 'wajib' | 'pagi' | 'siang' | 'malam';
+type SectionKey = "wajib" | "pagi" | "siang" | "malam";
 
 const SECTION_META: Record<SectionKey, { title: string; subtitle: string; icon: React.FC<{ size?: number; className?: string }>; tone: string; iconBg: string; iconColor: string }> = {
-  wajib: { title: 'Wajib di Setiap Shift', subtitle: 'Selalu tampil terlepas shift apa pun.',
-           icon: AlertTriangle, tone: 'border-amber-200 bg-amber-50/50',
-           iconBg: 'bg-amber-100', iconColor: 'text-amber-700' },
-  pagi:  { title: 'Shift Pagi',  subtitle: 'Hanya tampil saat shift pagi (07:00 — 13:00).',
-           icon: Sun,            tone: 'border-yellow-200 bg-yellow-50/50',
-           iconBg: 'bg-yellow-100', iconColor: 'text-yellow-700' },
-  siang: { title: 'Shift Siang', subtitle: 'Hanya tampil saat shift siang (13:00 — 19:00).',
-           icon: Sunset,         tone: 'border-orange-200 bg-orange-50/50',
-           iconBg: 'bg-orange-100', iconColor: 'text-orange-700' },
-  malam: { title: 'Shift Malam', subtitle: 'Hanya tampil saat shift malam (19:00 — 07:00).',
-           icon: Moon,           tone: 'border-indigo-200 bg-indigo-50/50',
-           iconBg: 'bg-indigo-100', iconColor: 'text-indigo-700' },
+  wajib: { title: "Wajib di Setiap Shift", subtitle: "Selalu tampil terlepas shift apa pun.", icon: AlertTriangle, tone: "border-amber-200 bg-amber-50/50", iconBg: "bg-amber-100", iconColor: "text-amber-700" },
+  pagi: { title: "Shift Pagi", subtitle: "Hanya tampil saat shift pagi (07:15 — 13:15).", icon: Sun, tone: "border-yellow-200 bg-yellow-50/50", iconBg: "bg-yellow-100", iconColor: "text-yellow-700" },
+  siang: { title: "Shift Siang", subtitle: "Hanya tampil saat shift siang (13:15 — 19:15).", icon: Sunset, tone: "border-orange-200 bg-orange-50/50", iconBg: "bg-orange-100", iconColor: "text-orange-700" },
+  malam: { title: "Shift Malam", subtitle: "Hanya tampil saat shift malam (19:15 — 07:15).", icon: Moon, tone: "border-indigo-200 bg-indigo-50/50", iconBg: "bg-indigo-100", iconColor: "text-indigo-700" },
 };
 
-const SECTION_ORDER: SectionKey[] = ['wajib', 'pagi', 'siang', 'malam'];
+const SECTION_ORDER: SectionKey[] = ["wajib", "pagi", "siang", "malam"];
 
 /**
  * "Harian" tab content. Mirrors the original SettingsChecklistPage content
@@ -62,25 +38,24 @@ export const DailyChecklistTab: React.FC = () => {
   const fetchAll = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [its, mods] = await Promise.all([
-        dashboardChecklistService.listItems(),
-        dashboardChecklistService.listModules(),
-      ]);
+      const [its, mods] = await Promise.all([dashboardChecklistService.listItems(), dashboardChecklistService.listModules()]);
       setItems(its);
       setModules(mods);
       setErrorMessage(null);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
-        setErrorMessage('Sesi habis. Silakan login ulang.');
+        setErrorMessage("Sesi habis. Silakan login ulang.");
       } else {
-        setErrorMessage('Gagal memuat checklist harian. Coba refresh halaman.');
+        setErrorMessage("Gagal memuat checklist harian. Coba refresh halaman.");
       }
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => { void fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    void fetchAll();
+  }, [fetchAll]);
 
   const flashSuccess = (msg: string) => {
     setSuccessMessage(msg);
@@ -91,14 +66,14 @@ export const DailyChecklistTab: React.FC = () => {
     try {
       await dashboardChecklistService.createItem(payload);
       await fetchAll();
-      flashSuccess('Modul ditambahkan ke checklist.');
+      flashSuccess("Modul ditambahkan ke checklist.");
       setAddSection(null);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
-        const msg = (err.response.data as { message?: string })?.message ?? 'Gagal menambahkan modul.';
+        const msg = (err.response.data as { message?: string })?.message ?? "Gagal menambahkan modul.";
         setErrorMessage(msg);
       } else {
-        setErrorMessage('Gagal menambahkan modul.');
+        setErrorMessage("Gagal menambahkan modul.");
       }
     }
   };
@@ -109,9 +84,9 @@ export const DailyChecklistTab: React.FC = () => {
     try {
       await dashboardChecklistService.deleteItem(deleteTarget.id);
       await fetchAll();
-      flashSuccess('Modul dihapus dari checklist.');
+      flashSuccess("Modul dihapus dari checklist.");
     } catch {
-      setErrorMessage('Gagal menghapus modul.');
+      setErrorMessage("Gagal menghapus modul.");
     } finally {
       setBusyId(null);
       setDeleteTarget(null);
@@ -123,18 +98,16 @@ export const DailyChecklistTab: React.FC = () => {
     try {
       await dashboardChecklistService.updateItem(item.id, { is_active: !item.is_active });
       await fetchAll();
-      flashSuccess(item.is_active ? 'Modul dinonaktifkan.' : 'Modul diaktifkan kembali.');
+      flashSuccess(item.is_active ? "Modul dinonaktifkan." : "Modul diaktifkan kembali.");
     } catch {
-      setErrorMessage('Gagal mengubah status modul.');
+      setErrorMessage("Gagal mengubah status modul.");
     } finally {
       setBusyId(null);
     }
   };
 
   const handleMove = async (item: ChecklistItem, direction: -1 | 1) => {
-    const peers = items
-      .filter((i) => i.category === item.category && i.shift_type === item.shift_type)
-      .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+    const peers = items.filter((i) => i.category === item.category && i.shift_type === item.shift_type).sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
     const idx = peers.findIndex((p) => p.id === item.id);
     const targetIdx = idx + direction;
     if (idx === -1 || targetIdx < 0 || targetIdx >= peers.length) return;
@@ -148,7 +121,7 @@ export const DailyChecklistTab: React.FC = () => {
       await dashboardChecklistService.reorderItems(payload);
       await fetchAll();
     } catch {
-      setErrorMessage('Gagal mengubah urutan.');
+      setErrorMessage("Gagal mengubah urutan.");
     } finally {
       setBusyId(null);
     }
@@ -156,10 +129,13 @@ export const DailyChecklistTab: React.FC = () => {
 
   const sections = useMemo(() => {
     const map: Record<SectionKey, ChecklistItem[]> = {
-      wajib: [], pagi: [], siang: [], malam: [],
+      wajib: [],
+      pagi: [],
+      siang: [],
+      malam: [],
     };
     for (const item of items) {
-      if (item.category === 'wajib') map.wajib.push(item);
+      if (item.category === "wajib") map.wajib.push(item);
       else if (item.shift_type) map[item.shift_type as SectionKey].push(item);
     }
     for (const key of SECTION_ORDER) {
@@ -173,7 +149,9 @@ export const DailyChecklistTab: React.FC = () => {
       {errorMessage && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-start justify-between gap-3" role="alert">
           <span>{errorMessage}</span>
-          <button onClick={() => setErrorMessage(null)} className="text-red-500 hover:text-red-700 font-medium text-xs">Tutup</button>
+          <button onClick={() => setErrorMessage(null)} className="text-red-500 hover:text-red-700 font-medium text-xs">
+            Tutup
+          </button>
         </div>
       )}
       {successMessage && (
@@ -184,21 +162,14 @@ export const DailyChecklistTab: React.FC = () => {
 
       {isLoading ? (
         <div className="space-y-3">
-          {[1,2,3,4].map((i) => <Skeleton key={i} className="h-32 w-full" />)}
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-32 w-full" />
+          ))}
         </div>
       ) : (
         <div className="space-y-5">
           {SECTION_ORDER.map((key) => (
-            <SectionPanel
-              key={key}
-              sectionKey={key}
-              items={sections[key]}
-              busyId={busyId}
-              onAdd={() => setAddSection(key)}
-              onDelete={(i) => setDeleteTarget(i)}
-              onToggleActive={handleToggleActive}
-              onMove={handleMove}
-            />
+            <SectionPanel key={key} sectionKey={key} items={sections[key]} busyId={busyId} onAdd={() => setAddSection(key)} onDelete={(i) => setDeleteTarget(i)} onToggleActive={handleToggleActive} onMove={handleMove} />
           ))}
         </div>
       )}
@@ -207,19 +178,15 @@ export const DailyChecklistTab: React.FC = () => {
         <AddItemModal
           section={addSection}
           modules={modules}
-          existingKeys={new Set(items
-            .filter((i) =>
-              addSection === 'wajib'
-                ? i.category === 'wajib'
-                : i.category === 'shift' && i.shift_type === addSection,
-            )
-            .map((i) => i.module_key))}
+          existingKeys={new Set(items.filter((i) => (addSection === "wajib" ? i.category === "wajib" : i.category === "shift" && i.shift_type === addSection)).map((i) => i.module_key))}
           onClose={() => setAddSection(null)}
-          onSubmit={(moduleKey) => handleCreate({
-            module_key: moduleKey,
-            category: addSection === 'wajib' ? 'wajib' : 'shift',
-            shift_type: addSection === 'wajib' ? null : (addSection as ShiftType),
-          })}
+          onSubmit={(moduleKey) =>
+            handleCreate({
+              module_key: moduleKey,
+              category: addSection === "wajib" ? "wajib" : "shift",
+              shift_type: addSection === "wajib" ? null : (addSection as ShiftType),
+            })
+          }
         />
       )}
 
@@ -228,7 +195,7 @@ export const DailyChecklistTab: React.FC = () => {
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void handleDelete()}
         title="Hapus modul dari checklist?"
-        message={deleteTarget ? `"${deleteTarget.label}" akan dihapus dari pengingat ${sectionLabelForItem(deleteTarget)}.` : ''}
+        message={deleteTarget ? `"${deleteTarget.label}" akan dihapus dari pengingat ${sectionLabelForItem(deleteTarget)}.` : ""}
         confirmLabel="Hapus"
         cancelLabel="Batal"
         variant="danger"
@@ -238,8 +205,8 @@ export const DailyChecklistTab: React.FC = () => {
 };
 
 function sectionLabelForItem(item: ChecklistItem): string {
-  if (item.category === 'wajib') return 'Wajib di Setiap Shift';
-  return `Shift ${item.shift_type ?? '—'}`;
+  if (item.category === "wajib") return "Wajib di Setiap Shift";
+  return `Shift ${item.shift_type ?? "—"}`;
 }
 
 // ─── Section panel ──────────────────────────────────────────────────────────
@@ -254,9 +221,7 @@ interface SectionPanelProps {
   onMove: (item: ChecklistItem, direction: -1 | 1) => void;
 }
 
-const SectionPanel: React.FC<SectionPanelProps> = ({
-  sectionKey, items, busyId, onAdd, onDelete, onToggleActive, onMove,
-}) => {
+const SectionPanel: React.FC<SectionPanelProps> = ({ sectionKey, items, busyId, onAdd, onDelete, onToggleActive, onMove }) => {
   const meta = SECTION_META[sectionKey];
   const Icon = meta.icon;
 
@@ -290,9 +255,9 @@ const SectionPanel: React.FC<SectionPanelProps> = ({
             {items.map((item, idx) => {
               const isBusy = busyId === item.id;
               const isFirst = idx === 0;
-              const isLast  = idx === items.length - 1;
+              const isLast = idx === items.length - 1;
               return (
-                <li key={item.id} className={`flex items-center gap-3 px-5 py-3 ${!item.is_active ? 'bg-slate-50/60' : ''}`}>
+                <li key={item.id} className={`flex items-center gap-3 px-5 py-3 ${!item.is_active ? "bg-slate-50/60" : ""}`}>
                   <div className="flex flex-col gap-0.5 shrink-0">
                     <button
                       type="button"
@@ -324,26 +289,16 @@ const SectionPanel: React.FC<SectionPanelProps> = ({
                           <p className="text-sm font-medium text-slate-700">
                             <span className="font-mono text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">{item.module_key}</span>
                           </p>
-                          <p className="text-[11px] text-amber-700">
-                            Modul ini tidak terdaftar lagi di registry. Sebaiknya dihapus.
-                          </p>
+                          <p className="text-[11px] text-amber-700">Modul ini tidak terdaftar lagi di registry. Sebaiknya dihapus.</p>
                         </div>
                       </div>
                     ) : (
                       <>
-                        <p className={`text-sm font-medium ${item.is_active ? 'text-slate-900' : 'text-slate-500 line-through'}`}>
-                          {item.label}
-                        </p>
+                        <p className={`text-sm font-medium ${item.is_active ? "text-slate-900" : "text-slate-500 line-through"}`}>{item.label}</p>
                         <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
-                          <span className={`inline-flex items-center rounded px-1.5 py-0.5 font-bold ${item.division === 'CNSD' ? 'bg-sky-100 text-sky-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                            {item.division}
-                          </span>
+                          <span className={`inline-flex items-center rounded px-1.5 py-0.5 font-bold ${item.division === "CNSD" ? "bg-sky-100 text-sky-700" : "bg-emerald-100 text-emerald-700"}`}>{item.division}</span>
                           <span className="text-slate-400">{item.group}</span>
-                          {!item.is_active && (
-                            <span className="inline-flex items-center rounded bg-slate-200 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 uppercase tracking-wider">
-                              Nonaktif
-                            </span>
-                          )}
+                          {!item.is_active && <span className="inline-flex items-center rounded bg-slate-200 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 uppercase tracking-wider">Nonaktif</span>}
                         </p>
                       </>
                     )}
@@ -354,11 +309,9 @@ const SectionPanel: React.FC<SectionPanelProps> = ({
                       type="button"
                       disabled={isBusy}
                       onClick={() => onToggleActive(item)}
-                      className={`p-1.5 rounded-md transition-colors disabled:opacity-50 ${item.is_active
-                        ? 'text-slate-400 hover:text-amber-600 hover:bg-amber-50'
-                        : 'text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50'}`}
-                      title={item.is_active ? 'Nonaktifkan (sembunyikan dari dashboard)' : 'Aktifkan kembali'}
-                      aria-label={item.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                      className={`p-1.5 rounded-md transition-colors disabled:opacity-50 ${item.is_active ? "text-slate-400 hover:text-amber-600 hover:bg-amber-50" : "text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50"}`}
+                      title={item.is_active ? "Nonaktifkan (sembunyikan dari dashboard)" : "Aktifkan kembali"}
+                      aria-label={item.is_active ? "Nonaktifkan" : "Aktifkan"}
                     >
                       {item.is_active ? <PowerOff size={16} /> : <Power size={16} />}
                     </button>
@@ -394,7 +347,7 @@ interface AddItemModalProps {
 }
 
 const AddItemModal: React.FC<AddItemModalProps> = ({ section, modules, existingKeys, onClose, onSubmit }) => {
-  const [selected, setSelected] = useState<string>('');
+  const [selected, setSelected] = useState<string>("");
 
   const grouped = useMemo(() => {
     const map: Record<string, ChecklistModule[]> = {};
@@ -410,9 +363,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ section, modules, existingK
   return (
     <Modal isOpen={true} onClose={onClose} title={`Tambah modul ke ${sectionTitle}`} size="md">
       <div className="space-y-4">
-        <p className="text-sm text-slate-600">
-          Pilih modul dari daftar di bawah. Modul yang sudah ada di section ini ditandai dan tidak bisa dipilih.
-        </p>
+        <p className="text-sm text-slate-600">Pilih modul dari daftar di bawah. Modul yang sudah ada di section ini ditandai dan tidak bisa dipilih.</p>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Modul</label>
@@ -428,7 +379,8 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ section, modules, existingK
                   const dupe = existingKeys.has(m.key);
                   return (
                     <option key={m.key} value={m.key} disabled={dupe}>
-                      [{m.division}] {m.label}{dupe ? ' — sudah ditambahkan' : ''}
+                      [{m.division}] {m.label}
+                      {dupe ? " — sudah ditambahkan" : ""}
                     </option>
                   );
                 })}
@@ -438,7 +390,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ section, modules, existingK
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={onClose}>Batal</Button>
+          <Button variant="outline" onClick={onClose}>
+            Batal
+          </Button>
           <Button onClick={() => selected && onSubmit(selected)} disabled={!selected}>
             Tambahkan
           </Button>

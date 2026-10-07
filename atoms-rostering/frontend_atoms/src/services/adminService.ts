@@ -109,6 +109,30 @@ export const adminService = {
     return response.data.data;
   },
 
+  // Upload Employee Avatar (self or admin)
+  async uploadAvatar(id: number, file: File): Promise<{ avatar_path: string | null; avatar_url: string | null }> {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      data: { avatar_path: string | null; avatar_url: string | null };
+    }>(`/employees/${id}/avatar`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.data;
+  },
+
+  // Delete Employee Avatar (self or admin)
+  async deleteAvatar(id: number): Promise<{ avatar_path: string | null; avatar_url: string | null }> {
+    const response = await apiClient.delete<{
+      success: boolean;
+      message: string;
+      data: { avatar_path: string | null; avatar_url: string | null };
+    }>(`/employees/${id}/avatar`);
+    return response.data.data;
+  },
+
   // Admin reset user password (set temporary password)
   async resetPassword(id: number, password?: string): Promise<{ message: string; password: string; must_change_password: boolean }> {
     const response = await apiClient.post<{ message: string; password: string; must_change_password: boolean }>(

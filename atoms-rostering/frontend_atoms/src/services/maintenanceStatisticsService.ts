@@ -144,6 +144,65 @@ export interface TfpEquipmentDetail {
   series: TfpSeries;
 }
 
+// ─── Statistik Ground Check (backend maintenance) ──────────────────────────
+
+/** Ringkasan satu modul Ground Check. */
+export interface GroundCheckModuleSummary {
+  module_key: string;
+  label: string;
+  route: string;
+  total_records: number;
+  completed_records: number;
+  completion_rate: number;
+  monthly_total: number[];
+  monthly_completed: number[];
+  last_date: string | null;
+  /** false = modul ini hanya punya kelengkapan, tanpa nilai numerik. */
+  has_numeric: boolean;
+  metric_count: number;
+}
+
+export interface GroundCheckIndex {
+  year: number;
+  modules: GroundCheckModuleSummary[];
+}
+
+/** Satu kolom ukur, mis. tx1_error atau tx1_rf_level_db. */
+export interface GroundCheckMetric {
+  metric_key: string;
+  label: string;
+  unit: string | null;
+  samples: number;
+  /** Pembacaan yang ditulis ulang saat dibaca karena wraparound 360°. */
+  normalized: number;
+}
+
+export interface GroundCheckSeries {
+  metric_key: string | null;
+  label: string | null;
+  unit: string | null;
+  total_samples: number;
+  normalized_samples: number;
+  points: TfpSeriesPoint[];
+}
+
+export interface GroundCheckDetail {
+  year: number;
+  module_key: string;
+  label: string;
+  route: string;
+  records_total: number;
+  records_completed: number;
+  completion_rate: number;
+  monthly_total: number[];
+  monthly_completed: number[];
+  status_counts: { ongoing: number; on_hold: number; completed: number };
+  last_date: string | null;
+  has_numeric: boolean;
+  available_metrics: GroundCheckMetric[];
+  series: GroundCheckSeries;
+}
+
 /** Daftarkan token rostering ke cache backend maintenance (dev mode). */
 async function ensureMaintenanceAuth(): Promise<void> {
   if (maintenanceAuthReady) return;
@@ -222,5 +281,39 @@ export const maintenanceStatisticsService = {
       params,
     });
     return res.data.data as TfpEquipmentDetail;
+  },
+
+  async getGroundCheck(year?: number): Promise<GroundCheckIndex> {
+    const token = getStoredToken();
+    if (!token) throw new Error('Belum login.');
+
+    await ensureMaintenanceAuth();
+
+    const res = await axios.get(`${getMaintenanceApiBaseUrl()}/v1/statistics/ground-check`, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: year ? { year } : undefined,
+    });
+    return res.data.data as GroundCheckIndex;
+  },
+
+  async getGroundCheckDetail(
+    moduleKey: string,
+    year?: number,
+    metricKey?: string,
+  ): Promise<GroundCheckDetail> {
+    const token = getStoredToken();
+    if (!token) throw new Error('Belum login.');
+
+    await ensureMaintenanceAuth();
+
+    const params: Record<string, string | number> = {};
+    if (year) params.year = year;
+    if (metricKey) params.metric_key = metricKey;
+
+    const res = await axios.get(`${getMaintenanceApiBaseUrl()}/v1/statistics/ground-check/${moduleKey}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      params,
+    });
+    return res.data.data as GroundCheckDetail;
   },
 };

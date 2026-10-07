@@ -1,41 +1,28 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import {
-  AlertCircle,
-  ArrowLeft,
-  Calendar,
-  Clock,
-  MapPin,
-  Printer,
-  Radio,
-  Save,
-  Users,
-} from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { ShiftBadge } from '@/components/common/ShiftBadge';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import type { ShiftType } from '@/types';
-import { Skeleton } from '@/components/common/Skeleton';
-import { Tabs } from '@/components/common/Tabs';
-import { useAuth } from '@/hooks/useAuth';
-import { canEditCnsd } from '@/lib/roles';
-import { cnsdReceiverMeterService } from '@/services/cnsdReceiverMeterService';
-import { CnsdReceiverMeterSignaturePanel } from './components/CnsdReceiverMeterSignaturePanel';
-import type {
-  CnsdReceiverMeterItem,
-  CnsdReceiverMeterRecordDetail,
-} from '@/types/cnsdReceiver';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { AlertCircle, ArrowLeft, Calendar, Clock, MapPin, Printer, Radio, Save, Users } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { ShiftBadge } from "@/components/common/ShiftBadge";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import type { ShiftType } from "@/types";
+import { Skeleton } from "@/components/common/Skeleton";
+import { Tabs } from "@/components/common/Tabs";
+import { useAuth } from "@/hooks/useAuth";
+import { canEditCnsd } from "@/lib/roles";
+import { cnsdReceiverMeterService } from "@/services/cnsdReceiverMeterService";
+import { CnsdReceiverMeterSignaturePanel } from "./components/CnsdReceiverMeterSignaturePanel";
+import type { CnsdReceiverMeterItem, CnsdReceiverMeterRecordDetail } from "@/types/cnsdReceiver";
 
 // ─── Constants ─────────────────────────────────────────────────
 
 const SHIFT_TIME_LABELS: Record<string, string> = {
-  pagi:  '07:00 — 13:00',
-  siang: '13:00 — 19:00',
-  malam: '19:00 — 07:00',
+  pagi: "07:15 — 13:15",
+  siang: "13:15 — 19:15",
+  malam: "19:15 — 07:15",
 };
 
-const STATUS_OPTIONS = ['ON LINE', 'OFF LINE'];
+const STATUS_OPTIONS = ["ON LINE", "OFF LINE"];
 
 interface SectionMeta {
   code: string;
@@ -76,16 +63,16 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Editable equipment metadata (paper-form header). Flushed on Save alongside item edits.
-  const [merk, setMerk] = useState('');
-  const [type, setType] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
+  const [merk, setMerk] = useState("");
+  const [type, setType] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
 
   const canEditMetadata = canEditCnsd(user);
 
   // ─── Fetch ──────────────────────────────────────────────────
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
-      setErrorMessage('ID form tidak valid.');
+      setErrorMessage("ID form tidak valid.");
       setIsLoading(false);
       return;
     }
@@ -94,9 +81,9 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
       const data = await cnsdReceiverMeterService.getRecord(recordId);
       setRecord(data);
       setEditedItems({});
-      setMerk(data.merk ?? '');
-      setType(data.type ?? '');
-      setSerialNumber(data.serial_number ?? '');
+      setMerk(data.merk ?? "");
+      setType(data.type ?? "");
+      setSerialNumber(data.serial_number ?? "");
       if (data.sections_meta.length > 0) {
         const stillExists = activeSectionCode && data.sections_meta.some((s) => s.code === activeSectionCode);
         if (!stillExists) {
@@ -106,20 +93,20 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
       setErrorMessage(null);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
-        setErrorMessage('Form tidak ditemukan.');
+        setErrorMessage("Form tidak ditemukan.");
       } else {
-        setErrorMessage('Gagal memuat data form.');
+        setErrorMessage("Gagal memuat data form.");
       }
       setRecord(null);
     } finally {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   useEffect(() => {
     void fetchRecord();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   // ─── Derived ────────────────────────────────────────────────
@@ -127,33 +114,25 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
     const map: Record<string, CnsdReceiverMeterItem[]> = {};
     if (!record) return map;
     record.items.forEach((it) => {
-      const code = it.section_code ?? '1';
+      const code = it.section_code ?? "1";
       if (!map[code]) map[code] = [];
       map[code].push(it);
     });
     return map;
   }, [record]);
 
-  const isCompleted = record?.status === 'completed';
+  const isCompleted = record?.status === "completed";
   const isReadOnly = isCompleted || !canEditCnsd(user);
-  const metadataDirty =
-    !!record &&
-    (merk !== (record.merk ?? '') ||
-      type !== (record.type ?? '') ||
-      serialNumber !== (record.serial_number ?? ''));
+  const metadataDirty = !!record && (merk !== (record.merk ?? "") || type !== (record.type ?? "") || serialNumber !== (record.serial_number ?? ""));
   const hasChanges = Object.keys(editedItems).length > 0 || metadataDirty;
 
-  const updateField = (
-    itemId: number,
-    field: keyof CnsdReceiverMeterItem,
-    value: string | null,
-  ) => {
+  const updateField = (itemId: number, field: keyof CnsdReceiverMeterItem, value: string | null) => {
     if (isReadOnly) return;
     setEditedItems((prev) => ({
       ...prev,
       [itemId]: {
         ...(prev[itemId] ?? {}),
-        [field]: value === '' ? null : value,
+        [field]: value === "" ? null : value,
       },
     }));
   };
@@ -162,10 +141,10 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
     const edited = editedItems[item.id];
     if (edited && field in edited) {
       const v = edited[field];
-      return v == null ? '' : String(v);
+      return v == null ? "" : String(v);
     }
     const original = item[field];
-    return original == null ? '' : String(original);
+    return original == null ? "" : String(original);
   };
 
   // ─── Save ───────────────────────────────────────────────────
@@ -178,11 +157,11 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
 
     const items = Object.entries(editedItems).map(([rawId, patch]) => ({
       id: Number(rawId),
-      status_a:    'status_a'    in patch ? patch.status_a    ?? null : undefined,
-      status_b:    'status_b'    in patch ? patch.status_b    ?? null : undefined,
-      sequelsh_on: 'sequelsh_on' in patch ? patch.sequelsh_on ?? null : undefined,
-      hasil:       'hasil'       in patch ? patch.hasil       ?? null : undefined,
-      keterangan:  'keterangan'  in patch ? patch.keterangan  ?? null : undefined,
+      status_a: "status_a" in patch ? (patch.status_a ?? null) : undefined,
+      status_b: "status_b" in patch ? (patch.status_b ?? null) : undefined,
+      sequelsh_on: "sequelsh_on" in patch ? (patch.sequelsh_on ?? null) : undefined,
+      hasil: "hasil" in patch ? (patch.hasil ?? null) : undefined,
+      keterangan: "keterangan" in patch ? (patch.keterangan ?? null) : undefined,
     }));
 
     try {
@@ -196,15 +175,15 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
       setEditedItems({});
       const parts: string[] = [];
       if (items.length > 0) parts.push(`${items.length} item`);
-      if (metadataDirty) parts.push('metadata peralatan');
-      setSuccessMessage(`${parts.join(' + ')} disimpan.`);
+      if (metadataDirty) parts.push("metadata peralatan");
+      setSuccessMessage(`${parts.join(" + ")} disimpan.`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menyimpan perubahan.');
+        setErrorMessage(data.message ?? "Gagal menyimpan perubahan.");
       } else {
-        setErrorMessage('Koneksi gagal, coba lagi.');
+        setErrorMessage("Koneksi gagal, coba lagi.");
       }
     } finally {
       setIsSaving(false);
@@ -226,8 +205,8 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
     return (
       <div className="max-w-3xl mx-auto py-20 text-center space-y-4">
         <AlertCircle className="mx-auto h-12 w-12 text-slate-400" />
-        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? 'Form tidak ditemukan.'}</h2>
-        <Button variant="outline" onClick={() => navigate('/cnsd/receiver-meter')} className="gap-2">
+        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? "Form tidak ditemukan."}</h2>
+        <Button variant="outline" onClick={() => navigate("/cnsd/receiver-meter")} className="gap-2">
           <ArrowLeft size={16} />
           Kembali ke Daftar
         </Button>
@@ -235,27 +214,17 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
     );
   }
 
-  const activeSectionMeta = activeSectionCode
-    ? record.sections_meta.find((s) => s.code === activeSectionCode) ?? null
-    : null;
+  const activeSectionMeta = activeSectionCode ? (record.sections_meta.find((s) => s.code === activeSectionCode) ?? null) : null;
 
   return (
     <div className="max-w-full space-y-5 animate-fade-in pb-12">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <button
-          type="button"
-          onClick={() => navigate('/cnsd')}
-          className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors"
-        >
+        <button type="button" onClick={() => navigate("/cnsd")} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
           <ArrowLeft size={14} /> CNSD
         </button>
         <span>/</span>
-        <button
-          type="button"
-          onClick={() => navigate('/cnsd/receiver-meter')}
-          className="hover:text-slate-700 transition-colors"
-        >
+        <button type="button" onClick={() => navigate("/cnsd/receiver-meter")} className="hover:text-slate-700 transition-colors">
           Receiver Meter Reading
         </button>
         <span>/</span>
@@ -271,9 +240,7 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg font-bold text-slate-900">
-                  Meter Reading — Receiver
-                </h1>
+                <h1 className="text-lg font-bold text-slate-900">Meter Reading — Receiver</h1>
                 <StatusBadge status={record.status} variant="pill" />
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -290,7 +257,7 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg" title="Rentang waktu shift">
               <Clock size={13} className="text-slate-400" />
-              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? '—'}</span>
+              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? "—"}</span>
             </div>
             <ShiftBadge shift={record.shift_type as ShiftType} />
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
@@ -316,20 +283,16 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
         <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Manager Teknik</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Supervisor CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Teknisi CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(', ')}>
-              {record.technicians.map((t) => t.technician_name).join(', ') || <span className="text-slate-400 italic">—</span>}
+            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(", ")}>
+              {record.technicians.map((t) => t.technician_name).join(", ") || <span className="text-slate-400 italic">—</span>}
             </p>
           </div>
         </div>
@@ -337,11 +300,11 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
 
       {/* Messages */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{errorMessage}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {errorMessage}
+        </div>
       )}
-      {successMessage && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>
-      )}
+      {successMessage && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>}
 
       {/* Info Peralatan card */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
@@ -353,33 +316,11 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
           <InfoCell label="Tanggal" value={record.date} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-2 border-t border-slate-100">
-          <EditableMetaField
-            label="Merk"
-            value={merk}
-            onChange={setMerk}
-            disabled={isReadOnly || !canEditMetadata}
-            placeholder="OTE / PAE / TELERAD"
-          />
-          <EditableMetaField
-            label="Type"
-            value={type}
-            onChange={setType}
-            disabled={isReadOnly || !canEditMetadata}
-            placeholder="—"
-          />
-          <EditableMetaField
-            label="Serial Number"
-            value={serialNumber}
-            onChange={setSerialNumber}
-            disabled={isReadOnly || !canEditMetadata}
-            placeholder="—"
-          />
+          <EditableMetaField label="Merk" value={merk} onChange={setMerk} disabled={isReadOnly || !canEditMetadata} placeholder="OTE / PAE / TELERAD" />
+          <EditableMetaField label="Type" value={type} onChange={setType} disabled={isReadOnly || !canEditMetadata} placeholder="—" />
+          <EditableMetaField label="Serial Number" value={serialNumber} onChange={setSerialNumber} disabled={isReadOnly || !canEditMetadata} placeholder="—" />
         </div>
-        {!canEditMetadata && !isReadOnly && (
-          <p className="text-[10px] text-slate-400 italic">
-            Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.
-          </p>
-        )}
+        {!canEditMetadata && !isReadOnly && <p className="text-[10px] text-slate-400 italic">Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.</p>}
       </div>
 
       {/* Tabs */}
@@ -395,15 +336,7 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
       )}
 
       {/* Section content */}
-      {activeSectionMeta && (
-        <ReceiverSectionPanel
-          sectionMeta={activeSectionMeta}
-          items={itemsBySection[activeSectionMeta.code] ?? []}
-          isReadOnly={isReadOnly}
-          getValue={getValue}
-          onChange={updateField}
-        />
-      )}
+      {activeSectionMeta && <ReceiverSectionPanel sectionMeta={activeSectionMeta} items={itemsBySection[activeSectionMeta.code] ?? []} isReadOnly={isReadOnly} getValue={getValue} onChange={updateField} />}
 
       {/* Pending-changes indicator */}
       {!isReadOnly && (
@@ -411,17 +344,12 @@ export const CnsdReceiverMeterDetailPage: React.FC = () => {
           {hasChanges && (
             <span className="text-xs text-amber-600 font-medium">
               {Object.keys(editedItems).length > 0 && `${Object.keys(editedItems).length} item`}
-              {Object.keys(editedItems).length > 0 && metadataDirty && ' + '}
-              {metadataDirty && 'metadata'}
-              {' belum disimpan'}
+              {Object.keys(editedItems).length > 0 && metadataDirty && " + "}
+              {metadataDirty && "metadata"}
+              {" belum disimpan"}
             </span>
           )}
-          <Button
-            onClick={() => void handleSave()}
-            disabled={!hasChanges}
-            isLoading={isSaving}
-            className="gap-2"
-          >
+          <Button onClick={() => void handleSave()} disabled={!hasChanges} isLoading={isSaving} className="gap-2">
             <Save size={16} />
             Simpan Perubahan
           </Button>
@@ -444,16 +372,14 @@ interface ReceiverSectionPanelProps {
   onChange: (itemId: number, field: keyof CnsdReceiverMeterItem, value: string | null) => void;
 }
 
-const ReceiverSectionPanel: React.FC<ReceiverSectionPanelProps> = ({
-  sectionMeta, items, isReadOnly, getValue, onChange,
-}) => {
+const ReceiverSectionPanel: React.FC<ReceiverSectionPanelProps> = ({ sectionMeta, items, isReadOnly, getValue, onChange }) => {
   // Group items by group_name; Section 1 has header rows we skip in body.
   const groups = useMemo(() => {
     const order: string[] = [];
     const map: Record<string, CnsdReceiverMeterItem[]> = {};
     items.forEach((it) => {
       if (it.is_header) return; // skip explicit header rows; we'll render via group name bar
-      const key = it.group_name ?? '__ungrouped__';
+      const key = it.group_name ?? "__ungrouped__";
       if (!map[key]) {
         map[key] = [];
         order.push(key);
@@ -461,13 +387,13 @@ const ReceiverSectionPanel: React.FC<ReceiverSectionPanelProps> = ({
       map[key].push(it);
     });
     return order.map((key) => ({
-      number: items.find((i) => (i.group_name ?? '__ungrouped__') === key)?.group_number ?? null,
-      name: key === '__ungrouped__' ? null : key,
+      number: items.find((i) => (i.group_name ?? "__ungrouped__") === key)?.group_number ?? null,
+      name: key === "__ungrouped__" ? null : key,
       items: map[key],
     }));
   }, [items]);
 
-  const isReceiver = sectionMeta.inputs_layout === 'receiver';
+  const isReceiver = sectionMeta.inputs_layout === "receiver";
   const colCount = isReceiver ? 6 : 5;
 
   return (
@@ -477,15 +403,9 @@ const ReceiverSectionPanel: React.FC<ReceiverSectionPanelProps> = ({
           <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
             {sectionMeta.code}. {sectionMeta.name}
           </h2>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            {isReceiver
-              ? 'Pilih status ON LINE / OFF LINE untuk masing-masing channel A dan B per frekuensi.'
-              : 'Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan kerja.'}
-          </p>
+          <p className="text-[11px] text-slate-500 mt-0.5">{isReceiver ? "Pilih status ON LINE / OFF LINE untuk masing-masing channel A dan B per frekuensi." : "Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan kerja."}</p>
         </div>
-        <span className="text-xs font-medium text-slate-400">
-          {groups.reduce((sum, g) => sum + g.items.length, 0)} item
-        </span>
+        <span className="text-xs font-medium text-slate-400">{groups.reduce((sum, g) => sum + g.items.length, 0)} item</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -493,13 +413,11 @@ const ReceiverSectionPanel: React.FC<ReceiverSectionPanelProps> = ({
           <thead>
             <tr className="bg-slate-50 text-slate-700">
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-12 text-[11px] uppercase tracking-wider">No</th>
-              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[240px] text-[11px] uppercase tracking-wider">
-                {isReceiver ? 'Pemeriksaan' : 'Kegiatan'}
-              </th>
+              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[240px] text-[11px] uppercase tracking-wider">{isReceiver ? "Pemeriksaan" : "Kegiatan"}</th>
               {isReceiver ? (
                 <>
                   <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[120px] text-[11px] uppercase tracking-wider">Status A</th>
-                  
+
                   <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[120px] text-[11px] uppercase tracking-wider">SQUELCH TX 1</th>
                 </>
               ) : (
@@ -525,20 +443,13 @@ const ReceiverSectionPanel: React.FC<ReceiverSectionPanelProps> = ({
                   {group.name && isReceiver && (
                     <tr className="bg-slate-100">
                       <td colSpan={colCount} className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200">
-                        {group.number ? `${group.number}. ` : ''}{group.name}
+                        {group.number ? `${group.number}. ` : ""}
+                        {group.name}
                       </td>
                     </tr>
                   )}
                   {group.items.map((item, idx) => (
-                    <ReceiverItemRow
-                      key={item.id}
-                      item={item}
-                      rowIdx={idx + 1}
-                      isReceiver={isReceiver}
-                      isReadOnly={isReadOnly}
-                      getValue={getValue}
-                      onChange={onChange}
-                    />
+                    <ReceiverItemRow key={item.id} item={item} rowIdx={idx + 1} isReceiver={isReceiver} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} />
                   ))}
                 </React.Fragment>
               ))
@@ -561,86 +472,51 @@ interface ReceiverItemRowProps {
   onChange: (itemId: number, field: keyof CnsdReceiverMeterItem, value: string | null) => void;
 }
 
-const ReceiverItemRow: React.FC<ReceiverItemRowProps> = ({
-  item, rowIdx, isReceiver, isReadOnly, getValue, onChange,
-}) => {
-  const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
-  const selectClass = inputClass + ' appearance-none cursor-pointer';
+const ReceiverItemRow: React.FC<ReceiverItemRowProps> = ({ item, rowIdx, isReceiver, isReadOnly, getValue, onChange }) => {
+  const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
+  const selectClass = inputClass + " appearance-none cursor-pointer";
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
-      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">
-        {rowIdx}
-      </td>
-      <td className="px-3 py-2 align-middle text-slate-800 font-medium">
-        {item.item_name}
-      </td>
+      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{rowIdx}</td>
+      <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.item_name}</td>
       {isReceiver ? (
         <>
           <td className="px-2 py-2 align-middle">
-            <select
-              className={selectClass}
-              value={getValue(item, 'status_a')}
-              onChange={(e) => onChange(item.id, 'status_a', e.target.value || null)}
-              disabled={isReadOnly}
-            >
+            <select className={selectClass} value={getValue(item, "status_a")} onChange={(e) => onChange(item.id, "status_a", e.target.value || null)} disabled={isReadOnly}>
               <option value="">—</option>
               {STATUS_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </td>
-         
+
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
-              value={getValue(item, 'sequelsh_on')}
-              onChange={(e) => onChange(item.id, 'sequelsh_on', e.target.value)}
-              disabled={isReadOnly}
-            />
+            <input type="text" className={inputClass} placeholder="..." value={getValue(item, "sequelsh_on")} onChange={(e) => onChange(item.id, "sequelsh_on", e.target.value)} disabled={isReadOnly} />
           </td>
-           <td className="px-2 py-2 align-middle">
-            <select
-              className={selectClass}
-              value={getValue(item, 'status_b')}
-              onChange={(e) => onChange(item.id, 'status_b', e.target.value || null)}
-              disabled={isReadOnly}
-            >
+          <td className="px-2 py-2 align-middle">
+            <select className={selectClass} value={getValue(item, "status_b")} onChange={(e) => onChange(item.id, "status_b", e.target.value || null)} disabled={isReadOnly}>
               <option value="">—</option>
               {STATUS_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </td>
         </>
       ) : (
         <>
-          <td className="px-2 py-2 align-middle text-center text-slate-600 text-[11px]">
-            {item.nominal ?? '—'}
-          </td>
+          <td className="px-2 py-2 align-middle text-center text-slate-600 text-[11px]">{item.nominal ?? "—"}</td>
           <td className="px-2 py-2 align-middle">
-            <input
-              type="text"
-              className={inputClass}
-              placeholder="..."
-              value={getValue(item, 'hasil')}
-              onChange={(e) => onChange(item.id, 'hasil', e.target.value)}
-              disabled={isReadOnly}
-            />
+            <input type="text" className={inputClass} placeholder="..." value={getValue(item, "hasil")} onChange={(e) => onChange(item.id, "hasil", e.target.value)} disabled={isReadOnly} />
           </td>
         </>
       )}
       <td className="px-2 py-2 align-middle">
-        <input
-          type="text"
-          className={inputClass}
-          placeholder="....."
-          value={getValue(item, 'keterangan')}
-          onChange={(e) => onChange(item.id, 'keterangan', e.target.value)}
-          disabled={isReadOnly}
-        />
+        <input type="text" className={inputClass} placeholder="....." value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={isReadOnly} />
       </td>
     </tr>
   );
@@ -651,7 +527,7 @@ const ReceiverItemRow: React.FC<ReceiverItemRowProps> = ({
 const InfoCell: React.FC<{ label: string; value: string | null }> = ({ label, value }) => (
   <div>
     <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">{label}</span>
-    <p className="mt-0.5 font-medium text-slate-700">{value ?? '—'}</p>
+    <p className="mt-0.5 font-medium text-slate-700">{value ?? "—"}</p>
   </div>
 );
 
@@ -667,7 +543,7 @@ const EditableMetaField: React.FC<EditableMetaFieldProps> = ({ label, value, onC
   <div>
     <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</label>
     {disabled ? (
-      <p className="text-xs text-slate-700 font-medium">{value || '—'}</p>
+      <p className="text-xs text-slate-700 font-medium">{value || "—"}</p>
     ) : (
       <input
         type="text"

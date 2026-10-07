@@ -343,6 +343,52 @@ draft ──► pending_manager ──► final
 
 ---
 
+## Branch Office Endpoints (Kantor Cabang)
+
+Standalone registry of offices and the CNSD/TFP modules available per office.
+Self-contained — touches no existing maintenance record table. Reads are open
+to every authenticated user; mutations are gated with
+`role:Admin,Manager Teknik`. The frontend page lives at `/branches`.
+
+| Method | Endpoint | Description | Auth | Notes |
+|--------|----------|-------------|------|-------|
+| `GET` | `/api/v1/branches` | List offices + availability counts | Bearer | `?search=` filters name/code. `cnsd_available_count` / `tfp_available_count` per row |
+| `GET` | `/api/v1/branches/module-catalog` | Configurable CNSD/TFP modules | Bearer | Derived from `DashboardModuleRegistry`; returns `{key,label,group,route}[]` per family |
+| `POST` | `/api/v1/branches` | Create office | Bearer + `role:Admin,Manager Teknik` | `code` unique |
+| `GET` | `/api/v1/branches/{id}` | Office detail + module flags | Bearer | `modules.cnsd` / `modules.tfp` = `{key,is_available}[]` |
+| `PUT` | `/api/v1/branches/{id}` | Update office | Bearer + `role:Admin,Manager Teknik` | |
+| `PUT` | `/api/v1/branches/{id}/modules` | Sync module availability | Bearer + `role:Admin,Manager Teknik` | Full-catalog sync; omitted keys reset to `false` |
+| `DELETE` | `/api/v1/branches/{id}` | Delete office | Bearer + `role:Admin,Manager Teknik` | Cascades `branch_modules`; existing CNSD/TFP records untouched |
+
+Request body for `PUT /branches/{id}/modules` — send the whole catalog:
+
+```json
+{
+  "modules": [
+    { "type": "cnsd", "key": "cnsd-radar", "is_available": true },
+    { "type": "tfp",  "key": "tfp-tower",  "is_available": false }
+  ]
+}
+```
+
+Validation rules:
+- `key` must exist in `DashboardModuleRegistry` **and** belong to the declared
+  `type` (e.g. `type: cnsd` + `key: tfp-tower` is rejected).
+- Keys use registry convention (`cnsd-*` / `tfp-*`), not frontend route slugs.
+
+### Module catalog scope
+
+| Family | Registry groups | Count |
+|--------|-----------------|-------|
+| `cnsd` | `CNSD Readiness`, `CNSD Meter Reading` | 17 |
+| `tfp` | `TFP Performance` | 10 |
+
+`Ground Check` and `Grounding` are deliberately excluded — they are operational
+checklists, not per-branch equipment sets. Extend `BranchModule::TYPE_GROUPS`
+to widen the scope.
+
+---
+
 ## Notifications Endpoints (Future)
 
 | Method | Endpoint | Description | Auth |

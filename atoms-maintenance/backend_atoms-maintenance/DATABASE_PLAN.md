@@ -389,6 +389,38 @@
 
 ---
 
+### 21. `branch_offices` — Kantor Cabang Registry
+
+Standalone office registry. Holds no existing maintenance data and is not
+referenced by any CNSD/TFP/grounding table — dropping these two tables removes
+the feature without touching maintenance records.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | BIGSERIAL PK | |
+| code | VARCHAR(20) UNIQUE | Branch code, e.g. `KDR` |
+| name | VARCHAR(200) | e.g. `Cabang Kediri` |
+| is_active | BOOLEAN DEFAULT true | Inactive offices stay configurable but are not offered to users |
+| timestamps | TIMESTAMPTZ | |
+
+### 22. `branch_modules` — Per-Office Module Availability
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | BIGSERIAL PK | |
+| branch_office_id | BIGINT FK → `branch_offices.id` | `ON DELETE CASCADE` |
+| module_type | VARCHAR(10) | `cnsd` or `tfp` |
+| module_key | VARCHAR(100) | `DashboardModuleRegistry` key, e.g. `cnsd-recorder` |
+| is_available | BOOLEAN DEFAULT false | |
+| timestamps | TIMESTAMPTZ | |
+| — | UNIQUE(`branch_office_id`, `module_type`, `module_key`) | One row per module per office |
+
+`module_key` deliberately stores **no label** — labels, groups and routes are
+resolved at read time from `DashboardModuleRegistry`, which stays the single
+source of truth for modules.
+
+---
+
 ## Indexes (Proposed)
 
 - `work_orders`: index on `(division, shift_date)`, `(status)`, `(created_by)`
@@ -397,6 +429,8 @@
 - `maintenance_reports`: index on `(status)`, `(facility)`, `(created_by)`
 - `grounding_reports`: index on `(tanggal)`, `(dibuat_oleh)`
 - `ground_check_readings`: index on `(shift_date)`, `(category)`
+- `branch_modules`: the unique index above covers per-office lookups; add
+  `(branch_office_id, module_type, is_available)` if per-family counts grow hot
 
 ---
 

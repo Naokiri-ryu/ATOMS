@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\V1\Statistics;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Statistics\GroundCheckStatisticsRequest;
 use App\Http\Requests\Statistics\TfpEquipmentStatisticsRequest;
+use App\Services\Statistics\GroundCheckStatisticsService;
 use App\Services\Statistics\StatisticsOverviewService;
 use App\Services\Statistics\TfpParameterStatisticsService;
 use App\Traits\ApiResponse;
@@ -16,8 +18,9 @@ use Illuminate\Http\Request;
  * submissions behind the /statistics page. Open to any authenticated user.
  *
  * `overview` is the legacy cross-module recap (CNSD + TFP submission counts).
- * The /statistics UI itself now drills into TFP equipment via `tfpEquipmentIndex`
- * and `tfpEquipment`; the overview endpoint is kept for existing API consumers.
+ * The /statistics UI is a hub that drills into either TFP Performance Check
+ * (`tfpEquipmentIndex` / `tfpEquipment`) or Ground Check (`groundCheckIndex` /
+ * `groundCheck`); the overview endpoint is kept for existing API consumers.
  */
 class StatisticsController extends Controller
 {
@@ -26,6 +29,7 @@ class StatisticsController extends Controller
     public function __construct(
         protected StatisticsOverviewService $statisticsService,
         protected TfpParameterStatisticsService $tfpStatisticsService,
+        protected GroundCheckStatisticsService $groundCheckStatisticsService,
     ) {}
 
     /**
@@ -97,5 +101,59 @@ class StatisticsController extends Controller
         );
 
         return $this->success($data, 'Statistik peralatan TFP retrieved');
+    }
+
+    /**
+     * GET /api/v1/statistics/ground-check?year=YYYY
+     *
+     * Yearly recap for all 5 Ground Check modules — the equipment picker on
+     * /statistics/ground-check. Each entry also carries `has_numeric`, so the
+     * UI can tell the three recap-only modules (ADC, VHF, Glide Path) apart
+     * from the two that also carry a measurement chart (Localizer, DVOR).
+     */
+    public function groundCheckIndex(Request $request): JsonResponse
+    {
+        $now = Carbon::now();
+        $year = (int) ($request->input('year') ?? $now->year);
+
+        if ($year < 2020 || $year > 2099) {
+            $year = $now->year;
+        }
+
+        return $this->success(
+            $this->groundCheckStatisticsService->moduleIndex($year),
+            'Daftar peralatan Ground Check retrieved'
+        );
+    }
+
+    /**
+     * GET /api/v1/statistics/ground-check/{moduleKey}?year=YYYY&metric_key=
+     *
+     * Without `metric_key`: recap, completion trend, and the measurement
+     * metrics found for the year (what the dropdown lists). With it: the
+     * 12-month min/max/avg series for that single measurement column.
+     *
+     * ADC / VHF / Glide Path have no numeric measurements, so they always come
+     * back with `has_numeric: false`, an empty metric list, and a null series —
+     * they are completion-only modules.
+     */
+    public function groundCheck(
+        string $moduleKey,
+        GroundCheckStatisticsRequest $request
+    ): JsonResponse {
+        $now = Carbon::now();
+        $year = (int) ($request->input('year') ?? $now->year);
+
+        if ($year < 2020 || $year > 2099) {
+            $year = $now->year;
+        }
+
+        $data = $this->groundCheckStatisticsService->module(
+            $moduleKey,
+            $year,
+            $request->input('metric_key'),
+        );
+
+        return $this->success($data, 'Statistik Ground Check retrieved');
     }
 }

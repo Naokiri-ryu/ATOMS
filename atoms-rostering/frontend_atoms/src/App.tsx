@@ -34,7 +34,9 @@ import SupportTicketsAdminPage from './pages/SupportTicketsAdminPage';
 import DashboardPage from './modules/dashboard/pages/DashboardPage';
 
 import StatisticsPage from './pages/StatisticsPage';
+import GroundCheckStatisticsPage from './pages/GroundCheckStatisticsPage';
 import TfpEquipmentStatisticsPage from './pages/statistics/TfpEquipmentStatisticsPage';
+import GroundCheckModuleStatisticsPage from './pages/statistics/GroundCheckModuleStatisticsPage';
 
 function App() {
   return (
@@ -71,9 +73,9 @@ function App() {
             }
           />
 
-          {/* ── Statistik: Performance Check TFP per peralatan dari aplikasi Maintenance ── */}
+          {/* ── Statistik: Performance Check & Ground Check dari aplikasi Maintenance ── */}
               <Route
-                path="/statistics"
+                path="/statistics/performance-check"
                 element={
                   <ProtectedRoute>
                     <StatisticsPage />
@@ -81,10 +83,26 @@ function App() {
                 }
               />
               <Route
-                path="/statistics/tfp/:moduleKey"
+                path="/statistics/performance-check/:moduleKey"
                 element={
                   <ProtectedRoute>
                     <TfpEquipmentStatisticsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/statistics/ground-check"
+                element={
+                  <ProtectedRoute>
+                    <GroundCheckStatisticsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/statistics/ground-check/:moduleKey"
+                element={
+                  <ProtectedRoute>
+                    <GroundCheckModuleStatisticsPage />
                   </ProtectedRoute>
                 }
               />

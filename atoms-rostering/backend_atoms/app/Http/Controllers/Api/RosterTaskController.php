@@ -327,7 +327,7 @@ class RosterTaskController extends Controller
 
         $task = RosterTask::create($payload);
 
-        $shiftNames = ['07-13' => 'Pagi (07.00-13.00)', '13-19' => 'Siang (13.00-19.00)', '19-07' => 'Malam (19.00-07.00)'];
+        $shiftNames = ['07-13' => 'Pagi (07.15-13.15)', '13-19' => 'Siang (13.15-19.15)', '19-07' => 'Malam (19.15-07.15)'];
         $shiftName = $shiftNames[$task->shift_key] ?? $task->shift_key;
 
         foreach ($task->assigned_to as $userId) {

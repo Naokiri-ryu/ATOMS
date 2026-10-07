@@ -1,52 +1,31 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  CheckSquare,
-  ChevronDown,
-  ChevronRight,
-  Clock,
-  Edit2,
-  Lock,
-  PenLine,
-  Plus,
-  Save,
-  Thermometer,
-  Trash2,
-  Users,
-  X,
-} from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { PageHeader } from '@/components/common/PageHeader';
-import { SignatureCanvas } from '@/components/shared/SignatureCanvas';
-import { SignatureDisplay } from '@/components/shared/SignatureDisplay';
-import { useAuth } from '@/hooks/useAuth';
-import { canEditCnsd } from '@/lib/roles';
-import { noteSortMinutes } from '@/lib/shiftUtils';
-import { logbookCnsdService } from '@/services/logbookCnsdService';
-import type {
-  LogbookCnsdDetail as LogbookCnsdDetailType,
-  LogbookCnsdItem,
-  PersonnelShiftInfo,
-  ShiftKey,
-} from '@/types/logbookCnsd';
+import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { ArrowLeft, CheckCircle2, CheckSquare, ChevronDown, ChevronRight, Clock, Edit2, Lock, PenLine, Plus, Save, Thermometer, Trash2, Users, X } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { PageHeader } from "@/components/common/PageHeader";
+import { SignatureCanvas } from "@/components/shared/SignatureCanvas";
+import { SignatureDisplay } from "@/components/shared/SignatureDisplay";
+import { useAuth } from "@/hooks/useAuth";
+import { canEditCnsd } from "@/lib/roles";
+import { noteSortMinutes } from "@/lib/shiftUtils";
+import { logbookCnsdService } from "@/services/logbookCnsdService";
+import type { LogbookCnsdDetail as LogbookCnsdDetailType, LogbookCnsdItem, PersonnelShiftInfo, ShiftKey } from "@/types/logbookCnsd";
 
 const namesMatch = (a?: string | null, b?: string | null): boolean => {
   if (!a || !b) return false;
-  const norm = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase();
-  return norm(a) !== '' && norm(a) === norm(b);
+  const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+  return norm(a) !== "" && norm(a) === norm(b);
 };
 
 // ─── Helpers ──────────────────────────────────────────────
 const formatDateLong = (dateStr: string): string => {
   try {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-      weekday: 'long',
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
+    return new Date(dateStr).toLocaleDateString("id-ID", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
     });
   } catch {
     return dateStr;
@@ -55,11 +34,11 @@ const formatDateLong = (dateStr: string): string => {
 
 const getCurrentTime = (): string => {
   const now = new Date();
-  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 };
 
 // ─── Status Toggle ─────────────────────────────────────────
-type ShiftStatus = 'S' | 'US' | null;
+type ShiftStatus = "S" | "US" | null;
 
 interface StatusToggleProps {
   value: ShiftStatus;
@@ -70,8 +49,8 @@ interface StatusToggleProps {
 const StatusToggle: React.FC<StatusToggleProps> = ({ value, onChange, disabled }) => {
   const cycle = () => {
     if (disabled) return;
-    if (value === null) onChange('S');
-    else if (value === 'S') onChange('US');
+    if (value === null) onChange("S");
+    else if (value === "S") onChange("US");
     else onChange(null);
   };
 
@@ -80,20 +59,15 @@ const StatusToggle: React.FC<StatusToggleProps> = ({ value, onChange, disabled }
       type="button"
       onClick={cycle}
       disabled={disabled}
-      title={value === null ? 'Klik untuk set S' : value === 'S' ? 'Klik untuk set U/S' : 'Klik untuk reset'}
+      title={value === null ? "Klik untuk set S" : value === "S" ? "Klik untuk set U/S" : "Klik untuk reset"}
       className={`
         inline-flex items-center justify-center w-12 h-8 rounded-lg text-xs font-bold transition-all duration-150 border
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1
-        ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
-        ${value === 'S'
-          ? 'bg-emerald-500 border-emerald-600 text-white shadow-sm'
-          : value === 'US'
-          ? 'bg-red-500 border-red-600 text-white shadow-sm'
-          : 'bg-slate-100 border-slate-200 text-slate-400 hover:bg-slate-200'
-        }
+        ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
+        ${value === "S" ? "bg-emerald-500 border-emerald-600 text-white shadow-sm" : value === "US" ? "bg-red-500 border-red-600 text-white shadow-sm" : "bg-slate-100 border-slate-200 text-slate-400 hover:bg-slate-200"}
       `}
     >
-      {value === 'S' ? 'S' : value === 'US' ? 'U/S' : '—'}
+      {value === "S" ? "S" : value === "US" ? "U/S" : "—"}
     </button>
   );
 };
@@ -107,21 +81,17 @@ interface MeasurementInputProps {
 }
 
 const MeasurementInput: React.FC<MeasurementInputProps> = ({ value, unit, onChange, disabled }) => (
-  <div className={`relative w-20 h-8 ${disabled ? 'opacity-50' : ''}`}>
+  <div className={`relative w-20 h-8 ${disabled ? "opacity-50" : ""}`}>
     <input
       type="text"
       inputMode="decimal"
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
+      value={value ?? ""}
+      onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
       disabled={disabled}
       placeholder="—"
       className="w-full h-8 rounded-lg border border-slate-200 bg-white px-2 pr-6 text-xs font-mono text-slate-900 text-right placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent disabled:bg-slate-50"
     />
-    {unit && (
-      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-medium pointer-events-none">
-        {unit}
-      </span>
-    )}
+    {unit && <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-medium pointer-events-none">{unit}</span>}
   </div>
 );
 
@@ -138,8 +108,8 @@ interface LocalItemState {
 interface EquipmentRowProps {
   item: LogbookCnsdItem;
   localState: LocalItemState;
-  onStatusChange: (shift: 'status_pagi' | 'status_siang' | 'status_malam', value: ShiftStatus) => void;
-  onValueChange: (shift: 'value_pagi' | 'value_siang' | 'value_malam', value: string | null) => void;
+  onStatusChange: (shift: "status_pagi" | "status_siang" | "status_malam", value: ShiftStatus) => void;
+  onValueChange: (shift: "value_pagi" | "value_siang" | "value_malam", value: string | null) => void;
   onEdit: () => void;
   onDelete: () => void;
   canManage: boolean;
@@ -147,31 +117,17 @@ interface EquipmentRowProps {
   shiftLocked: { pagi: boolean; siang: boolean; malam: boolean };
 }
 
-const EquipmentRow: React.FC<EquipmentRowProps> = ({
-  item, localState, onStatusChange, onValueChange, onEdit, onDelete, canManage, disabled, shiftLocked,
-}) => (
+const EquipmentRow: React.FC<EquipmentRowProps> = ({ item, localState, onStatusChange, onValueChange, onEdit, onDelete, canManage, disabled, shiftLocked }) => (
   <div className="grid grid-cols-[1fr_auto] gap-2 items-center px-4 py-2.5 hover:bg-slate-50/50 transition-colors group">
     <div className="flex items-center gap-2 min-w-0">
-      {item.is_measurement && (
-        <Thermometer size={12} className="text-sky-500 shrink-0" />
-      )}
+      {item.is_measurement && <Thermometer size={12} className="text-sky-500 shrink-0" />}
       <span className="text-sm text-slate-700 leading-tight truncate">{item.equipment_name}</span>
       {canManage && !disabled && (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          <button
-            type="button"
-            onClick={onEdit}
-            className="p-1 rounded text-slate-300 hover:text-amber-500 hover:bg-amber-50 transition-colors"
-            title="Edit nama peralatan"
-          >
+          <button type="button" onClick={onEdit} className="p-1 rounded text-slate-300 hover:text-amber-500 hover:bg-amber-50 transition-colors" title="Edit nama peralatan">
             <Edit2 size={12} />
           </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-            title="Hapus peralatan"
-          >
+          <button type="button" onClick={onDelete} className="p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors" title="Hapus peralatan">
             <Trash2 size={12} />
           </button>
         </div>
@@ -180,15 +136,15 @@ const EquipmentRow: React.FC<EquipmentRowProps> = ({
     <div className="flex gap-2">
       {item.is_measurement ? (
         <>
-          <MeasurementInput value={localState.value_pagi}  unit={item.unit} onChange={(v) => onValueChange('value_pagi', v)}  disabled={disabled || shiftLocked.pagi} />
-          <MeasurementInput value={localState.value_siang} unit={item.unit} onChange={(v) => onValueChange('value_siang', v)} disabled={disabled || shiftLocked.siang} />
-          <MeasurementInput value={localState.value_malam} unit={item.unit} onChange={(v) => onValueChange('value_malam', v)} disabled={disabled || shiftLocked.malam} />
+          <MeasurementInput value={localState.value_pagi} unit={item.unit} onChange={(v) => onValueChange("value_pagi", v)} disabled={disabled || shiftLocked.pagi} />
+          <MeasurementInput value={localState.value_siang} unit={item.unit} onChange={(v) => onValueChange("value_siang", v)} disabled={disabled || shiftLocked.siang} />
+          <MeasurementInput value={localState.value_malam} unit={item.unit} onChange={(v) => onValueChange("value_malam", v)} disabled={disabled || shiftLocked.malam} />
         </>
       ) : (
         <>
-          <StatusToggle value={localState.status_pagi}  onChange={(v) => onStatusChange('status_pagi', v)}  disabled={disabled || shiftLocked.pagi} />
-          <StatusToggle value={localState.status_siang} onChange={(v) => onStatusChange('status_siang', v)} disabled={disabled || shiftLocked.siang} />
-          <StatusToggle value={localState.status_malam} onChange={(v) => onStatusChange('status_malam', v)} disabled={disabled || shiftLocked.malam} />
+          <StatusToggle value={localState.status_pagi} onChange={(v) => onStatusChange("status_pagi", v)} disabled={disabled || shiftLocked.pagi} />
+          <StatusToggle value={localState.status_siang} onChange={(v) => onStatusChange("status_siang", v)} disabled={disabled || shiftLocked.siang} />
+          <StatusToggle value={localState.status_malam} onChange={(v) => onStatusChange("status_malam", v)} disabled={disabled || shiftLocked.malam} />
         </>
       )}
     </div>
@@ -200,8 +156,8 @@ interface CategoryAccordionProps {
   category: string;
   items: LogbookCnsdItem[];
   localItems: Record<number, LocalItemState>;
-  onStatusChange: (itemId: number, shift: 'status_pagi' | 'status_siang' | 'status_malam', value: ShiftStatus) => void;
-  onValueChange: (itemId: number, shift: 'value_pagi' | 'value_siang' | 'value_malam', value: string | null) => void;
+  onStatusChange: (itemId: number, shift: "status_pagi" | "status_siang" | "status_malam", value: ShiftStatus) => void;
+  onValueChange: (itemId: number, shift: "value_pagi" | "value_siang" | "value_malam", value: string | null) => void;
   onEditItem: (item: LogbookCnsdItem) => void;
   onDeleteItem: (itemId: number) => void;
   onAddItem: (category: string) => void;
@@ -211,10 +167,7 @@ interface CategoryAccordionProps {
   defaultOpen?: boolean;
 }
 
-const CategoryAccordion: React.FC<CategoryAccordionProps> = ({
-  category, items, localItems, onStatusChange, onValueChange, onEditItem, onDeleteItem, onAddItem,
-  canManage, disabled, shiftLocked, defaultOpen = true,
-}) => {
+const CategoryAccordion: React.FC<CategoryAccordionProps> = ({ category, items, localItems, onStatusChange, onValueChange, onEditItem, onDeleteItem, onAddItem, canManage, disabled, shiftLocked, defaultOpen = true }) => {
   const [open, setOpen] = useState(defaultOpen);
   const isMeasurementGroup = items.length > 0 && items.every((i) => i.is_measurement);
 
@@ -230,9 +183,7 @@ const CategoryAccordion: React.FC<CategoryAccordionProps> = ({
           {category}
         </span>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center rounded-full bg-white border border-gray-200 text-[10px] font-semibold text-slate-500 px-2 py-0.5">
-            {items.length} item
-          </span>
+          <span className="inline-flex items-center rounded-full bg-white border border-gray-200 text-[10px] font-semibold text-slate-500 px-2 py-0.5">{items.length} item</span>
           {open ? <ChevronDown size={15} className="text-slate-400" /> : <ChevronRight size={15} className="text-slate-400" />}
         </div>
       </button>
@@ -243,8 +194,10 @@ const CategoryAccordion: React.FC<CategoryAccordionProps> = ({
           <div className="grid grid-cols-[1fr_auto] gap-2 px-4 py-1.5 bg-gray-50/40">
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Nama Peralatan</span>
             <div className="flex gap-2">
-              {(['Pagi', 'Siang', 'Malam'] as const).map((s) => (
-                <span key={s} className={`${isMeasurementGroup ? 'w-20' : 'w-12'} text-center text-[10px] font-semibold text-slate-400 uppercase tracking-wider`}>{s}</span>
+              {(["Pagi", "Siang", "Malam"] as const).map((s) => (
+                <span key={s} className={`${isMeasurementGroup ? "w-20" : "w-12"} text-center text-[10px] font-semibold text-slate-400 uppercase tracking-wider`}>
+                  {s}
+                </span>
               ))}
             </div>
           </div>
@@ -276,11 +229,7 @@ const CategoryAccordion: React.FC<CategoryAccordionProps> = ({
 
           {canManage && !disabled && !isMeasurementGroup && (
             <div className="px-4 py-2">
-              <button
-                type="button"
-                onClick={() => onAddItem(category)}
-                className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-sky-600 transition-colors"
-              >
+              <button type="button" onClick={() => onAddItem(category)} className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-sky-600 transition-colors">
                 <Plus size={12} /> Tambah peralatan ke {category}
               </button>
             </div>
@@ -292,23 +241,23 @@ const CategoryAccordion: React.FC<CategoryAccordionProps> = ({
 };
 
 // ─── Personnel Block ───────────────────────────────────────
-const SHIFT_ACCENT: Record<'pagi' | 'siang' | 'malam', { dot: string; ring: string; label: string }> = {
-  pagi: { dot: 'bg-amber-400', ring: 'ring-amber-100', label: 'text-amber-700' },
-  siang: { dot: 'bg-sky-400', ring: 'ring-sky-100', label: 'text-sky-700' },
-  malam: { dot: 'bg-indigo-400', ring: 'ring-indigo-100', label: 'text-indigo-700' },
+const SHIFT_ACCENT: Record<"pagi" | "siang" | "malam", { dot: string; ring: string; label: string }> = {
+  pagi: { dot: "bg-amber-400", ring: "ring-amber-100", label: "text-amber-700" },
+  siang: { dot: "bg-sky-400", ring: "ring-sky-100", label: "text-sky-700" },
+  malam: { dot: "bg-indigo-400", ring: "ring-indigo-100", label: "text-indigo-700" },
 };
 
 const PersonnelBlock: React.FC<{
-  shiftKey: 'pagi' | 'siang' | 'malam';
+  shiftKey: "pagi" | "siang" | "malam";
   label: string;
   range: string;
   info: PersonnelShiftInfo | undefined;
 }> = ({ shiftKey, label, range, info }) => {
   if (!info) return null;
   const all = [
-    ...(info.manager ? [{ name: info.manager.name, role: 'Manager Teknik' }] : []),
-    ...(info.supervisor ? [{ name: info.supervisor.name, role: 'Supervisor CNSD' }] : []),
-    ...info.technicians.map((t) => ({ name: t.name, role: 'Teknisi CNSD' })),
+    ...(info.manager ? [{ name: info.manager.name, role: "Manager Teknik" }] : []),
+    ...(info.supervisor ? [{ name: info.supervisor.name, role: "Supervisor CNSD" }] : []),
+    ...info.technicians.map((t) => ({ name: t.name, role: "Teknisi CNSD" })),
   ];
   const accent = SHIFT_ACCENT[shiftKey];
 
@@ -331,9 +280,7 @@ const PersonnelBlock: React.FC<{
               key={i}
               title={p.role}
               className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-                p.role === 'Manager Teknik' ? 'bg-brand-50 text-brand-primary border-brand-100' :
-                p.role === 'Supervisor CNSD' ? 'bg-sky-50 text-sky-700 border-sky-100' :
-                'bg-white text-slate-700 border-slate-200'
+                p.role === "Manager Teknik" ? "bg-brand-50 text-brand-primary border-brand-100" : p.role === "Supervisor CNSD" ? "bg-sky-50 text-sky-700 border-sky-100" : "bg-white text-slate-700 border-slate-200"
               }`}
             >
               {p.name}
@@ -355,7 +302,7 @@ interface EditEquipmentModalProps {
 }
 
 const EditEquipmentModal: React.FC<EditEquipmentModalProps> = ({ isOpen, item, onClose, onSave, isSaving }) => {
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -369,22 +316,20 @@ const EditEquipmentModal: React.FC<EditEquipmentModalProps> = ({ isOpen, item, o
       <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <h2 className="text-base font-semibold text-slate-800">Edit Peralatan</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-gray-100 transition-colors"><X size={18} /></button>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-gray-100 transition-colors">
+            <X size={18} />
+          </button>
         </div>
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">Nama Peralatan</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              autoFocus
-            />
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary" autoFocus />
           </div>
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>Batal</Button>
-            <Button type="button" isLoading={isSaving} onClick={() => onSave(name, '')} disabled={!name.trim()}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+              Batal
+            </Button>
+            <Button type="button" isLoading={isSaving} onClick={() => onSave(name, "")} disabled={!name.trim()}>
               Simpan
             </Button>
           </div>
@@ -403,11 +348,14 @@ interface AddEquipmentModalProps {
 }
 
 const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({ isOpen, defaultCategory, onClose, onAdd, isSaving }) => {
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const [category, setCategory] = useState(defaultCategory);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setCategory(defaultCategory); setName(''); }, [defaultCategory, isOpen]);
+  useEffect(() => {
+    setCategory(defaultCategory);
+    setName("");
+  }, [defaultCategory, isOpen]);
 
   if (!isOpen) return null;
 
@@ -416,20 +364,19 @@ const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({ isOpen, defaultCa
       <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <h2 className="text-base font-semibold text-slate-800">Tambah Peralatan</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-gray-100 transition-colors"><X size={18} /></button>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-gray-100 transition-colors">
+            <X size={18} />
+          </button>
         </div>
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">Kategori</label>
-            <input
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-            />
+            <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} className="w-full h-10 rounded-xl border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Nama Peralatan <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-medium text-slate-700 mb-1">
+              Nama Peralatan <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               value={name}
@@ -440,7 +387,9 @@ const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({ isOpen, defaultCa
             />
           </div>
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>Batal</Button>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+              Batal
+            </Button>
             <Button type="button" isLoading={isSaving} onClick={() => onAdd(name, category)} disabled={!name.trim() || !category.trim()} className="gap-1.5">
               <Plus size={14} /> Tambah
             </Button>
@@ -473,10 +422,10 @@ export const LogbookCnsdDetail: React.FC = () => {
 
   const [localItems, setLocalItems] = useState<Record<number, LocalItemState>>({});
 
-  const [noteShift, setNoteShift] = useState<'pagi' | 'siang' | 'malam'>('pagi');
+  const [noteShift, setNoteShift] = useState<"pagi" | "siang" | "malam">("pagi");
   const [noteTime, setNoteTime] = useState(getCurrentTime());
 
-  const [noteActivity, setNoteActivity] = useState('');
+  const [noteActivity, setNoteActivity] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
 
   const loadRecord = useCallback(async () => {
@@ -486,33 +435,37 @@ export const LogbookCnsdDetail: React.FC = () => {
       const data = await logbookCnsdService.getLogbook(Number(id));
       setRecord(data);
       const init: Record<number, LocalItemState> = {};
-      Object.values(data.items_by_category).flat().forEach((item) => {
-        init[item.id] = {
-          status_pagi: item.status_pagi,
-          status_siang: item.status_siang,
-          status_malam: item.status_malam,
-          value_pagi: item.value_pagi,
-          value_siang: item.value_siang,
-          value_malam: item.value_malam,
-        };
-      });
+      Object.values(data.items_by_category)
+        .flat()
+        .forEach((item) => {
+          init[item.id] = {
+            status_pagi: item.status_pagi,
+            status_siang: item.status_siang,
+            status_malam: item.status_malam,
+            value_pagi: item.value_pagi,
+            value_siang: item.value_siang,
+            value_malam: item.value_malam,
+          };
+        });
       setLocalItems(init);
       setErrorMessage(null);
     } catch {
-      setErrorMessage('Gagal memuat data logbook.');
+      setErrorMessage("Gagal memuat data logbook.");
     } finally {
       setIsLoading(false);
     }
   }, [id]);
 
-  useEffect(() => { void loadRecord(); }, [loadRecord]);
+  useEffect(() => {
+    void loadRecord();
+  }, [loadRecord]);
 
   // ── Read-only role gates ─────────────────────────────────────────────────
   // General Manager always sees this page read-only for oversight.
   // Teknisi TFP can READ a CNSD logbook but must not be able to write to it
   //   (their write scope is TFP logbook only — same applies to Teknisi CNSD
   //    on the TFP logbook detail page).
-  const isGmReadOnly = user?.role === 'General Manager';
+  const isGmReadOnly = user?.role === "General Manager";
   const isReadOnlyViewer = isGmReadOnly || !canEditCnsd(user);
 
   const isFullySigned = !!record?.is_fully_signed;
@@ -525,39 +478,25 @@ export const LogbookCnsdDetail: React.FC = () => {
     malam: !!record?.is_signed_malam || isReadOnlyViewer,
   };
   // Signing the logbook is reserved to MT (name-matched at the backend).
-  const canSign = user?.role === 'Manager Teknik';
+  const canSign = user?.role === "Manager Teknik";
 
   // Delete logbook: Admin / MT / Supervisor CNSD.
-  const canDelete =
-    user?.role === 'Admin' ||
-    user?.role === 'Manager Teknik' ||
-    user?.role === 'Supervisor CNSD';
+  const canDelete = user?.role === "Admin" || user?.role === "Manager Teknik" || user?.role === "Supervisor CNSD";
   // Equipment management (add/edit/delete equipment rows) — same as canDelete:
   // never includes teknisi.
-  const canManageEquipment =
-    user?.role === 'Admin' ||
-    user?.role === 'Manager Teknik' ||
-    user?.role === 'Supervisor CNSD';
+  const canManageEquipment = user?.role === "Admin" || user?.role === "Manager Teknik" || user?.role === "Supervisor CNSD";
 
-  const handleStatusChange = (
-    itemId: number,
-    shift: 'status_pagi' | 'status_siang' | 'status_malam',
-    value: ShiftStatus,
-  ) => {
+  const handleStatusChange = (itemId: number, shift: "status_pagi" | "status_siang" | "status_malam", value: ShiftStatus) => {
     setLocalItems((prev) => ({
       ...prev,
-      [itemId]: { ...(prev[itemId] ?? {} as LocalItemState), [shift]: value },
+      [itemId]: { ...(prev[itemId] ?? ({} as LocalItemState)), [shift]: value },
     }));
   };
 
-  const handleValueChange = (
-    itemId: number,
-    shift: 'value_pagi' | 'value_siang' | 'value_malam',
-    value: string | null,
-  ) => {
+  const handleValueChange = (itemId: number, shift: "value_pagi" | "value_siang" | "value_malam", value: string | null) => {
     setLocalItems((prev) => ({
       ...prev,
-      [itemId]: { ...(prev[itemId] ?? {} as LocalItemState), [shift]: value },
+      [itemId]: { ...(prev[itemId] ?? ({} as LocalItemState)), [shift]: value },
     }));
   };
 
@@ -578,14 +517,14 @@ export const LogbookCnsdDetail: React.FC = () => {
       }));
       const updated = await logbookCnsdService.updateItems(record.id, items);
       setRecord(updated);
-      setSuccessMessage('Perubahan berhasil disimpan.');
+      setSuccessMessage("Perubahan berhasil disimpan.");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menyimpan perubahan.');
+        setErrorMessage(data.message ?? "Gagal menyimpan perubahan.");
       } else {
-        setErrorMessage('Gagal menyimpan perubahan.');
+        setErrorMessage("Gagal menyimpan perubahan.");
       }
     } finally {
       setIsSaving(false);
@@ -597,7 +536,7 @@ export const LogbookCnsdDetail: React.FC = () => {
     if (!record || !noteActivity.trim()) return;
 
     if (noteTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(noteTime)) {
-      setErrorMessage('Format waktu tidak valid. Gunakan format HH:MM (00:00 - 23:59).');
+      setErrorMessage("Format waktu tidak valid. Gunakan format HH:MM (00:00 - 23:59).");
       return;
     }
 
@@ -610,14 +549,14 @@ export const LogbookCnsdDetail: React.FC = () => {
         activity: noteActivity.trim(),
       });
       setRecord(updated);
-      setNoteActivity('');
+      setNoteActivity("");
       setNoteTime(getCurrentTime());
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menambah catatan.');
+        setErrorMessage(data.message ?? "Gagal menambah catatan.");
       } else {
-        setErrorMessage('Gagal menambah catatan.');
+        setErrorMessage("Gagal menambah catatan.");
       }
     } finally {
       setIsAddingNote(false);
@@ -625,12 +564,12 @@ export const LogbookCnsdDetail: React.FC = () => {
   };
 
   const handleDeleteNote = async (noteId: number) => {
-    if (!record || !confirm('Hapus catatan ini?')) return;
+    if (!record || !confirm("Hapus catatan ini?")) return;
     try {
       const updated = await logbookCnsdService.deleteNote(record.id, noteId);
       setRecord(updated);
     } catch {
-      setErrorMessage('Gagal menghapus catatan.');
+      setErrorMessage("Gagal menghapus catatan.");
     }
   };
 
@@ -641,22 +580,28 @@ export const LogbookCnsdDetail: React.FC = () => {
       const updated = await logbookCnsdService.editEquipment(record.id, editingItem.id, { name });
       setRecord(updated);
       const init: Record<number, LocalItemState> = { ...localItems };
-      Object.values(updated.items_by_category).flat().forEach((item) => {
-        if (!init[item.id]) {
-          init[item.id] = {
-            status_pagi: item.status_pagi, status_siang: item.status_siang, status_malam: item.status_malam,
-            value_pagi: item.value_pagi, value_siang: item.value_siang, value_malam: item.value_malam,
-          };
-        }
-      });
+      Object.values(updated.items_by_category)
+        .flat()
+        .forEach((item) => {
+          if (!init[item.id]) {
+            init[item.id] = {
+              status_pagi: item.status_pagi,
+              status_siang: item.status_siang,
+              status_malam: item.status_malam,
+              value_pagi: item.value_pagi,
+              value_siang: item.value_siang,
+              value_malam: item.value_malam,
+            };
+          }
+        });
       setLocalItems(init);
       setEditingItem(null);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal mengubah peralatan.');
+        setErrorMessage(data.message ?? "Gagal mengubah peralatan.");
       } else {
-        setErrorMessage('Gagal mengubah peralatan.');
+        setErrorMessage("Gagal mengubah peralatan.");
       }
     } finally {
       setIsEquipmentSaving(false);
@@ -664,7 +609,7 @@ export const LogbookCnsdDetail: React.FC = () => {
   };
 
   const handleDeleteEquipment = async (itemId: number) => {
-    if (!record || !confirm('Hapus peralatan ini dari logbook?')) return;
+    if (!record || !confirm("Hapus peralatan ini dari logbook?")) return;
     try {
       const updated = await logbookCnsdService.removeEquipment(record.id, itemId);
       setRecord(updated);
@@ -676,9 +621,9 @@ export const LogbookCnsdDetail: React.FC = () => {
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menghapus peralatan.');
+        setErrorMessage(data.message ?? "Gagal menghapus peralatan.");
       } else {
-        setErrorMessage('Gagal menghapus peralatan.');
+        setErrorMessage("Gagal menghapus peralatan.");
       }
     }
   };
@@ -690,22 +635,28 @@ export const LogbookCnsdDetail: React.FC = () => {
       const updated = await logbookCnsdService.addEquipment(record.id, name, category);
       setRecord(updated);
       const init: Record<number, LocalItemState> = { ...localItems };
-      Object.values(updated.items_by_category).flat().forEach((item) => {
-        if (!init[item.id]) {
-          init[item.id] = {
-            status_pagi: item.status_pagi, status_siang: item.status_siang, status_malam: item.status_malam,
-            value_pagi: item.value_pagi, value_siang: item.value_siang, value_malam: item.value_malam,
-          };
-        }
-      });
+      Object.values(updated.items_by_category)
+        .flat()
+        .forEach((item) => {
+          if (!init[item.id]) {
+            init[item.id] = {
+              status_pagi: item.status_pagi,
+              status_siang: item.status_siang,
+              status_malam: item.status_malam,
+              value_pagi: item.value_pagi,
+              value_siang: item.value_siang,
+              value_malam: item.value_malam,
+            };
+          }
+        });
       setLocalItems(init);
       setAddingCategory(null);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menambah peralatan.');
+        setErrorMessage(data.message ?? "Gagal menambah peralatan.");
       } else {
-        setErrorMessage('Gagal menambah peralatan.');
+        setErrorMessage("Gagal menambah peralatan.");
       }
     } finally {
       setIsEquipmentSaving(false);
@@ -724,9 +675,9 @@ export const LogbookCnsdDetail: React.FC = () => {
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menyimpan tanda tangan.');
+        setErrorMessage(data.message ?? "Gagal menyimpan tanda tangan.");
       } else {
-        setErrorMessage('Gagal menyimpan tanda tangan.');
+        setErrorMessage("Gagal menyimpan tanda tangan.");
       }
     } finally {
       setIsSigning(false);
@@ -739,24 +690,30 @@ export const LogbookCnsdDetail: React.FC = () => {
     setBulkPendingShift(shift);
     setErrorMessage(null);
     try {
-      const updated = await logbookCnsdService.bulkSetShiftStatus(record.id, { shift, status: 'S', overwrite: true });
+      const updated = await logbookCnsdService.bulkSetShiftStatus(record.id, { shift, status: "S", overwrite: true });
       setRecord(updated);
       const next: Record<number, LocalItemState> = {};
-      Object.values(updated.items_by_category).flat().forEach((item) => {
-        next[item.id] = {
-          status_pagi: item.status_pagi, status_siang: item.status_siang, status_malam: item.status_malam,
-          value_pagi: item.value_pagi, value_siang: item.value_siang, value_malam: item.value_malam,
-        };
-      });
+      Object.values(updated.items_by_category)
+        .flat()
+        .forEach((item) => {
+          next[item.id] = {
+            status_pagi: item.status_pagi,
+            status_siang: item.status_siang,
+            status_malam: item.status_malam,
+            value_pagi: item.value_pagi,
+            value_siang: item.value_siang,
+            value_malam: item.value_malam,
+          };
+        });
       setLocalItems(next);
       setSuccessMessage(`Semua peralatan shift ${shift} diset Serviceable.`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menerapkan auto-fill.');
+        setErrorMessage(data.message ?? "Gagal menerapkan auto-fill.");
       } else {
-        setErrorMessage('Gagal menerapkan auto-fill.');
+        setErrorMessage("Gagal menerapkan auto-fill.");
       }
     } finally {
       setBulkPendingShift(null);
@@ -771,15 +728,21 @@ export const LogbookCnsdDetail: React.FC = () => {
       const updated = await logbookCnsdService.bulkSetShiftStatus(record.id, { shift, status: null, overwrite: true });
       setRecord(updated);
       const next: Record<number, LocalItemState> = {};
-      Object.values(updated.items_by_category).flat().forEach((item) => {
-        next[item.id] = {
-          status_pagi: item.status_pagi, status_siang: item.status_siang, status_malam: item.status_malam,
-          value_pagi: item.value_pagi, value_siang: item.value_siang, value_malam: item.value_malam,
-        };
-      });
+      Object.values(updated.items_by_category)
+        .flat()
+        .forEach((item) => {
+          next[item.id] = {
+            status_pagi: item.status_pagi,
+            status_siang: item.status_siang,
+            status_malam: item.status_malam,
+            value_pagi: item.value_pagi,
+            value_siang: item.value_siang,
+            value_malam: item.value_malam,
+          };
+        });
       setLocalItems(next);
     } catch {
-      setErrorMessage('Gagal mereset shift.');
+      setErrorMessage("Gagal mereset shift.");
     } finally {
       setBulkPendingShift(null);
     }
@@ -795,13 +758,13 @@ export const LogbookCnsdDetail: React.FC = () => {
     setIsDeleting(true);
     try {
       await logbookCnsdService.deleteLogbook(record.id);
-      navigate('/logbooks/cnsd');
+      navigate("/logbooks/cnsd");
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menghapus logbook.');
+        setErrorMessage(data.message ?? "Gagal menghapus logbook.");
       } else {
-        setErrorMessage('Gagal menghapus logbook.');
+        setErrorMessage("Gagal menghapus logbook.");
       }
     } finally {
       setIsDeleting(false);
@@ -822,8 +785,10 @@ export const LogbookCnsdDetail: React.FC = () => {
   if (!record) {
     return (
       <div className="max-w-7xl mx-auto p-6">
-        <p className="text-red-600">{errorMessage ?? 'Logbook tidak ditemukan.'}</p>
-        <Button onClick={() => navigate('/logbooks/cnsd')} className="mt-4">Kembali</Button>
+        <p className="text-red-600">{errorMessage ?? "Logbook tidak ditemukan."}</p>
+        <Button onClick={() => navigate("/logbooks/cnsd")} className="mt-4">
+          Kembali
+        </Button>
       </div>
     );
   }
@@ -831,42 +796,51 @@ export const LogbookCnsdDetail: React.FC = () => {
   const categories = Object.keys(record.items_by_category);
 
   const notesByShift = {
-    pagi: record.notes.filter((n) => n.shift === 'pagi'),
-    siang: record.notes.filter((n) => n.shift === 'siang'),
-    malam: record.notes.filter((n) => n.shift === 'malam'),
+    pagi: record.notes.filter((n) => n.shift === "pagi"),
+    siang: record.notes.filter((n) => n.shift === "siang"),
+    malam: record.notes.filter((n) => n.shift === "malam"),
   };
 
   const shiftColors = {
-    pagi: 'bg-amber-50 border-amber-200 text-amber-700',
-    siang: 'bg-sky-50 border-sky-200 text-sky-700',
-    malam: 'bg-indigo-50 border-indigo-200 text-indigo-700',
+    pagi: "bg-amber-50 border-amber-200 text-amber-700",
+    siang: "bg-sky-50 border-sky-200 text-sky-700",
+    malam: "bg-indigo-50 border-indigo-200 text-indigo-700",
   };
 
   const shiftManagers: Record<ShiftKey, { name: string; user_id: number } | null> = {
-    pagi:  record.personnel_on_duty?.pagi?.manager ?? 
-          (record.manager_signatures.pagi?.signed_by_name ? { 
-            name: record.manager_signatures.pagi.signed_by_name, 
-            user_id: record.manager_signatures.pagi.signed_by_id ?? 0 
-          } : null),
-    siang: record.personnel_on_duty?.siang?.manager ?? 
-          (record.manager_signatures.siang?.signed_by_name ? { 
-            name: record.manager_signatures.siang.signed_by_name, 
-            user_id: record.manager_signatures.siang.signed_by_id ?? 0 
-          } : null),
-    malam: record.personnel_on_duty?.malam?.manager ?? 
-          (record.manager_signatures.malam?.signed_by_name ? { 
-            name: record.manager_signatures.malam.signed_by_name, 
-            user_id: record.manager_signatures.malam.signed_by_id ?? 0 
-          } : null),
+    pagi:
+      record.personnel_on_duty?.pagi?.manager ??
+      (record.manager_signatures.pagi?.signed_by_name
+        ? {
+            name: record.manager_signatures.pagi.signed_by_name,
+            user_id: record.manager_signatures.pagi.signed_by_id ?? 0,
+          }
+        : null),
+    siang:
+      record.personnel_on_duty?.siang?.manager ??
+      (record.manager_signatures.siang?.signed_by_name
+        ? {
+            name: record.manager_signatures.siang.signed_by_name,
+            user_id: record.manager_signatures.siang.signed_by_id ?? 0,
+          }
+        : null),
+    malam:
+      record.personnel_on_duty?.malam?.manager ??
+      (record.manager_signatures.malam?.signed_by_name
+        ? {
+            name: record.manager_signatures.malam.signed_by_name,
+            user_id: record.manager_signatures.malam.signed_by_id ?? 0,
+          }
+        : null),
   };
 
-  const SHIFT_LABEL: Record<ShiftKey, string> = { pagi: 'Pagi', siang: 'Siang', malam: 'Malam' };
-  const SHIFT_RANGE: Record<ShiftKey, string> = { pagi: '07:00–13:00', siang: '13:00–19:00', malam: '19:00–07:00' };
+  const SHIFT_LABEL: Record<ShiftKey, string> = { pagi: "Pagi", siang: "Siang", malam: "Malam" };
+  const SHIFT_RANGE: Record<ShiftKey, string> = { pagi: "07:15–13:15", siang: "13:15–19:15", malam: "19:15–07:15" };
 
   const SHIFT_WINDOW: Record<ShiftKey, { start: string; end: string }> = {
-    pagi:  { start: '07:00', end: '13:00' },
-    siang: { start: '13:00', end: '19:00' },
-    malam: { start: '19:00', end: '07:00' },
+    pagi: { start: "07:15", end: "13:15" },
+    siang: { start: "13:15", end: "19:15" },
+    malam: { start: "19:15", end: "07:15" },
   };
   const isNoteTimeLate = (shift: ShiftKey, time: string | null): boolean => {
     if (!time) return false;
@@ -879,11 +853,13 @@ export const LogbookCnsdDetail: React.FC = () => {
     <div className="space-y-5 animate-fade-in max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <button type="button" onClick={() => navigate('/logbooks')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
+        <button type="button" onClick={() => navigate("/logbooks")} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
           <ArrowLeft size={14} /> Logbook
         </button>
         <span>/</span>
-        <button type="button" onClick={() => navigate('/logbooks/cnsd')} className="hover:text-slate-700 transition-colors">CNSD</button>
+        <button type="button" onClick={() => navigate("/logbooks/cnsd")} className="hover:text-slate-700 transition-colors">
+          CNSD
+        </button>
         <span>/</span>
         <span className="text-slate-700 font-medium">{record.date}</span>
       </div>
@@ -896,15 +872,17 @@ export const LogbookCnsdDetail: React.FC = () => {
         subtitle="Log Book CNS & Automation"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`inline-flex items-center gap-1.5 rounded-full text-xs font-semibold px-3 py-1.5 border ${
-              isFullySigned
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                : (record.is_signed_pagi || record.is_signed_siang || record.is_signed_malam)
-                  ? 'bg-amber-50 border-amber-200 text-amber-700'
-                  : 'bg-slate-50 border-slate-200 text-slate-500'
-            }`}>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full text-xs font-semibold px-3 py-1.5 border ${
+                isFullySigned
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                  : record.is_signed_pagi || record.is_signed_siang || record.is_signed_malam
+                    ? "bg-amber-50 border-amber-200 text-amber-700"
+                    : "bg-slate-50 border-slate-200 text-slate-500"
+              }`}
+            >
               <CheckCircle2 size={13} />
-              {isFullySigned ? 'Semua Shift Sudah TTD' : `${[record.is_signed_pagi, record.is_signed_siang, record.is_signed_malam].filter(Boolean).length}/3 Shift TTD`}
+              {isFullySigned ? "Semua Shift Sudah TTD" : `${[record.is_signed_pagi, record.is_signed_siang, record.is_signed_malam].filter(Boolean).length}/3 Shift TTD`}
             </span>
             {!isFullySigned && (
               <Button onClick={handleSave} isLoading={isSaving} className="gap-2">
@@ -920,12 +898,8 @@ export const LogbookCnsdDetail: React.FC = () => {
         }
       />
 
-      {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div>
-      )}
-      {successMessage && (
-        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{successMessage}</div>
-      )}
+      {errorMessage && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div>}
+      {successMessage && <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{successMessage}</div>}
 
       {/* Personnel On Duty */}
       {record.personnel_on_duty && (
@@ -935,9 +909,9 @@ export const LogbookCnsdDetail: React.FC = () => {
             <h3 className="text-sm font-semibold text-slate-700">Personel On Duty</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <PersonnelBlock shiftKey="pagi" label="Shift Pagi" range="07:00–13:00" info={record.personnel_on_duty.pagi} />
-            <PersonnelBlock shiftKey="siang" label="Shift Siang" range="13:00–19:00" info={record.personnel_on_duty.siang} />
-            <PersonnelBlock shiftKey="malam" label="Shift Malam" range="19:00–07:00" info={record.personnel_on_duty.malam} />
+            <PersonnelBlock shiftKey="pagi" label="Shift Pagi" range="07:15–13:15" info={record.personnel_on_duty.pagi} />
+            <PersonnelBlock shiftKey="siang" label="Shift Siang" range="13:15–19:15" info={record.personnel_on_duty.siang} />
+            <PersonnelBlock shiftKey="malam" label="Shift Malam" range="19:15–07:15" info={record.personnel_on_duty.malam} />
           </div>
         </div>
       )}
@@ -976,7 +950,7 @@ export const LogbookCnsdDetail: React.FC = () => {
           {!isFullySigned && (
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 flex flex-wrap items-center gap-2">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mr-1">Auto-fill:</span>
-              {(['pagi', 'siang', 'malam'] as ShiftKey[]).map((shift) => (
+              {(["pagi", "siang", "malam"] as ShiftKey[]).map((shift) => (
                 <div key={shift} className="flex items-center gap-1">
                   <button
                     type="button"
@@ -1003,9 +977,7 @@ export const LogbookCnsdDetail: React.FC = () => {
           )}
 
           {categories.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-slate-400 text-sm">
-              Tidak ada data peralatan.
-            </div>
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-slate-400 text-sm">Tidak ada data peralatan.</div>
           ) : (
             <div className="space-y-2">
               {categories.map((cat, idx) => (
@@ -1029,11 +1001,7 @@ export const LogbookCnsdDetail: React.FC = () => {
           )}
 
           {canManageEquipment && !isFullySigned && (
-            <button
-              type="button"
-              onClick={() => setAddingCategory('')}
-              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-sky-600 transition-colors px-1"
-            >
+            <button type="button" onClick={() => setAddingCategory("")} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-sky-600 transition-colors px-1">
               <Plus size={13} /> Tambah peralatan ke kategori baru
             </button>
           )}
@@ -1043,48 +1011,40 @@ export const LogbookCnsdDetail: React.FC = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-700">Catatan Kegiatan</h3>
-            {record.notes.length > 0 && (
-              <span className="text-[11px] text-slate-400">
-                {record.notes.length} entri
-              </span>
-            )}
+            {record.notes.length > 0 && <span className="text-[11px] text-slate-400">{record.notes.length} entri</span>}
           </div>
 
-          
-          
-        {isReadOnlyViewer ? (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
-          <Lock size={20} className="mx-auto text-amber-500 mb-2" />
-          <p className="text-sm font-semibold text-amber-700">Mode hanya baca</p>
-          <p className="text-xs text-amber-600 mt-1">
-            Anda tidak memiliki akses menambah atau mengubah catatan untuk logbook ini.
-          </p>
-        </div>
-        ) : (
-        <form onSubmit={handleAddNote} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Shift</label>
-              <select
-                value={noteShift}
-                onChange={(e) => setNoteShift(e.target.value as 'pagi' | 'siang' | 'malam')}
-                className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-              >
-                <option value="pagi">Pagi</option>
-                <option value="siang">Siang</option>
-                <option value="malam">Malam</option>
-              </select>
+          {isReadOnlyViewer ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+              <Lock size={20} className="mx-auto text-amber-500 mb-2" />
+              <p className="text-sm font-semibold text-amber-700">Mode hanya baca</p>
+              <p className="text-xs text-amber-600 mt-1">Anda tidak memiliki akses menambah atau mengubah catatan untuk logbook ini.</p>
             </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Jam</label>
-              <input
-                type="time"
-                value={noteTime}
-                onChange={(e) => setNoteTime(e.target.value)}
-                className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-              />
-            </div>
-          </div>
+          ) : (
+            <form onSubmit={handleAddNote} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Shift</label>
+                  <select
+                    value={noteShift}
+                    onChange={(e) => setNoteShift(e.target.value as "pagi" | "siang" | "malam")}
+                    className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                  >
+                    <option value="pagi">Pagi</option>
+                    <option value="siang">Siang</option>
+                    <option value="malam">Malam</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Jam</label>
+                  <input
+                    type="time"
+                    value={noteTime}
+                    onChange={(e) => setNoteTime(e.target.value)}
+                    className="w-full h-9 rounded-lg border border-gray-300 bg-white px-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                  />
+                </div>
+              </div>
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-500 mb-1 uppercase tracking-wide">Kegiatan / Catatan</label>
@@ -1092,22 +1052,19 @@ export const LogbookCnsdDetail: React.FC = () => {
                   value={noteActivity}
                   onChange={(e) => setNoteActivity(e.target.value)}
                   rows={3}
-                  maxLength={500} 
+                  maxLength={500}
                   placeholder="Tulis kegiatan atau catatan operasional..."
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent resize-none"
                 />
-                <div className="text-right text-[10px] text-slate-400 mt-1">
-                  {noteActivity.length}/500 karakter
-                </div>
+                <div className="text-right text-[10px] text-slate-400 mt-1">{noteActivity.length}/500 karakter</div>
               </div>
               <div className="flex justify-end">
                 <Button type="submit" isLoading={isAddingNote} disabled={!noteActivity.trim()} size="sm" className="gap-1.5">
                   <Plus size={14} /> Tambah Catatan
                 </Button>
               </div>
-        </form>
-      )}
-          
+            </form>
+          )}
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             {record.notes.length === 0 ? (
@@ -1120,7 +1077,7 @@ export const LogbookCnsdDetail: React.FC = () => {
               </div>
             ) : (
               <div className="max-h-[520px] overflow-y-auto">
-                {(['pagi', 'siang', 'malam'] as const).map((shift) => {
+                {(["pagi", "siang", "malam"] as const).map((shift) => {
                   const notes = notesByShift[shift];
                   if (notes.length === 0) return null;
 
@@ -1128,7 +1085,7 @@ export const LogbookCnsdDetail: React.FC = () => {
                     const ta = noteSortMinutes(shift, a.time);
                     const tb = noteSortMinutes(shift, b.time);
                     if (ta === null && tb === null) return 0;
-                    if (ta === null) return 1;  // Notes tanpa time di akhir
+                    if (ta === null) return 1; // Notes tanpa time di akhir
                     if (tb === null) return -1;
                     return ta - tb;
                   });
@@ -1145,30 +1102,30 @@ export const LogbookCnsdDetail: React.FC = () => {
                         {sortedNotes.map((note) => {
                           const isLate = isNoteTimeLate(shift, note.time);
                           return (
-                          <div key={note.id} className="relative flex items-start gap-3 py-2 hover:bg-slate-50/50 rounded-lg -ml-3 pl-3 pr-2 group">
-                            <div className="relative flex items-center justify-center shrink-0 mt-2">
-                              <div className="h-2.5 w-2.5 rounded-full bg-white border-2 border-sky-400 group-hover:border-sky-500 group-hover:scale-110 transition-all" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              {note.time && (
-                                <span className={`inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded mb-1 ${isLate ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
-                                  <Clock size={10} className={isLate ? 'text-red-400' : 'text-slate-400'} />
-                                  {note.time}
-                                </span>
+                            <div key={note.id} className="relative flex items-start gap-3 py-2 hover:bg-slate-50/50 rounded-lg -ml-3 pl-3 pr-2 group">
+                              <div className="relative flex items-center justify-center shrink-0 mt-2">
+                                <div className="h-2.5 w-2.5 rounded-full bg-white border-2 border-sky-400 group-hover:border-sky-500 group-hover:scale-110 transition-all" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                {note.time && (
+                                  <span className={`inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded mb-1 ${isLate ? "bg-red-50 text-red-600" : "bg-slate-100 text-slate-600"}`}>
+                                    <Clock size={10} className={isLate ? "text-red-400" : "text-slate-400"} />
+                                    {note.time}
+                                  </span>
+                                )}
+                                <p className={`text-sm leading-snug ${isLate ? "text-red-600 font-medium" : "text-slate-700"}`}>{note.activity}</p>
+                              </div>
+                              {!isReadOnlyViewer && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteNote(note.id)}
+                                  className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all shrink-0 mt-1"
+                                  title="Hapus catatan"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
                               )}
-                              <p className={`text-sm leading-snug ${isLate ? 'text-red-600 font-medium' : 'text-slate-700'}`}>{note.activity}</p>
                             </div>
-                            {!isReadOnlyViewer && (
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteNote(note.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all shrink-0 mt-1"
-                                title="Hapus catatan"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            )}
-                          </div>
                           );
                         })}
                       </div>
@@ -1186,14 +1143,12 @@ export const LogbookCnsdDetail: React.FC = () => {
         <div className="flex items-start justify-between gap-4 mb-5">
           <div>
             <h3 className="text-base font-bold text-slate-800">Tanda Tangan Manager Teknik</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Tiap shift punya slot tanda tangan tersendiri. Hanya Manager Teknik yang bertugas pada shift tersebut yang dapat menandatangani.
-            </p>
+            <p className="text-xs text-slate-500 mt-0.5">Tiap shift punya slot tanda tangan tersendiri. Hanya Manager Teknik yang bertugas pada shift tersebut yang dapat menandatangani.</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {(['pagi', 'siang', 'malam'] as ShiftKey[]).map((shift) => {
+          {(["pagi", "siang", "malam"] as ShiftKey[]).map((shift) => {
             const sig = record.manager_signatures[shift];
             const assignedMgr = shiftManagers[shift];
             const isSigned = !!sig?.signature;
@@ -1203,14 +1158,12 @@ export const LogbookCnsdDetail: React.FC = () => {
             return (
               <div key={shift} className="space-y-3 border border-gray-100 rounded-xl p-3 bg-slate-50/40">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                    Shift {SHIFT_LABEL[shift]}
-                  </p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Shift {SHIFT_LABEL[shift]}</p>
                   <span className="text-[10px] text-slate-400 font-medium">{SHIFT_RANGE[shift]}</span>
                 </div>
 
                 <SignatureDisplay
-                  signerName={sig?.signed_by_name ?? assignedMgr?.name ?? 'Belum ditugaskan'}
+                  signerName={sig?.signed_by_name ?? assignedMgr?.name ?? "Belum ditugaskan"}
                   signedAt={sig?.signed_at ?? null}
                   signatureImage={sig?.signature ?? null}
                   role={`Manager Teknik — ${SHIFT_LABEL[shift]}`}
@@ -1227,14 +1180,18 @@ export const LogbookCnsdDetail: React.FC = () => {
                 {showLockedNote && (
                   <div className="flex items-start gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-600">
                     <Lock size={12} className="mt-0.5 text-slate-400 shrink-0" />
-                    <span>Hanya dapat ditandatangani oleh <span className="font-semibold text-slate-800">{assignedMgr?.name}</span></span>
+                    <span>
+                      Hanya dapat ditandatangani oleh <span className="font-semibold text-slate-800">{assignedMgr?.name}</span>
+                    </span>
                   </div>
                 )}
 
                 {isSigned && sig?.signed_by_name && assignedMgr && !namesMatch(sig.signed_by_name, assignedMgr.name) && (
                   <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-2 text-xs text-blue-700">
                     <CheckCircle2 size={12} className="mt-0.5 shrink-0" />
-                    <span>Ditandatangani sebelumnya oleh <span className="font-semibold">{sig.signed_by_name}</span> (Sesuai roster saat itu).</span>
+                    <span>
+                      Ditandatangani sebelumnya oleh <span className="font-semibold">{sig.signed_by_name}</span> (Sesuai roster saat itu).
+                    </span>
                   </div>
                 )}
               </div>
@@ -1243,27 +1200,17 @@ export const LogbookCnsdDetail: React.FC = () => {
         </div>
       </div>
 
-      <EditEquipmentModal
-        isOpen={!!editingItem}
-        item={editingItem}
-        onClose={() => setEditingItem(null)}
-        onSave={handleEditEquipment}
-        isSaving={isEquipmentSaving}
-      />
-      <AddEquipmentModal
-        isOpen={addingCategory !== null}
-        defaultCategory={addingCategory ?? ''}
-        onClose={() => setAddingCategory(null)}
-        onAdd={handleAddEquipment}
-        isSaving={isEquipmentSaving}
-      />
+      <EditEquipmentModal isOpen={!!editingItem} item={editingItem} onClose={() => setEditingItem(null)} onSave={handleEditEquipment} isSaving={isEquipmentSaving} />
+      <AddEquipmentModal isOpen={addingCategory !== null} defaultCategory={addingCategory ?? ""} onClose={() => setAddingCategory(null)} onAdd={handleAddEquipment} isSaving={isEquipmentSaving} />
 
       <SignatureCanvas
         isOpen={!!signShift}
-        onClose={() => { if (!isSigning) setSignShift(null); }}
+        onClose={() => {
+          if (!isSigning) setSignShift(null);
+        }}
         onConfirm={(base64) => void handleSign(base64)}
-        signerName={user?.name ?? 'Manager Teknik'}
-        role={signShift ? `Manager Teknik — Shift ${SHIFT_LABEL[signShift]}` : 'Manager Teknik'}
+        signerName={user?.name ?? "Manager Teknik"}
+        role={signShift ? `Manager Teknik — Shift ${SHIFT_LABEL[signShift]}` : "Manager Teknik"}
         isLoading={isSigning}
       />
     </div>

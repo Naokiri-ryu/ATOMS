@@ -1,42 +1,25 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import {
-  AlertCircle,
-  ArrowLeft,
-  Calendar,
-  Check,
-  Clock,
-  Lock as LockIcon,
-  MapPin,
-  Mic as RecorderIcon,
-  Printer,
-  Save,
-  Users,
-  X as XIcon,
-} from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { ShiftBadge } from '@/components/common/ShiftBadge';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { Skeleton } from '@/components/common/Skeleton';
-import { Tabs } from '@/components/common/Tabs';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
-import { canEditCnsd } from '@/lib/roles';
-import { cnsdRecorderMeterService } from '@/services/cnsdRecorderMeterService';
-import { CnsdRecorderMeterSignaturePanel } from './components/CnsdRecorderMeterSignaturePanel';
-import type {
-  CnsdRecorderMeterItem,
-  CnsdRecorderMeterRecordDetail,
-  CnsdRecorderMeterSectionMeta,
-} from '@/types/cnsdRecorder';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { AlertCircle, ArrowLeft, Calendar, Check, Clock, Lock as LockIcon, MapPin, Mic as RecorderIcon, Printer, Save, Users, X as XIcon } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { ShiftBadge } from "@/components/common/ShiftBadge";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { Skeleton } from "@/components/common/Skeleton";
+import { Tabs } from "@/components/common/Tabs";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { canEditCnsd } from "@/lib/roles";
+import { cnsdRecorderMeterService } from "@/services/cnsdRecorderMeterService";
+import { CnsdRecorderMeterSignaturePanel } from "./components/CnsdRecorderMeterSignaturePanel";
+import type { CnsdRecorderMeterItem, CnsdRecorderMeterRecordDetail, CnsdRecorderMeterSectionMeta } from "@/types/cnsdRecorder";
 
 // ─── Constants ────────────────────────────────────────────────
 
 const SHIFT_TIME_LABELS: Record<string, string> = {
-  pagi:  '07:00 — 13:00',
-  siang: '13:00 — 19:00',
-  malam: '19:00 — 07:00',
+  pagi: "07:15 — 13:15",
+  siang: "13:15 — 19:15",
+  malam: "19:15 — 07:15",
 };
 
 // ─── Main component ───────────────────────────────────────────
@@ -69,16 +52,16 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [merk, setMerk] = useState('');
-  const [type, setType] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
+  const [merk, setMerk] = useState("");
+  const [type, setType] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
 
   const canEditMetadata = canEditCnsd(user);
 
   // ─── Fetch ──────────────────────────────────────────────────
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
-      setErrorMessage('ID form tidak valid.');
+      setErrorMessage("ID form tidak valid.");
       setIsLoading(false);
       return;
     }
@@ -87,9 +70,9 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
       const data = await cnsdRecorderMeterService.getRecord(recordId);
       setRecord(data);
       setEditedItems({});
-      setMerk(data.merk ?? '');
-      setType(data.type ?? '');
-      setSerialNumber(data.serial_number ?? '');
+      setMerk(data.merk ?? "");
+      setType(data.type ?? "");
+      setSerialNumber(data.serial_number ?? "");
       if (data.sections_meta.length > 0) {
         const stillExists = activeSectionCode && data.sections_meta.some((s) => s.code === activeSectionCode);
         if (!stillExists) {
@@ -99,20 +82,20 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
       setErrorMessage(null);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
-        setErrorMessage('Form tidak ditemukan.');
+        setErrorMessage("Form tidak ditemukan.");
       } else {
-        setErrorMessage('Gagal memuat data form.');
+        setErrorMessage("Gagal memuat data form.");
       }
       setRecord(null);
     } finally {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   useEffect(() => {
     void fetchRecord();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   // ─── Derived ────────────────────────────────────────────────
@@ -120,33 +103,25 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
     const map: Record<string, CnsdRecorderMeterItem[]> = {};
     if (!record) return map;
     record.items.forEach((it) => {
-      const code = it.section_code ?? 'A';
+      const code = it.section_code ?? "A";
       if (!map[code]) map[code] = [];
       map[code].push(it);
     });
     return map;
   }, [record]);
 
-  const isCompleted = record?.status === 'completed';
+  const isCompleted = record?.status === "completed";
   const isReadOnly = isCompleted || !canEditCnsd(user);
-  const metadataDirty =
-    !!record &&
-    (merk !== (record.merk ?? '') ||
-      type !== (record.type ?? '') ||
-      serialNumber !== (record.serial_number ?? ''));
+  const metadataDirty = !!record && (merk !== (record.merk ?? "") || type !== (record.type ?? "") || serialNumber !== (record.serial_number ?? ""));
   const hasChanges = Object.keys(editedItems).length > 0 || metadataDirty;
 
-  const updateField = (
-    itemId: number,
-    field: keyof CnsdRecorderMeterItem,
-    value: string | null,
-  ) => {
+  const updateField = (itemId: number, field: keyof CnsdRecorderMeterItem, value: string | null) => {
     if (isReadOnly) return;
     setEditedItems((prev) => ({
       ...prev,
       [itemId]: {
         ...(prev[itemId] ?? {}),
-        [field]: value === '' ? null : value,
+        [field]: value === "" ? null : value,
       },
     }));
   };
@@ -155,10 +130,10 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
     const edited = editedItems[item.id];
     if (edited && field in edited) {
       const v = edited[field];
-      return v == null ? '' : String(v);
+      return v == null ? "" : String(v);
     }
     const original = item[field];
-    return original == null ? '' : String(original);
+    return original == null ? "" : String(original);
   };
 
   // ─── Save ───────────────────────────────────────────────────
@@ -171,10 +146,10 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
 
     const items = Object.entries(editedItems).map(([rawId, patch]) => ({
       id: Number(rawId),
-      hasil_server_a: 'hasil_server_a' in patch ? patch.hasil_server_a ?? null : undefined,
-      hasil_server_b: 'hasil_server_b' in patch ? patch.hasil_server_b ?? null : undefined,
-      hasil:          'hasil'          in patch ? patch.hasil          ?? null : undefined,
-      keterangan:     'keterangan'     in patch ? patch.keterangan     ?? null : undefined,
+      hasil_server_a: "hasil_server_a" in patch ? (patch.hasil_server_a ?? null) : undefined,
+      hasil_server_b: "hasil_server_b" in patch ? (patch.hasil_server_b ?? null) : undefined,
+      hasil: "hasil" in patch ? (patch.hasil ?? null) : undefined,
+      keterangan: "keterangan" in patch ? (patch.keterangan ?? null) : undefined,
     }));
 
     try {
@@ -188,15 +163,15 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
       setEditedItems({});
       const parts: string[] = [];
       if (items.length > 0) parts.push(`${items.length} item`);
-      if (metadataDirty) parts.push('metadata peralatan');
-      setSuccessMessage(`${parts.join(' + ')} disimpan.`);
+      if (metadataDirty) parts.push("metadata peralatan");
+      setSuccessMessage(`${parts.join(" + ")} disimpan.`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menyimpan perubahan.');
+        setErrorMessage(data.message ?? "Gagal menyimpan perubahan.");
       } else {
-        setErrorMessage('Koneksi gagal, coba lagi.');
+        setErrorMessage("Koneksi gagal, coba lagi.");
       }
     } finally {
       setIsSaving(false);
@@ -218,8 +193,8 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
     return (
       <div className="max-w-3xl mx-auto py-20 text-center space-y-4">
         <AlertCircle className="mx-auto h-12 w-12 text-slate-400" />
-        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? 'Form tidak ditemukan.'}</h2>
-        <Button variant="outline" onClick={() => navigate('/cnsd/recorder-meter')} className="gap-2">
+        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? "Form tidak ditemukan."}</h2>
+        <Button variant="outline" onClick={() => navigate("/cnsd/recorder-meter")} className="gap-2">
           <ArrowLeft size={16} />
           Kembali ke Daftar
         </Button>
@@ -227,19 +202,17 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
     );
   }
 
-  const activeSectionMeta = activeSectionCode
-    ? record.sections_meta.find((s) => s.code === activeSectionCode) ?? null
-    : null;
+  const activeSectionMeta = activeSectionCode ? (record.sections_meta.find((s) => s.code === activeSectionCode) ?? null) : null;
 
   return (
     <div className="max-w-full space-y-5 animate-fade-in pb-12">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <button type="button" onClick={() => navigate('/cnsd')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
+        <button type="button" onClick={() => navigate("/cnsd")} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
           <ArrowLeft size={14} /> CNSD
         </button>
         <span>/</span>
-        <button type="button" onClick={() => navigate('/cnsd/recorder-meter')} className="hover:text-slate-700 transition-colors">
+        <button type="button" onClick={() => navigate("/cnsd/recorder-meter")} className="hover:text-slate-700 transition-colors">
           Recorder Meter Reading
         </button>
         <span>/</span>
@@ -261,7 +234,12 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
               <p className="text-xs text-slate-500 mt-0.5">
                 CNSD &nbsp;·&nbsp;
                 <span className="font-mono">{record.form_number}</span>
-                {record.form_code && <> &nbsp;·&nbsp; <span className="font-mono">{record.form_code}</span></>}
+                {record.form_code && (
+                  <>
+                    {" "}
+                    &nbsp;·&nbsp; <span className="font-mono">{record.form_code}</span>
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -273,7 +251,7 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg" title="Rentang waktu shift">
               <Clock size={13} className="text-slate-400" />
-              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? '—'}</span>
+              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? "—"}</span>
             </div>
             <ShiftBadge shift={record.shift_type} />
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
@@ -299,20 +277,16 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
         <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Manager Teknik</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Supervisor CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Teknisi CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(', ')}>
-              {record.technicians.map((t) => t.technician_name).join(', ') || <span className="text-slate-400 italic">—</span>}
+            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(", ")}>
+              {record.technicians.map((t) => t.technician_name).join(", ") || <span className="text-slate-400 italic">—</span>}
             </p>
           </div>
         </div>
@@ -320,11 +294,11 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
 
       {/* Messages */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{errorMessage}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {errorMessage}
+        </div>
       )}
-      {successMessage && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>
-      )}
+      {successMessage && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>}
 
       {/* Info Peralatan card */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
@@ -340,32 +314,14 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
           <EditableMetaField label="Type" value={type} onChange={setType} disabled={isReadOnly || !canEditMetadata} placeholder="VC - MDx" />
           <EditableMetaField label="Serial Number" value={serialNumber} onChange={setSerialNumber} disabled={isReadOnly || !canEditMetadata} placeholder="51" />
         </div>
-        {!canEditMetadata && !isReadOnly && (
-          <p className="text-[10px] text-slate-400 italic">
-            Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.
-          </p>
-        )}
+        {!canEditMetadata && !isReadOnly && <p className="text-[10px] text-slate-400 italic">Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.</p>}
       </div>
 
       {/* Tabs */}
-      {record.sections_meta.length > 0 && (
-        <Tabs
-          items={record.sections_meta.map((s) => ({ key: s.code, label: `${s.code}. ${s.name}` }))}
-          defaultKey={activeSectionCode ?? record.sections_meta[0]?.code}
-          onChange={setActiveSectionCode}
-        />
-      )}
+      {record.sections_meta.length > 0 && <Tabs items={record.sections_meta.map((s) => ({ key: s.code, label: `${s.code}. ${s.name}` }))} defaultKey={activeSectionCode ?? record.sections_meta[0]?.code} onChange={setActiveSectionCode} />}
 
       {/* Section content */}
-      {activeSectionMeta && (
-        <RecorderSectionPanel
-          sectionMeta={activeSectionMeta}
-          items={itemsBySection[activeSectionMeta.code] ?? []}
-          isReadOnly={isReadOnly}
-          getValue={getValue}
-          onChange={updateField}
-        />
-      )}
+      {activeSectionMeta && <RecorderSectionPanel sectionMeta={activeSectionMeta} items={itemsBySection[activeSectionMeta.code] ?? []} isReadOnly={isReadOnly} getValue={getValue} onChange={updateField} />}
 
       {/* Pending-changes indicator */}
       {!isReadOnly && (
@@ -373,9 +329,9 @@ export const CnsdRecorderMeterDetailPage: React.FC = () => {
           {hasChanges && (
             <span className="text-xs text-amber-600 font-medium">
               {Object.keys(editedItems).length > 0 && `${Object.keys(editedItems).length} item`}
-              {Object.keys(editedItems).length > 0 && metadataDirty && ' + '}
-              {metadataDirty && 'metadata'}
-              {' belum disimpan'}
+              {Object.keys(editedItems).length > 0 && metadataDirty && " + "}
+              {metadataDirty && "metadata"}
+              {" belum disimpan"}
             </span>
           )}
           <Button onClick={() => void handleSave()} disabled={!hasChanges} isLoading={isSaving} className="gap-2">
@@ -400,14 +356,12 @@ interface RecorderSectionPanelProps {
   onChange: (itemId: number, field: keyof CnsdRecorderMeterItem, value: string | null) => void;
 }
 
-const RecorderSectionPanel: React.FC<RecorderSectionPanelProps> = ({
-  sectionMeta, items, isReadOnly, getValue, onChange,
-}) => {
+const RecorderSectionPanel: React.FC<RecorderSectionPanelProps> = ({ sectionMeta, items, isReadOnly, getValue, onChange }) => {
   const groups = useMemo(() => {
     const order: string[] = [];
     const map: Record<string, CnsdRecorderMeterItem[]> = {};
     items.forEach((it) => {
-      const key = it.group_name ?? '__ungrouped__';
+      const key = it.group_name ?? "__ungrouped__";
       if (!map[key]) {
         map[key] = [];
         order.push(key);
@@ -415,13 +369,13 @@ const RecorderSectionPanel: React.FC<RecorderSectionPanelProps> = ({
       map[key].push(it);
     });
     return order.map((key) => ({
-      number: items.find((i) => (i.group_name ?? '__ungrouped__') === key)?.group_number ?? null,
-      name: key === '__ungrouped__' ? null : key,
+      number: items.find((i) => (i.group_name ?? "__ungrouped__") === key)?.group_number ?? null,
+      name: key === "__ungrouped__" ? null : key,
       items: map[key],
     }));
   }, [items]);
 
-  const isServerDual = sectionMeta.inputs_layout === 'server_dual';
+  const isServerDual = sectionMeta.inputs_layout === "server_dual";
   const colCount = isServerDual ? 6 : 5;
 
   return (
@@ -432,9 +386,7 @@ const RecorderSectionPanel: React.FC<RecorderSectionPanelProps> = ({
             {sectionMeta.code}. {sectionMeta.name}
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            {isServerDual
-              ? 'Isi hasil pengukuran SERVER A dan SERVER B per channel. Baris U/S (merah) tidak dapat diisi.'
-              : 'Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan kerja.'}
+            {isServerDual ? "Isi hasil pengukuran SERVER A dan SERVER B per channel. Baris U/S (merah) tidak dapat diisi." : "Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan kerja."}
           </p>
         </div>
         <span className="text-xs font-medium text-slate-400">{items.length} item</span>
@@ -445,25 +397,15 @@ const RecorderSectionPanel: React.FC<RecorderSectionPanelProps> = ({
           <thead>
             <tr className="bg-slate-50 text-slate-700">
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-24 text-[11px] uppercase tracking-wider">No</th>
-              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[220px] text-[11px] uppercase tracking-wider">
-                {isServerDual ? 'Pembacaan Meter Reading' : 'Kegiatan'}
-              </th>
-              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[130px] text-[11px] uppercase tracking-wider">
-                {isServerDual ? 'Nominal / Content' : 'Nominal'}
-              </th>
+              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[220px] text-[11px] uppercase tracking-wider">{isServerDual ? "Pembacaan Meter Reading" : "Kegiatan"}</th>
+              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[130px] text-[11px] uppercase tracking-wider">{isServerDual ? "Nominal / Content" : "Nominal"}</th>
               {isServerDual ? (
                 <>
-                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">
-                    {sectionMeta.columns_label_1 ?? 'Server A'}
-                  </th>
-                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">
-                    {sectionMeta.columns_label_2 ?? 'Server B'}
-                  </th>
+                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_1 ?? "Server A"}</th>
+                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_2 ?? "Server B"}</th>
                 </>
               ) : (
-                <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">
-                  {sectionMeta.columns_label_1 ?? 'Hasil Pemeriksaan'}
-                </th>
+                <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_1 ?? "Hasil Pemeriksaan"}</th>
               )}
               <th className="px-2 py-2 text-left font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">Keterangan</th>
             </tr>
@@ -481,19 +423,13 @@ const RecorderSectionPanel: React.FC<RecorderSectionPanelProps> = ({
                   {group.name && (
                     <tr className="bg-slate-100">
                       <td colSpan={colCount} className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200">
-                        {group.number ? `${group.number}. ` : ''}{group.name}
+                        {group.number ? `${group.number}. ` : ""}
+                        {group.name}
                       </td>
                     </tr>
                   )}
                   {group.items.map((item) => (
-                    <RecorderItemRow
-                      key={item.id}
-                      item={item}
-                      isServerDual={isServerDual}
-                      isReadOnly={isReadOnly}
-                      getValue={getValue}
-                      onChange={onChange}
-                    />
+                    <RecorderItemRow key={item.id} item={item} isServerDual={isServerDual} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} />
                   ))}
                 </React.Fragment>
               ))
@@ -515,10 +451,8 @@ interface RecorderItemRowProps {
   onChange: (itemId: number, field: keyof CnsdRecorderMeterItem, value: string | null) => void;
 }
 
-const RecorderItemRow: React.FC<RecorderItemRowProps> = ({
-  item, isServerDual, isReadOnly, getValue, onChange,
-}) => {
-  const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
+const RecorderItemRow: React.FC<RecorderItemRowProps> = ({ item, isServerDual, isReadOnly, getValue, onChange }) => {
+  const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
   const isBlocked = item.is_blocked;
   const disabled = isReadOnly || isBlocked;
 
@@ -526,15 +460,11 @@ const RecorderItemRow: React.FC<RecorderItemRowProps> = ({
   if (isBlocked) {
     return (
       <tr className="border-b border-slate-100 bg-red-50">
-        <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">
-          {item.item_number ?? ''}
-        </td>
-        <td className="px-3 py-2 align-middle text-slate-800 font-medium">
-          {item.item_name}
-        </td>
+        <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{item.item_number ?? ""}</td>
+        <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.item_name}</td>
         <td colSpan={isServerDual ? 3 : 2} className="px-3 py-2 align-middle text-center bg-red-500 text-white font-bold uppercase tracking-wider">
           <span className="inline-flex items-center gap-1.5">
-            <LockIcon size={12} /> {item.block_reason ?? 'U/S'}
+            <LockIcon size={12} /> {item.block_reason ?? "U/S"}
           </span>
         </td>
         <td className="px-2 py-2 align-middle text-slate-400 italic text-[11px]">—</td>
@@ -544,70 +474,33 @@ const RecorderItemRow: React.FC<RecorderItemRowProps> = ({
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
-      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">
-        {item.item_number ?? ''}
-      </td>
-      <td className="px-3 py-2 align-middle text-slate-800 font-medium">
-        {item.item_name}
-      </td>
-      <td className={cn('px-2 py-2 align-middle text-center text-slate-600 text-[11px]', !item.nominal && 'text-slate-300')}>
-        {item.nominal || '—'}
-      </td>
+      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{item.item_number ?? ""}</td>
+      <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.item_name}</td>
+      <td className={cn("px-2 py-2 align-middle text-center text-slate-600 text-[11px]", !item.nominal && "text-slate-300")}>{item.nominal || "—"}</td>
       {isServerDual ? (
         <>
           <td className="px-2 py-2 align-middle">
             {item.server_a_locked ? (
-              <div className="h-8 flex items-center justify-center rounded bg-red-500 text-white font-bold text-[11px] uppercase tracking-wider">
-                U/S
-              </div>
+              <div className="h-8 flex items-center justify-center rounded bg-red-500 text-white font-bold text-[11px] uppercase tracking-wider">U/S</div>
             ) : (
-              <AdaptiveCell
-                nominal={item.nominal}
-                isChannel={item.group_name === 'CHANNEL'}
-                value={getValue(item, 'hasil_server_a')}
-                onChange={(v) => onChange(item.id, 'hasil_server_a', v)}
-                disabled={disabled}
-                inputClass={inputClass}
-              />
+              <AdaptiveCell nominal={item.nominal} isChannel={item.group_name === "CHANNEL"} value={getValue(item, "hasil_server_a")} onChange={(v) => onChange(item.id, "hasil_server_a", v)} disabled={disabled} inputClass={inputClass} />
             )}
           </td>
           <td className="px-2 py-2 align-middle">
             {item.server_b_locked ? (
-              <div className="h-8 flex items-center justify-center rounded bg-red-500 text-white font-bold text-[11px] uppercase tracking-wider">
-                U/S
-              </div>
+              <div className="h-8 flex items-center justify-center rounded bg-red-500 text-white font-bold text-[11px] uppercase tracking-wider">U/S</div>
             ) : (
-              <AdaptiveCell
-                nominal={item.nominal}
-                isChannel={item.group_name === 'CHANNEL'}
-                value={getValue(item, 'hasil_server_b')}
-                onChange={(v) => onChange(item.id, 'hasil_server_b', v)}
-                disabled={disabled}
-                inputClass={inputClass}
-              />
+              <AdaptiveCell nominal={item.nominal} isChannel={item.group_name === "CHANNEL"} value={getValue(item, "hasil_server_b")} onChange={(v) => onChange(item.id, "hasil_server_b", v)} disabled={disabled} inputClass={inputClass} />
             )}
           </td>
         </>
       ) : (
         <td className="px-2 py-2 align-middle">
-          <EnvironmentCell
-            nominal={item.nominal}
-            value={getValue(item, 'hasil')}
-            onChange={(v) => onChange(item.id, 'hasil', v)}
-            disabled={disabled}
-            inputClass={inputClass}
-          />
+          <EnvironmentCell nominal={item.nominal} value={getValue(item, "hasil")} onChange={(v) => onChange(item.id, "hasil", v)} disabled={disabled} inputClass={inputClass} />
         </td>
       )}
       <td className="px-2 py-2 align-middle">
-        <input
-          type="text"
-          className={inputClass}
-          placeholder="Catatan"
-          value={getValue(item, 'keterangan')}
-          onChange={(e) => onChange(item.id, 'keterangan', e.target.value)}
-          disabled={disabled}
-        />
+        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={disabled} />
       </td>
     </tr>
   );
@@ -615,7 +508,7 @@ const RecorderItemRow: React.FC<RecorderItemRowProps> = ({
 
 // ─── Adaptive cell (Section A: KVM / SERVER / CHANNEL) ────────
 
-type AdaptiveShape = { kind: 'toggle'; options: [string, string] } | { kind: 'text' };
+type AdaptiveShape = { kind: "toggle"; options: [string, string] } | { kind: "text" };
 
 /**
  * Normalize a stored reading into a canonical token so old manual entries still
@@ -624,9 +517,9 @@ type AdaptiveShape = { kind: 'toggle'; options: [string, string] } | { kind: 'te
  */
 const toggleAliasFor = (v: string): string => {
   const t = v.trim();
-  if (t === '√' || t === '✓' || t === 'v' || t === 'V') return '√';
+  if (t === "√" || t === "✓" || t === "v" || t === "V") return "√";
   const l = t.toLowerCase();
-  if (l === 'ok') return 'ok';
+  if (l === "ok") return "ok";
   return l;
 };
 
@@ -635,8 +528,8 @@ const toggleMatches = (value: string, opt: string): boolean => {
   const v = toggleAliasFor(value);
   const o = toggleAliasFor(opt);
   if (v === o) return true;
-  if (o === 'normal' && (v === '√' || v === 'ok')) return true;
-  if (o === '√' && v === 'ok') return true;
+  if (o === "normal" && (v === "√" || v === "ok")) return true;
+  if (o === "√" && v === "ok") return true;
   return false;
 };
 
@@ -648,15 +541,15 @@ const toggleMatches = (value: string, opt: string): boolean => {
  *   numeric / anything else → free-text input
  */
 const parseAdaptiveShape = (nominal: string | null): AdaptiveShape => {
-  if (!nominal) return { kind: 'text' };
-  const u = nominal.trim().toUpperCase().replace(/\s+/g, ' ');
-  if (u === 'NORMAL / ALRM' || u === 'NORMAL/ALRM' || u === 'NORMAL / ALARM' || u === 'NORMAL/ALARM') {
-    return { kind: 'toggle', options: ['NORMAL', 'ALARM'] };
+  if (!nominal) return { kind: "text" };
+  const u = nominal.trim().toUpperCase().replace(/\s+/g, " ");
+  if (u === "NORMAL / ALRM" || u === "NORMAL/ALRM" || u === "NORMAL / ALARM" || u === "NORMAL/ALARM") {
+    return { kind: "toggle", options: ["NORMAL", "ALARM"] };
   }
-  if (u === '√ / -' || u === '√/-' || u === '√ /-' || u === '√/ -') {
-    return { kind: 'toggle', options: ['√', '-'] };
+  if (u === "√ / -" || u === "√/-" || u === "√ /-" || u === "√/ -") {
+    return { kind: "toggle", options: ["√", "-"] };
   }
-  return { kind: 'text' };
+  return { kind: "text" };
 };
 
 interface AdaptiveCellProps {
@@ -669,24 +562,13 @@ interface AdaptiveCellProps {
 }
 
 const AdaptiveCell: React.FC<AdaptiveCellProps> = ({ nominal, isChannel, value, onChange, disabled, inputClass }) => {
-  const shape = isChannel
-    ? { kind: 'toggle', options: ['NORMAL', 'FAULT'] as [string, string] }
-    : parseAdaptiveShape(nominal);
+  const shape = isChannel ? { kind: "toggle", options: ["NORMAL", "FAULT"] as [string, string] } : parseAdaptiveShape(nominal);
 
-  if (shape.kind === 'toggle') {
+  if (shape.kind === "toggle") {
     return <BinaryToggle options={shape.options} value={value} onChange={onChange} disabled={disabled} />;
   }
 
-  return (
-    <input
-      type="text"
-      className={cn(inputClass, 'text-center')}
-      placeholder={nominal ?? '...'}
-      value={value}
-      onChange={(e) => onChange(e.target.value || null)}
-      disabled={disabled}
-    />
-  );
+  return <input type="text" className={cn(inputClass, "text-center")} placeholder={nominal ?? "..."} value={value} onChange={(e) => onChange(e.target.value || null)} disabled={disabled} />;
 };
 
 interface BinaryToggleProps {
@@ -700,9 +582,9 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
   const [leftOpt, rightOpt] = options;
   const isActive = (opt: string) => toggleMatches(value, opt);
 
-  const leftActive = 'bg-emerald-600 text-white border-emerald-600';
-  const rightActive = leftOpt === 'NORMAL' ? 'bg-red-600 text-white border-red-600' : 'bg-slate-600 text-white border-slate-600';
-  const idle = 'bg-white text-slate-600 border-slate-300 hover:border-slate-400';
+  const leftActive = "bg-emerald-600 text-white border-emerald-600";
+  const rightActive = leftOpt === "NORMAL" ? "bg-red-600 text-white border-red-600" : "bg-slate-600 text-white border-slate-600";
+  const idle = "bg-white text-slate-600 border-slate-300 hover:border-slate-400";
 
   const click = (opt: string) => {
     if (disabled) return;
@@ -713,7 +595,7 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
     <div className="inline-flex rounded-md overflow-hidden border border-slate-300 select-none w-full justify-center">
       <button
         type="button"
-        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300', isActive(leftOpt) ? leftActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        className={cn("flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300", isActive(leftOpt) ? leftActive : idle, disabled && "opacity-50 cursor-not-allowed")}
         onClick={() => click(leftOpt)}
         disabled={disabled}
       >
@@ -721,7 +603,7 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
       </button>
       <button
         type="button"
-        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors', isActive(rightOpt) ? rightActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        className={cn("flex-1 px-2 py-1 text-[11px] font-semibold transition-colors", isActive(rightOpt) ? rightActive : idle, disabled && "opacity-50 cursor-not-allowed")}
         onClick={() => click(rightOpt)}
         disabled={disabled}
       >
@@ -742,28 +624,13 @@ interface EnvironmentCellProps {
 }
 
 const EnvironmentCell: React.FC<EnvironmentCellProps> = ({ nominal, value, onChange, disabled, inputClass }) => {
-  const isCheckNominal = !!nominal && nominal.trim() === '√';
+  const isCheckNominal = !!nominal && nominal.trim() === "√";
 
   if (isCheckNominal) {
-    return (
-      <CheckToggleCell
-        checked={toggleMatches(value, '√')}
-        onToggle={(checked) => onChange(checked ? '√' : null)}
-        disabled={disabled}
-      />
-    );
+    return <CheckToggleCell checked={toggleMatches(value, "√")} onToggle={(checked) => onChange(checked ? "√" : null)} disabled={disabled} />;
   }
 
-  return (
-    <input
-      type="text"
-      className={cn(inputClass, 'text-center')}
-      placeholder={nominal ?? '...'}
-      value={value}
-      onChange={(e) => onChange(e.target.value || null)}
-      disabled={disabled}
-    />
-  );
+  return <input type="text" className={cn(inputClass, "text-center")} placeholder={nominal ?? "..."} value={value} onChange={(e) => onChange(e.target.value || null)} disabled={disabled} />;
 };
 
 const CheckToggleCell: React.FC<{
@@ -771,8 +638,8 @@ const CheckToggleCell: React.FC<{
   onToggle: (checked: boolean) => void;
   disabled: boolean;
 }> = ({ checked, onToggle, disabled }) => {
-  const active = 'bg-emerald-600 text-white border-emerald-600';
-  const idle = 'bg-white text-slate-300 border-slate-300 hover:border-slate-400 hover:text-slate-500';
+  const active = "bg-emerald-600 text-white border-emerald-600";
+  const idle = "bg-white text-slate-300 border-slate-300 hover:border-slate-400 hover:text-slate-500";
 
   return (
     <button
@@ -780,12 +647,8 @@ const CheckToggleCell: React.FC<{
       onClick={() => !disabled && onToggle(!checked)}
       disabled={disabled}
       aria-pressed={checked}
-      title={checked ? 'Klik lagi untuk hapus centang' : 'Klik untuk centang'}
-      className={cn(
-        'mx-auto flex h-8 w-12 items-center justify-center rounded-md border-2 transition-colors',
-        checked ? active : idle,
-        disabled && 'opacity-50 cursor-not-allowed',
-      )}
+      title={checked ? "Klik lagi untuk hapus centang" : "Klik untuk centang"}
+      className={cn("mx-auto flex h-8 w-12 items-center justify-center rounded-md border-2 transition-colors", checked ? active : idle, disabled && "opacity-50 cursor-not-allowed")}
     >
       {checked ? <Check size={16} strokeWidth={3} /> : <XIcon size={14} className="opacity-40" />}
     </button>
@@ -797,7 +660,7 @@ const CheckToggleCell: React.FC<{
 const InfoCell: React.FC<{ label: string; value: string | null }> = ({ label, value }) => (
   <div>
     <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">{label}</span>
-    <p className="mt-0.5 font-medium text-slate-700">{value ?? '—'}</p>
+    <p className="mt-0.5 font-medium text-slate-700">{value ?? "—"}</p>
   </div>
 );
 
@@ -813,7 +676,7 @@ const EditableMetaField: React.FC<EditableMetaFieldProps> = ({ label, value, onC
   <div>
     <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</label>
     {disabled ? (
-      <p className="text-xs text-slate-700 font-medium">{value || '—'}</p>
+      <p className="text-xs text-slate-700 font-medium">{value || "—"}</p>
     ) : (
       <input
         type="text"

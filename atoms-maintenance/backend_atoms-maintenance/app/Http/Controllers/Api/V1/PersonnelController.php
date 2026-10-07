@@ -69,10 +69,11 @@ class PersonnelController extends Controller
 
         // Fallback auto-detect (deprecated path: only used if frontend omits shift_type)
         if (!$shiftType) {
-            $hour = (int) Carbon::now()->format('H');
-            if ($hour >= 7 && $hour < 13) {
+            $now = Carbon::now();
+            $minutes = $now->hour * 60 + $now->minute;
+            if ($minutes >= 7 * 60 + 15 && $minutes < 13 * 60 + 15) {
                 $shiftType = 'pagi';
-            } elseif ($hour >= 13 && $hour < 19) {
+            } elseif ($minutes >= 13 * 60 + 15 && $minutes < 19 * 60 + 15) {
                 $shiftType = 'siang';
             } else {
                 $shiftType = 'malam';

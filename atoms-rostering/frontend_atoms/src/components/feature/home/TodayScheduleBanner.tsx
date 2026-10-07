@@ -107,7 +107,7 @@ const TodayScheduleBanner: React.FC = () => {
               </span>
               <span className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                7:00AM - 13:00PM
+                7:15AM - 1:15PM
               </span>
             </div>
           </div>

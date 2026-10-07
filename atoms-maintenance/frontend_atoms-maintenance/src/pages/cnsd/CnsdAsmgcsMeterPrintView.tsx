@@ -6,9 +6,9 @@ import { cnsdAsmgcsMeterService } from "@/services/cnsdAsmgcsMeterService";
 import type { CnsdAsmgcsMeterItem, CnsdAsmgcsMeterRecordDetail, CnsdAsmgcsMeterSectionMeta } from "@/types/cnsdAsmgcs";
 
 const SHIFT_TIME_LABELS: Record<string, string> = {
-  pagi: "07:00 — 13:00",
-  siang: "13:00 — 19:00",
-  malam: "19:00 — 07:00",
+  pagi:  '07:15 — 13:15',
+  siang: '13:15 — 19:15',
+  malam: '19:15 — 07:15',
 };
 
 const formatDateID = (v?: string | null): string => {

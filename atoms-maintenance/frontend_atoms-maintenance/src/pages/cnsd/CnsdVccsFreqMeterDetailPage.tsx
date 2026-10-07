@@ -1,42 +1,25 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import {
-  AlertCircle,
-  ArrowLeft,
-  Calendar,
-  Check,
-  Clock,
-  Headphones as VccsFreqIcon,
-  MapPin,
-  Printer,
-  Save,
-  Users,
-  X as XIcon,
-} from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { ShiftBadge } from '@/components/common/ShiftBadge';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { Skeleton } from '@/components/common/Skeleton';
-import { Tabs } from '@/components/common/Tabs';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
-import { canEditCnsd } from '@/lib/roles';
-import { cnsdVccsFreqMeterService } from '@/services/cnsdVccsFreqMeterService';
-import { CnsdVccsFreqMeterSignaturePanel } from './components/CnsdVccsFreqMeterSignaturePanel';
-import type {
-  CnsdVccsFreqInputsLayout,
-  CnsdVccsFreqMeterItem,
-  CnsdVccsFreqMeterRecordDetail,
-  CnsdVccsFreqMeterSectionMeta,
-} from '@/types/cnsdVccsFreq';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { AlertCircle, ArrowLeft, Calendar, Check, Clock, Headphones as VccsFreqIcon, MapPin, Printer, Save, Users, X as XIcon } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { ShiftBadge } from "@/components/common/ShiftBadge";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { Skeleton } from "@/components/common/Skeleton";
+import { Tabs } from "@/components/common/Tabs";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { canEditCnsd } from "@/lib/roles";
+import { cnsdVccsFreqMeterService } from "@/services/cnsdVccsFreqMeterService";
+import { CnsdVccsFreqMeterSignaturePanel } from "./components/CnsdVccsFreqMeterSignaturePanel";
+import type { CnsdVccsFreqInputsLayout, CnsdVccsFreqMeterItem, CnsdVccsFreqMeterRecordDetail, CnsdVccsFreqMeterSectionMeta } from "@/types/cnsdVccsFreq";
 
 // ─── Constants ────────────────────────────────────────────────
 
 const SHIFT_TIME_LABELS: Record<string, string> = {
-  pagi:  '07:00 — 13:00',
-  siang: '13:00 — 19:00',
-  malam: '19:00 — 07:00',
+  pagi: "07:15 — 13:15",
+  siang: "13:15 — 19:15",
+  malam: "19:15 — 07:15",
 };
 
 /**
@@ -47,17 +30,17 @@ const SHIFT_TIME_LABELS: Record<string, string> = {
  *   "√ / -" variants → toggle '√' / '-'
  *   numeric / other  → free-text input
  */
-type AdaptiveShape = { kind: 'toggle'; options: [string, string] } | { kind: 'text' };
+type AdaptiveShape = { kind: "toggle"; options: [string, string] } | { kind: "text" };
 const parseAdaptiveShape = (nominal: string | null): AdaptiveShape => {
-  if (!nominal) return { kind: 'text' };
-  const u = nominal.trim().toUpperCase().replace(/\s+/g, ' ');
-  if (u === 'NORMAL / ALRM' || u === 'NORMAL/ALRM' || u === 'NORMAL / ALARM' || u === 'NORMAL/ALARM') {
-    return { kind: 'toggle', options: ['NORMAL', 'ALARM'] };
+  if (!nominal) return { kind: "text" };
+  const u = nominal.trim().toUpperCase().replace(/\s+/g, " ");
+  if (u === "NORMAL / ALRM" || u === "NORMAL/ALRM" || u === "NORMAL / ALARM" || u === "NORMAL/ALARM") {
+    return { kind: "toggle", options: ["NORMAL", "ALARM"] };
   }
-  if (u === '√ / -' || u === '√/-' || u === '√ /-' || u === '√/ -') {
-    return { kind: 'toggle', options: ['√', '-'] };
+  if (u === "√ / -" || u === "√/-" || u === "√ /-" || u === "√/ -") {
+    return { kind: "toggle", options: ["√", "-"] };
   }
-  return { kind: 'text' };
+  return { kind: "text" };
 };
 
 // ─── Main component ───────────────────────────────────────────
@@ -86,16 +69,16 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [merk, setMerk] = useState('');
-  const [type, setType] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
+  const [merk, setMerk] = useState("");
+  const [type, setType] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
 
   const canEditMetadata = canEditCnsd(user);
 
   // ─── Fetch ──────────────────────────────────────────────────
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
-      setErrorMessage('ID form tidak valid.');
+      setErrorMessage("ID form tidak valid.");
       setIsLoading(false);
       return;
     }
@@ -104,9 +87,9 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
       const data = await cnsdVccsFreqMeterService.getRecord(recordId);
       setRecord(data);
       setEditedItems({});
-      setMerk(data.merk ?? '');
-      setType(data.type ?? '');
-      setSerialNumber(data.serial_number ?? '');
+      setMerk(data.merk ?? "");
+      setType(data.type ?? "");
+      setSerialNumber(data.serial_number ?? "");
       if (data.sections_meta.length > 0) {
         const stillExists = activeSectionCode && data.sections_meta.some((s) => s.code === activeSectionCode);
         if (!stillExists) {
@@ -116,20 +99,20 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
       setErrorMessage(null);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
-        setErrorMessage('Form tidak ditemukan.');
+        setErrorMessage("Form tidak ditemukan.");
       } else {
-        setErrorMessage('Gagal memuat data form.');
+        setErrorMessage("Gagal memuat data form.");
       }
       setRecord(null);
     } finally {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   useEffect(() => {
     void fetchRecord();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   // ─── Derived ────────────────────────────────────────────────
@@ -137,20 +120,16 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
     const map: Record<string, CnsdVccsFreqMeterItem[]> = {};
     if (!record) return map;
     record.items.forEach((it) => {
-      const code = it.section_code ?? '1';
+      const code = it.section_code ?? "1";
       if (!map[code]) map[code] = [];
       map[code].push(it);
     });
     return map;
   }, [record]);
 
-  const isCompleted = record?.status === 'completed';
+  const isCompleted = record?.status === "completed";
   const isReadOnly = isCompleted || !canEditCnsd(user);
-  const metadataDirty =
-    !!record &&
-    (merk !== (record.merk ?? '') ||
-      type !== (record.type ?? '') ||
-      serialNumber !== (record.serial_number ?? ''));
+  const metadataDirty = !!record && (merk !== (record.merk ?? "") || type !== (record.type ?? "") || serialNumber !== (record.serial_number ?? ""));
   const hasChanges = Object.keys(editedItems).length > 0 || metadataDirty;
 
   const updateField = (itemId: number, field: keyof CnsdVccsFreqMeterItem, value: string | null) => {
@@ -159,7 +138,7 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
       ...prev,
       [itemId]: {
         ...(prev[itemId] ?? {}),
-        [field]: value === '' ? null : value,
+        [field]: value === "" ? null : value,
       },
     }));
   };
@@ -168,10 +147,10 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
     const edited = editedItems[item.id];
     if (edited && field in edited) {
       const v = edited[field];
-      return v == null ? '' : String(v);
+      return v == null ? "" : String(v);
     }
     const original = item[field];
-    return original == null ? '' : String(original);
+    return original == null ? "" : String(original);
   };
 
   // ─── Save ───────────────────────────────────────────────────
@@ -184,10 +163,10 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
 
     const items = Object.entries(editedItems).map(([rawId, patch]) => ({
       id: Number(rawId),
-      hasil_a:     'hasil_a'    in patch ? patch.hasil_a    ?? null : undefined,
-      hasil_b:     'hasil_b'    in patch ? patch.hasil_b    ?? null : undefined,
-      hasil:       'hasil'      in patch ? patch.hasil      ?? null : undefined,
-      keterangan:  'keterangan' in patch ? patch.keterangan ?? null : undefined,
+      hasil_a: "hasil_a" in patch ? (patch.hasil_a ?? null) : undefined,
+      hasil_b: "hasil_b" in patch ? (patch.hasil_b ?? null) : undefined,
+      hasil: "hasil" in patch ? (patch.hasil ?? null) : undefined,
+      keterangan: "keterangan" in patch ? (patch.keterangan ?? null) : undefined,
     }));
 
     try {
@@ -201,15 +180,15 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
       setEditedItems({});
       const parts: string[] = [];
       if (items.length > 0) parts.push(`${items.length} item`);
-      if (metadataDirty) parts.push('metadata peralatan');
-      setSuccessMessage(`${parts.join(' + ')} disimpan.`);
+      if (metadataDirty) parts.push("metadata peralatan");
+      setSuccessMessage(`${parts.join(" + ")} disimpan.`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menyimpan perubahan.');
+        setErrorMessage(data.message ?? "Gagal menyimpan perubahan.");
       } else {
-        setErrorMessage('Koneksi gagal, coba lagi.');
+        setErrorMessage("Koneksi gagal, coba lagi.");
       }
     } finally {
       setIsSaving(false);
@@ -231,8 +210,8 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
     return (
       <div className="max-w-3xl mx-auto py-20 text-center space-y-4">
         <AlertCircle className="mx-auto h-12 w-12 text-slate-400" />
-        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? 'Form tidak ditemukan.'}</h2>
-        <Button variant="outline" onClick={() => navigate('/cnsd/vccs-freq-meter')} className="gap-2">
+        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? "Form tidak ditemukan."}</h2>
+        <Button variant="outline" onClick={() => navigate("/cnsd/vccs-freq-meter")} className="gap-2">
           <ArrowLeft size={16} />
           Kembali ke Daftar
         </Button>
@@ -240,19 +219,17 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
     );
   }
 
-  const activeSectionMeta = activeSectionCode
-    ? record.sections_meta.find((s) => s.code === activeSectionCode) ?? null
-    : null;
+  const activeSectionMeta = activeSectionCode ? (record.sections_meta.find((s) => s.code === activeSectionCode) ?? null) : null;
 
   return (
     <div className="max-w-full space-y-5 animate-fade-in pb-12">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <button type="button" onClick={() => navigate('/cnsd')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
+        <button type="button" onClick={() => navigate("/cnsd")} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
           <ArrowLeft size={14} /> CNSD
         </button>
         <span>/</span>
-        <button type="button" onClick={() => navigate('/cnsd/vccs-freq-meter')} className="hover:text-slate-700 transition-colors">
+        <button type="button" onClick={() => navigate("/cnsd/vccs-freq-meter")} className="hover:text-slate-700 transition-colors">
           VCCS (Frequentis) Meter Reading
         </button>
         <span>/</span>
@@ -285,7 +262,7 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg" title="Rentang waktu shift">
               <Clock size={13} className="text-slate-400" />
-              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? '—'}</span>
+              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? "—"}</span>
             </div>
             <ShiftBadge shift={record.shift_type} />
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
@@ -311,20 +288,16 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
         <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Manager Teknik</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Supervisor CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Teknisi CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(', ')}>
-              {record.technicians.map((t) => t.technician_name).join(', ') || <span className="text-slate-400 italic">—</span>}
+            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(", ")}>
+              {record.technicians.map((t) => t.technician_name).join(", ") || <span className="text-slate-400 italic">—</span>}
             </p>
           </div>
         </div>
@@ -332,11 +305,11 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
 
       {/* Messages */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{errorMessage}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {errorMessage}
+        </div>
       )}
-      {successMessage && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>
-      )}
+      {successMessage && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>}
 
       {/* Info Peralatan card */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
@@ -352,32 +325,14 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
           <EditableMetaField label="Type" value={type} onChange={setType} disabled={isReadOnly || !canEditMetadata} placeholder="—" />
           <EditableMetaField label="Serial Number" value={serialNumber} onChange={setSerialNumber} disabled={isReadOnly || !canEditMetadata} placeholder="—" />
         </div>
-        {!canEditMetadata && !isReadOnly && (
-          <p className="text-[10px] text-slate-400 italic">
-            Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.
-          </p>
-        )}
+        {!canEditMetadata && !isReadOnly && <p className="text-[10px] text-slate-400 italic">Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.</p>}
       </div>
 
       {/* Tabs */}
-      {record.sections_meta.length > 0 && (
-        <Tabs
-          items={record.sections_meta.map((s) => ({ key: s.code, label: `${s.code}. ${s.name}` }))}
-          defaultKey={activeSectionCode ?? record.sections_meta[0]?.code}
-          onChange={setActiveSectionCode}
-        />
-      )}
+      {record.sections_meta.length > 0 && <Tabs items={record.sections_meta.map((s) => ({ key: s.code, label: `${s.code}. ${s.name}` }))} defaultKey={activeSectionCode ?? record.sections_meta[0]?.code} onChange={setActiveSectionCode} />}
 
       {/* Section content */}
-      {activeSectionMeta && (
-        <VccsFreqSectionPanel
-          sectionMeta={activeSectionMeta}
-          items={itemsBySection[activeSectionMeta.code] ?? []}
-          isReadOnly={isReadOnly}
-          getValue={getValue}
-          onChange={updateField}
-        />
-      )}
+      {activeSectionMeta && <VccsFreqSectionPanel sectionMeta={activeSectionMeta} items={itemsBySection[activeSectionMeta.code] ?? []} isReadOnly={isReadOnly} getValue={getValue} onChange={updateField} />}
 
       {/* Pending-changes indicator */}
       {!isReadOnly && (
@@ -385,9 +340,9 @@ export const CnsdVccsFreqMeterDetailPage: React.FC = () => {
           {hasChanges && (
             <span className="text-xs text-amber-600 font-medium">
               {Object.keys(editedItems).length > 0 && `${Object.keys(editedItems).length} item`}
-              {Object.keys(editedItems).length > 0 && metadataDirty && ' + '}
-              {metadataDirty && 'metadata'}
-              {' belum disimpan'}
+              {Object.keys(editedItems).length > 0 && metadataDirty && " + "}
+              {metadataDirty && "metadata"}
+              {" belum disimpan"}
             </span>
           )}
           <Button onClick={() => void handleSave()} disabled={!hasChanges} isLoading={isSaving} className="gap-2">
@@ -411,20 +366,22 @@ interface VccsFreqSectionPanelProps {
   onChange: (itemId: number, field: keyof CnsdVccsFreqMeterItem, value: string | null) => void;
 }
 
-const VccsFreqSectionPanel: React.FC<VccsFreqSectionPanelProps> = ({
-  sectionMeta, items, isReadOnly, getValue, onChange,
-}) => {
+const VccsFreqSectionPanel: React.FC<VccsFreqSectionPanelProps> = ({ sectionMeta, items, isReadOnly, getValue, onChange }) => {
   const layout: CnsdVccsFreqInputsLayout = sectionMeta.inputs_layout;
-  const isSingleAdaptive = layout === 'single_adaptive';
-  const isDualToggleNf   = layout === 'dual_toggle_nf';
-  const isEnv            = layout === 'environment';
+  const isSingleAdaptive = layout === "single_adaptive";
+  const isDualToggleNf = layout === "dual_toggle_nf";
+  const isEnv = layout === "environment";
 
   const description = (() => {
     switch (layout) {
-      case 'single_adaptive': return 'Isi Redundant Server — toggle untuk Normal/Alarm dan √/-, input bebas untuk angka tegangan.';
-      case 'dual_toggle_nf':  return 'Pilih centang (√) pada kolom Normal jika berfungsi normal, atau pada kolom Fault jika ada gangguan.';
-      case 'environment':     return 'Isi kolom Hasil Pemeriksaan untuk tiap kegiatan lingkungan kerja.';
-      default:                return '';
+      case "single_adaptive":
+        return "Isi Redundant Server — toggle untuk Normal/Alarm dan √/-, input bebas untuk angka tegangan.";
+      case "dual_toggle_nf":
+        return "Pilih centang (√) pada kolom Normal jika berfungsi normal, atau pada kolom Fault jika ada gangguan.";
+      case "environment":
+        return "Isi kolom Hasil Pemeriksaan untuk tiap kegiatan lingkungan kerja.";
+      default:
+        return "";
     }
   })();
 
@@ -465,29 +422,19 @@ const VccsFreqSectionPanel: React.FC<VccsFreqSectionPanelProps> = ({
           <thead>
             <tr className="bg-slate-50 text-slate-700">
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-16 text-[11px] uppercase tracking-wider">No</th>
-              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[200px] text-[11px] uppercase tracking-wider">
-                {isEnv ? 'Kegiatan' : 'Pembacaan Meter Reading'}
-              </th>
+              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[200px] text-[11px] uppercase tracking-wider">{isEnv ? "Kegiatan" : "Pembacaan Meter Reading"}</th>
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">
-                {isEnv ? 'Nominal' : (isSingleAdaptive ? 'Standart' : (sectionMeta.code === '3' ? 'Name' : 'Indicator'))}
+                {isEnv ? "Nominal" : isSingleAdaptive ? "Standart" : sectionMeta.code === "3" ? "Name" : "Indicator"}
               </th>
               {isSingleAdaptive ? (
-                <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[180px] text-[11px] uppercase tracking-wider">
-                  {sectionMeta.columns_label_1 ?? 'Redundant Server'}
-                </th>
+                <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[180px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_1 ?? "Redundant Server"}</th>
               ) : isDualToggleNf ? (
                 <>
-                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">
-                    {sectionMeta.columns_label_1 ?? 'Normal'}
-                  </th>
-                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">
-                    {sectionMeta.columns_label_2 ?? 'Fault'}
-                  </th>
+                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_1 ?? "Normal"}</th>
+                  <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[110px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_2 ?? "Fault"}</th>
                 </>
               ) : (
-                <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">
-                  {sectionMeta.columns_label_1 ?? 'Hasil Pemeriksaan'}
-                </th>
+                <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_1 ?? "Hasil Pemeriksaan"}</th>
               )}
               <th className="px-2 py-2 text-left font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">Keterangan</th>
             </tr>
@@ -501,7 +448,7 @@ const VccsFreqSectionPanel: React.FC<VccsFreqSectionPanelProps> = ({
               </tr>
             ) : (
               groupedItems.map((group) => (
-                <React.Fragment key={group.name ?? '__nogroup__'}>
+                <React.Fragment key={group.name ?? "__nogroup__"}>
                   {hasMultipleGroups && group.name && (
                     <tr className="bg-slate-100/80">
                       <td colSpan={colCount} className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-700">
@@ -510,14 +457,7 @@ const VccsFreqSectionPanel: React.FC<VccsFreqSectionPanelProps> = ({
                     </tr>
                   )}
                   {group.items.map((item) => (
-                    <VccsFreqItemRow
-                      key={item.id}
-                      item={item}
-                      layout={layout}
-                      isReadOnly={isReadOnly}
-                      getValue={getValue}
-                      onChange={onChange}
-                    />
+                    <VccsFreqItemRow key={item.id} item={item} layout={layout} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} />
                   ))}
                 </React.Fragment>
               ))
@@ -539,73 +479,36 @@ interface VccsFreqItemRowProps {
   onChange: (itemId: number, field: keyof CnsdVccsFreqMeterItem, value: string | null) => void;
 }
 
-const VccsFreqItemRow: React.FC<VccsFreqItemRowProps> = ({
-  item, layout, isReadOnly, getValue, onChange,
-}) => {
-  const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
+const VccsFreqItemRow: React.FC<VccsFreqItemRowProps> = ({ item, layout, isReadOnly, getValue, onChange }) => {
+  const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
   const disabled = isReadOnly || item.is_blocked;
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
-      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">
-        {item.item_number ?? ''}
-      </td>
-      <td className="px-3 py-2 align-middle text-slate-800 font-medium">
-        {item.item_name}
-      </td>
-      <td className="px-2 py-2 align-middle text-center text-slate-600 text-[11px]">
-        {item.nominal || '—'}
-      </td>
-      {layout === 'single_adaptive' ? (
+      <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{item.item_number ?? ""}</td>
+      <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.item_name}</td>
+      <td className="px-2 py-2 align-middle text-center text-slate-600 text-[11px]">{item.nominal || "—"}</td>
+      {layout === "single_adaptive" ? (
         <td className="px-2 py-2 align-middle">
-          <AdaptiveCell
-            nominal={item.nominal}
-            value={getValue(item, 'hasil_a')}
-            onChange={(v) => onChange(item.id, 'hasil_a', v)}
-            disabled={disabled}
-            inputClass={inputClass}
-          />
+          <AdaptiveCell nominal={item.nominal} value={getValue(item, "hasil_a")} onChange={(v) => onChange(item.id, "hasil_a", v)} disabled={disabled} inputClass={inputClass} />
         </td>
-      ) : layout === 'dual_toggle_nf' ? (
+      ) : layout === "dual_toggle_nf" ? (
         <>
           <td className="px-2 py-2 align-middle">
-            <CheckToggleCell
-              variant="normal"
-              checked={getValue(item, 'hasil_a') === '√'}
-              onToggle={(checked) => onChange(item.id, 'hasil_a', checked ? '√' : null)}
-              disabled={disabled}
-            />
+            <CheckToggleCell variant="normal" checked={getValue(item, "hasil_a") === "√"} onToggle={(checked) => onChange(item.id, "hasil_a", checked ? "√" : null)} disabled={disabled} />
           </td>
           <td className="px-2 py-2 align-middle">
-            <CheckToggleCell
-              variant="fault"
-              checked={getValue(item, 'hasil_b') === '√'}
-              onToggle={(checked) => onChange(item.id, 'hasil_b', checked ? '√' : null)}
-              disabled={disabled}
-            />
+            <CheckToggleCell variant="fault" checked={getValue(item, "hasil_b") === "√"} onToggle={(checked) => onChange(item.id, "hasil_b", checked ? "√" : null)} disabled={disabled} />
           </td>
         </>
       ) : (
         // environment
         <td className="px-2 py-2 align-middle">
-          <EnvironmentCell
-            nominal={item.nominal}
-            value={getValue(item, 'hasil')}
-            onChange={(v) => onChange(item.id, 'hasil', v)}
-            disabled={disabled}
-            inputClass={inputClass}
-          />
+          <EnvironmentCell nominal={item.nominal} value={getValue(item, "hasil")} onChange={(v) => onChange(item.id, "hasil", v)} disabled={disabled} inputClass={inputClass} />
         </td>
       )}
       <td className="px-2 py-2 align-middle">
-        <input
-          type="text"
-          className={inputClass}
-          placeholder="Catatan"
-          value={getValue(item, 'keterangan')}
-          onChange={(e) => onChange(item.id, 'keterangan', e.target.value)}
-          disabled={disabled}
-        />
+        <input type="text" className={inputClass} placeholder="Catatan" value={getValue(item, "keterangan")} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={disabled} />
       </td>
     </tr>
   );
@@ -624,20 +527,11 @@ interface AdaptiveCellProps {
 const AdaptiveCell: React.FC<AdaptiveCellProps> = ({ nominal, value, onChange, disabled, inputClass }) => {
   const shape = parseAdaptiveShape(nominal);
 
-  if (shape.kind === 'toggle') {
+  if (shape.kind === "toggle") {
     return <BinaryToggle options={shape.options} value={value} onChange={onChange} disabled={disabled} />;
   }
 
-  return (
-    <input
-      type="text"
-      className={cn(inputClass, 'text-center')}
-      placeholder={nominal ?? '...'}
-      value={value}
-      onChange={(e) => onChange(e.target.value || null)}
-      disabled={disabled}
-    />
-  );
+  return <input type="text" className={cn(inputClass, "text-center")} placeholder={nominal ?? "..."} value={value} onChange={(e) => onChange(e.target.value || null)} disabled={disabled} />;
 };
 
 interface BinaryToggleProps {
@@ -649,12 +543,12 @@ interface BinaryToggleProps {
 
 const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, disabled }) => {
   const [leftOpt, rightOpt] = options;
-  const isLeft  = value === leftOpt;
+  const isLeft = value === leftOpt;
   const isRight = value === rightOpt;
 
-  const leftActive  = 'bg-emerald-600 text-white border-emerald-600';
-  const rightActive = leftOpt === 'NORMAL' ? 'bg-red-600 text-white border-red-600' : 'bg-slate-600 text-white border-slate-600';
-  const idle = 'bg-white text-slate-600 border-slate-300 hover:border-slate-400';
+  const leftActive = "bg-emerald-600 text-white border-emerald-600";
+  const rightActive = leftOpt === "NORMAL" ? "bg-red-600 text-white border-red-600" : "bg-slate-600 text-white border-slate-600";
+  const idle = "bg-white text-slate-600 border-slate-300 hover:border-slate-400";
 
   const click = (opt: string) => {
     if (disabled) return;
@@ -665,18 +559,13 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
     <div className="inline-flex rounded-md overflow-hidden border border-slate-300 select-none w-full justify-center">
       <button
         type="button"
-        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300', isLeft ? leftActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
+        className={cn("flex-1 px-2 py-1 text-[11px] font-semibold transition-colors border-r border-slate-300", isLeft ? leftActive : idle, disabled && "opacity-50 cursor-not-allowed")}
         onClick={() => click(leftOpt)}
         disabled={disabled}
       >
         {leftOpt}
       </button>
-      <button
-        type="button"
-        className={cn('flex-1 px-2 py-1 text-[11px] font-semibold transition-colors', isRight ? rightActive : idle, disabled && 'opacity-50 cursor-not-allowed')}
-        onClick={() => click(rightOpt)}
-        disabled={disabled}
-      >
+      <button type="button" className={cn("flex-1 px-2 py-1 text-[11px] font-semibold transition-colors", isRight ? rightActive : idle, disabled && "opacity-50 cursor-not-allowed")} onClick={() => click(rightOpt)} disabled={disabled}>
         {rightOpt}
       </button>
     </div>
@@ -686,17 +575,15 @@ const BinaryToggle: React.FC<BinaryToggleProps> = ({ options, value, onChange, d
 // ─── Single-check toggle cell (MSC & RCMS / CWP) ──────────────
 
 interface CheckToggleCellProps {
-  variant: 'normal' | 'fault';
+  variant: "normal" | "fault";
   checked: boolean;
   onToggle: (checked: boolean) => void;
   disabled: boolean;
 }
 
 const CheckToggleCell: React.FC<CheckToggleCellProps> = ({ variant, checked, onToggle, disabled }) => {
-  const active = variant === 'normal'
-    ? 'bg-emerald-100 border-emerald-400 text-emerald-700'
-    : 'bg-red-100 border-red-400 text-red-700';
-  const idle = 'bg-white border-slate-300 text-slate-300 hover:border-slate-400 hover:text-slate-500';
+  const active = variant === "normal" ? "bg-emerald-100 border-emerald-400 text-emerald-700" : "bg-red-100 border-red-400 text-red-700";
+  const idle = "bg-white border-slate-300 text-slate-300 hover:border-slate-400 hover:text-slate-500";
 
   return (
     <button
@@ -704,12 +591,8 @@ const CheckToggleCell: React.FC<CheckToggleCellProps> = ({ variant, checked, onT
       onClick={() => !disabled && onToggle(!checked)}
       disabled={disabled}
       aria-pressed={checked}
-      title={checked ? 'Klik lagi untuk hapus centang' : 'Klik untuk centang'}
-      className={cn(
-        'mx-auto flex h-8 w-12 items-center justify-center rounded-md border-2 transition-colors',
-        checked ? active : idle,
-        disabled && 'opacity-50 cursor-not-allowed',
-      )}
+      title={checked ? "Klik lagi untuk hapus centang" : "Klik untuk centang"}
+      className={cn("mx-auto flex h-8 w-12 items-center justify-center rounded-md border-2 transition-colors", checked ? active : idle, disabled && "opacity-50 cursor-not-allowed")}
     >
       {checked ? <Check size={16} strokeWidth={3} /> : <XIcon size={14} className="opacity-40" />}
     </button>
@@ -727,29 +610,13 @@ interface EnvironmentCellProps {
 }
 
 const EnvironmentCell: React.FC<EnvironmentCellProps> = ({ nominal, value, onChange, disabled, inputClass }) => {
-  const isCheckNominal = nominal && nominal.trim() === '√';
+  const isCheckNominal = nominal && nominal.trim() === "√";
 
   if (isCheckNominal) {
-    return (
-      <CheckToggleCell
-        variant="normal"
-        checked={value === '√'}
-        onToggle={(checked) => onChange(checked ? '√' : null)}
-        disabled={disabled}
-      />
-    );
+    return <CheckToggleCell variant="normal" checked={value === "√"} onToggle={(checked) => onChange(checked ? "√" : null)} disabled={disabled} />;
   }
 
-  return (
-    <input
-      type="text"
-      className={cn(inputClass, 'text-center')}
-      placeholder={nominal ?? '...'}
-      value={value}
-      onChange={(e) => onChange(e.target.value || null)}
-      disabled={disabled}
-    />
-  );
+  return <input type="text" className={cn(inputClass, "text-center")} placeholder={nominal ?? "..."} value={value} onChange={(e) => onChange(e.target.value || null)} disabled={disabled} />;
 };
 
 // ─── Small subcomponents ──────────────────────────────────────
@@ -757,7 +624,7 @@ const EnvironmentCell: React.FC<EnvironmentCellProps> = ({ nominal, value, onCha
 const InfoCell: React.FC<{ label: string; value: string | null }> = ({ label, value }) => (
   <div>
     <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">{label}</span>
-    <p className="mt-0.5 font-medium text-slate-700">{value ?? '—'}</p>
+    <p className="mt-0.5 font-medium text-slate-700">{value ?? "—"}</p>
   </div>
 );
 
@@ -773,7 +640,7 @@ const EditableMetaField: React.FC<EditableMetaFieldProps> = ({ label, value, onC
   <div>
     <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</label>
     {disabled ? (
-      <p className="text-xs text-slate-700 font-medium">{value || '—'}</p>
+      <p className="text-xs text-slate-700 font-medium">{value || "—"}</p>
     ) : (
       <input
         type="text"

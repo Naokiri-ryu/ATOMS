@@ -86,7 +86,7 @@ export interface TfpMeasurementPoint extends TfpMeasurementPointRef {
 }
 
 /** Satu titik bulanan pada grafik. Null = tidak ada pembacaan bulan itu. */
-export interface TfpSeriesPoint {
+export interface StatisticsSeriesPoint {
   month: number;
   label: string;
   count: number;
@@ -94,6 +94,8 @@ export interface TfpSeriesPoint {
   max: number | null;
   avg: number | null;
 }
+
+export type TfpSeriesPoint = StatisticsSeriesPoint;
 
 export interface TfpSeries {
   parameter_number: string | null;
@@ -121,6 +123,71 @@ export interface TfpEquipmentDetail {
   last_date: string | null;
   available_points: TfpMeasurementPoint[];
   series: TfpSeries;
+}
+
+// ─── Statistik Ground Check per modul ──────────────────────────────────────
+//
+// Berbeda dengan TFP: hanya 2 dari 5 modul Ground Check yang menyimpan angka.
+// Localizer & DVOR punya kolom decimal; ADC, VHF, dan Glide Path isinya bebas
+// teks (dropdown + centang), jadi modul itu hanya punya tren kelengkapan.
+
+/** Ringkasan satu modul Ground Check untuk daftar /statistics/ground-check. */
+export interface GroundCheckModuleSummary {
+  module_key: string;
+  label: string;
+  route: string;
+  total_records: number;
+  completed_records: number;
+  completion_rate: number;
+  /** Index 0 = Januari. */
+  monthly_total: number[];
+  monthly_completed: number[];
+  last_date: string | null;
+  /** false = modul ini tidak punya nilai numerik (hanya kelengkapan). */
+  has_numeric: boolean;
+  metric_count: number;
+}
+
+export interface GroundCheckIndex {
+  year: number;
+  modules: GroundCheckModuleSummary[];
+}
+
+/** Satu kolom ukur yang bisa dipilih, mis. tx1_error atau tx1_rf_level_db. */
+export interface GroundCheckMetric {
+  metric_key: string;
+  label: string;
+  unit: string | null;
+  /** Jumlah pembacaan setelah nilai sudut dinormalisasi ke rentang ±180°. */
+  samples: number;
+  /** Pembacaan yang ditulis ulang saat dibaca karena wraparound 360°. */
+  normalized: number;
+}
+
+export interface GroundCheckSeries {
+  metric_key: string | null;
+  label: string | null;
+  unit: string | null;
+  total_samples: number;
+  normalized_samples: number;
+  points: StatisticsSeriesPoint[];
+}
+
+export interface GroundCheckDetail {
+  year: number;
+  module_key: string;
+  label: string;
+  route: string;
+  records_total: number;
+  records_completed: number;
+  completion_rate: number;
+  monthly_total: number[];
+  monthly_completed: number[];
+  status_counts: { ongoing: number; on_hold: number; completed: number };
+  last_date: string | null;
+  has_numeric: boolean;
+  available_metrics: GroundCheckMetric[];
+  series: GroundCheckSeries;
 }
 
 export const statisticsService = {
@@ -152,5 +219,27 @@ export const statisticsService = {
     }
     const res = await axios.get(`${API_URL}/v1/statistics/tfp/${moduleKey}`, { headers: getAuthHeaders(), params });
     return res.data.data as TfpEquipmentDetail;
+  },
+
+  async getGroundCheck(year?: number): Promise<GroundCheckIndex> {
+    const params: Record<string, number> = {};
+    if (year) params.year = year;
+    const res = await axios.get(`${API_URL}/v1/statistics/ground-check`, { headers: getAuthHeaders(), params });
+    return res.data.data as GroundCheckIndex;
+  },
+
+  async getGroundCheckDetail(
+    moduleKey: string,
+    year?: number,
+    metricKey?: string,
+  ): Promise<GroundCheckDetail> {
+    const params: Record<string, string | number> = {};
+    if (year) params.year = year;
+    if (metricKey) params.metric_key = metricKey;
+    const res = await axios.get(`${API_URL}/v1/statistics/ground-check/${moduleKey}`, {
+      headers: getAuthHeaders(),
+      params,
+    });
+    return res.data.data as GroundCheckDetail;
   },
 };

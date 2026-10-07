@@ -353,9 +353,9 @@ class RosterController extends Controller
         }
 
         $shiftPeriods = [
-            ['key' => '07-13', 'name' => 'Shift Pagi', 'start' => '07:00', 'end' => '13:00'],
-            ['key' => '13-19', 'name' => 'Shift Siang', 'start' => '13:00', 'end' => '19:00'],
-            ['key' => '19-07', 'name' => 'Shift Malam', 'start' => '19:00', 'end' => '07:00'],
+            ['key' => '07-13', 'name' => 'Shift Pagi', 'start' => '07:15', 'end' => '13:15'],
+            ['key' => '13-19', 'name' => 'Shift Siang', 'start' => '13:15', 'end' => '19:15'],
+            ['key' => '19-07', 'name' => 'Shift Malam', 'start' => '19:15', 'end' => '07:15'],
         ];
 
         $shiftMap = [

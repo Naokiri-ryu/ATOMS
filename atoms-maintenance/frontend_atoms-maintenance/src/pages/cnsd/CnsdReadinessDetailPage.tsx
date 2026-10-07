@@ -1,57 +1,42 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { AlertCircle, ArrowLeft, Calendar, CheckSquare, Clock, MapPin, Pencil, Plus, Printer, Save, Trash2, Users, X } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { ShiftBadge } from "@/components/common/ShiftBadge";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { Skeleton } from "@/components/common/Skeleton";
+import { Tabs } from "@/components/common/Tabs";
+import { useAuth } from "@/hooks/useAuth";
+import { canEditCnsd } from "@/lib/roles";
+import { cnsdReadinessService } from "@/services/cnsdReadinessService";
+import { CnsdReadinessSignaturePanel } from "@/pages/cnsd/components/CnsdReadinessSignaturePanel";
+import { cn } from "@/lib/utils";
 import {
-  AlertCircle,
-  ArrowLeft,
-  Calendar,
-  CheckSquare,
-  Clock,
-  MapPin,
-  Pencil,
-  Plus,
-  Printer,
-  Save,
-  Trash2,
-  Users,
-  X,
-} from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { ShiftBadge } from '@/components/common/ShiftBadge';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { Skeleton } from '@/components/common/Skeleton';
-import { Tabs } from '@/components/common/Tabs';
-import { useAuth } from '@/hooks/useAuth';
-import { canEditCnsd } from '@/lib/roles';
-import { cnsdReadinessService } from '@/services/cnsdReadinessService';
-import { CnsdReadinessSignaturePanel } from '@/pages/cnsd/components/CnsdReadinessSignaturePanel';
-import { cn } from '@/lib/utils';
-import type {
-  CnsdReadinessItem,
-  CnsdReadinessRecordDetail,
-  CnsdReadinessSectionMeta,
-} from '@/types/cnsd';
+  READINESS_STATUS_OPTIONS as STATUS_OPTIONS,
+  READINESS_DUAL_STATE_OPTIONS as DUAL_STATE_OPTIONS,
+  READINESS_DUAL_STATUS_OPTIONS as DUAL_STATUS_OPTIONS,
+  isDualStateColumn,
+  isDualStatusColumn,
+  isOptionActive,
+  matchesAnyOption,
+} from "@/lib/cnsdReadinessValues";
+import type { CnsdReadinessItem, CnsdReadinessRecordDetail, CnsdReadinessSectionMeta } from "@/types/cnsd";
 
 // ─── Helpers / constants ────────────────────────────────────────
 
 // Fixed shift time labels (mirrors atoms-rostering official shift windows).
 const SHIFT_TIME_LABELS: Record<string, string> = {
-  pagi:  '07:00 — 13:00',
-  siang: '13:00 — 19:00',
-  malam: '19:00 — 07:00',
+  pagi: "07:15 — 13:15",
+  siang: "13:15 — 19:15",
+  malam: "19:15 — 07:15",
 };
 
-// Section keys flagged for the REDUNDANT / MAIN-STANDBY toggle on kondisi_2.
-// Detection is by `columns_label_2` so renames preserve toggle behavior as
-// long as the label stays the same.
-const isDualStateColumn = (label: string | null | undefined): boolean =>
-  (label ?? '').trim().toUpperCase() === 'DUAL STATE';
+// Which option columns are rendered as pick-lists is derived from
+// `columns_label_1` / `columns_label_2` (see lib/cnsdReadinessValues), so
+// renaming a section header keeps the right input control.
 
-const STATUS_OPTIONS = ['NORMAL', 'TIDAK NORMAL'] as const;
-const DUAL_STATE_OPTIONS = ['REDUNDANT', 'MAIN-STANDBY'] as const;
-
-const isPlaceholderSection = (s: CnsdReadinessSectionMeta): boolean =>
-  !!(s.name && s.name.trim() !== '');
+const isPlaceholderSection = (s: CnsdReadinessSectionMeta): boolean => !!(s.name && s.name.trim() !== "");
 
 // ─── Statement toggle ──────────────────────────────────────────
 
@@ -60,34 +45,30 @@ interface StatementToggleProps {
   options: readonly string[];
   onChange: (v: string) => void;
   disabled?: boolean;
-  size?: 'sm' | 'md';
-  variant?: 'status' | 'state' | 'neutral';
+  size?: "sm" | "md";
+  variant?: "status" | "state" | "neutral";
 }
 
 /**
- * Pill-style toggle group used for binary fields (Normal/Tidak Normal,
- * Redundant/Main-Standby). Click the active option again to clear it.
+ * Pill-style toggle group used for fixed option columns (Normal/Tidak Normal,
+ * Redundant/Main-Standby, Dual/Single). Click the active option again to clear
+ * it. Values that predate these pick-lists are matched case/space-insensitively
+ * so they still highlight the right pill instead of looking blank.
  */
-const StatementToggle: React.FC<StatementToggleProps> = ({
-  value, options, onChange, disabled, size = 'sm', variant = 'neutral',
-}) => {
-  const padding = size === 'sm' ? 'h-7 px-2.5 text-[10px]' : 'h-9 px-3 text-xs';
+const StatementToggle: React.FC<StatementToggleProps> = ({ value, options, onChange, disabled, size = "sm", variant = "neutral" }) => {
+  const padding = size === "sm" ? "h-7 px-2.5 text-[10px]" : "h-9 px-3 text-xs";
   return (
     <div className="inline-flex items-center gap-1">
       {options.map((opt) => {
-        const isActive = value === opt;
-        let cls = 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50';
+        const isActive = isOptionActive(value, opt);
+        let cls = "bg-white text-slate-500 border-slate-200 hover:bg-slate-50";
         if (isActive) {
-          if (variant === 'status') {
-            cls = opt === 'NORMAL'
-              ? 'bg-emerald-500 text-white border-emerald-600 shadow-sm'
-              : 'bg-red-500 text-white border-red-600 shadow-sm';
-          } else if (variant === 'state') {
-            cls = opt === 'REDUNDANT'
-              ? 'bg-sky-500 text-white border-sky-600 shadow-sm'
-              : 'bg-amber-500 text-white border-amber-600 shadow-sm';
+          if (variant === "status") {
+            cls = opt === "NORMAL" ? "bg-emerald-500 text-white border-emerald-600 shadow-sm" : "bg-red-500 text-white border-red-600 shadow-sm";
+          } else if (variant === "state") {
+            cls = opt === "REDUNDANT" ? "bg-sky-500 text-white border-sky-600 shadow-sm" : "bg-amber-500 text-white border-amber-600 shadow-sm";
           } else {
-            cls = 'bg-slate-800 text-white border-slate-900 shadow-sm';
+            cls = "bg-slate-800 text-white border-slate-900 shadow-sm";
           }
         }
         return (
@@ -95,13 +76,13 @@ const StatementToggle: React.FC<StatementToggleProps> = ({
             key={opt}
             type="button"
             disabled={disabled}
-            onClick={() => onChange(isActive ? '' : opt)}
+            onClick={() => onChange(isActive ? "" : opt)}
             className={cn(
-              'inline-flex items-center justify-center rounded-md border font-semibold uppercase tracking-wider transition-all',
+              "inline-flex items-center justify-center rounded-md border font-semibold uppercase tracking-wider transition-all",
               padding,
               cls,
-              disabled && 'opacity-60 cursor-not-allowed',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary',
+              disabled && "opacity-60 cursor-not-allowed",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary",
             )}
           >
             {opt}
@@ -109,6 +90,36 @@ const StatementToggle: React.FC<StatementToggleProps> = ({
         );
       })}
     </div>
+  );
+};
+
+// ─── Legacy value chip ───────────────────────────────────────
+
+interface LegacyValueChipProps {
+  value: string;
+  options: readonly string[];
+  onClear: () => void;
+  disabled?: boolean;
+}
+
+/**
+ * The RADIO "DUAL STATUS" and "DUAL STATE" columns were free text before they
+ * became pick-lists, and operators also used them for unrelated shorthand
+ * (A / B, TX 1, OK, MSSR A …). Values that match no option cannot be shown as a
+ * pill, so surface them as a dismissible chip instead of hiding them.
+ */
+const LegacyValueChip: React.FC<LegacyValueChipProps> = ({ value, options, onClear, disabled }) => {
+  if (value === "" || matchesAnyOption(value, options)) return null;
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">
+      <span title="Nilai lama di luar pilihan — pilih di atas untuk menimpanya">Lama: {value}</span>
+      {!disabled && (
+        <button type="button" onClick={onClear} title="Hapus nilai lama" className="rounded p-px hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-500">
+          <X size={9} />
+        </button>
+      )}
+    </span>
   );
 };
 
@@ -122,17 +133,17 @@ interface SectionRenameModalProps {
 }
 
 const SectionRenameModal: React.FC<SectionRenameModalProps> = ({ open, initial, onClose, onSubmit }) => {
-  const [name, setName] = useState(initial?.name ?? '');
-  const [c1, setC1] = useState(initial?.columns_label_1 ?? '');
-  const [c2, setC2] = useState(initial?.columns_label_2 ?? '');
+  const [name, setName] = useState(initial?.name ?? "");
+  const [c1, setC1] = useState(initial?.columns_label_1 ?? "");
+  const [c2, setC2] = useState(initial?.columns_label_2 ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && initial) {
       setName(initial.name);
-      setC1(initial.columns_label_1 ?? '');
-      setC2(initial.columns_label_2 ?? '');
+      setC1(initial.columns_label_1 ?? "");
+      setC2(initial.columns_label_2 ?? "");
       setErr(null);
     }
   }, [open, initial]);
@@ -141,7 +152,7 @@ const SectionRenameModal: React.FC<SectionRenameModalProps> = ({ open, initial, 
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      setErr('Nama section tidak boleh kosong.');
+      setErr("Nama section tidak boleh kosong.");
       return;
     }
     setIsSaving(true);
@@ -150,7 +161,7 @@ const SectionRenameModal: React.FC<SectionRenameModalProps> = ({ open, initial, 
       await onSubmit({ name: name.trim(), columns_label_1: c1.trim(), columns_label_2: c2.trim() });
       onClose();
     } catch (e) {
-      const fallback = 'Gagal menyimpan perubahan section.';
+      const fallback = "Gagal menyimpan perubahan section.";
       if (axios.isAxiosError(e) && e.response) {
         const data = e.response.data as { message?: string };
         setErr(data.message ?? fallback);
@@ -175,9 +186,7 @@ const SectionRenameModal: React.FC<SectionRenameModalProps> = ({ open, initial, 
           </button>
         </div>
 
-        {err && (
-          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{err}</div>
-        )}
+        {err && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{err}</div>}
 
         <div className="space-y-3 text-xs">
           <div>
@@ -211,9 +220,7 @@ const SectionRenameModal: React.FC<SectionRenameModalProps> = ({ open, initial, 
               className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
               maxLength={80}
             />
-            <p className="text-[10px] text-slate-400 mt-1">
-              Label "DUAL STATE" otomatis menampilkan toggle REDUNDANT / MAIN-STANDBY.
-            </p>
+            <p className="text-[10px] text-slate-400 mt-1">Label "DUAL STATE" otomatis menampilkan toggle REDUNDANT / MAIN-STANDBY.</p>
           </div>
         </div>
 
@@ -234,24 +241,20 @@ const SectionRenameModal: React.FC<SectionRenameModalProps> = ({ open, initial, 
 
 interface AddItemFormProps {
   sectionMeta: CnsdReadinessSectionMeta;
-  onSubmit: (payload: {
-    item_number?: string | null;
-    equipment_name: string;
-    sub_equipment_name?: string | null;
-  }) => Promise<void>;
+  onSubmit: (payload: { item_number?: string | null; equipment_name: string; sub_equipment_name?: string | null }) => Promise<void>;
   onCancel: () => void;
 }
 
 const AddItemForm: React.FC<AddItemFormProps> = ({ sectionMeta, onSubmit, onCancel }) => {
-  const [itemNumber, setItemNumber] = useState('');
-  const [equipmentName, setEquipmentName] = useState('');
-  const [subEquipmentName, setSubEquipmentName] = useState('');
+  const [itemNumber, setItemNumber] = useState("");
+  const [equipmentName, setEquipmentName] = useState("");
+  const [subEquipmentName, setSubEquipmentName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     if (!equipmentName.trim()) {
-      setErr('Nama peralatan wajib diisi.');
+      setErr("Nama peralatan wajib diisi.");
       return;
     }
     setIsSaving(true);
@@ -262,9 +265,11 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ sectionMeta, onSubmit, onCanc
         equipment_name: equipmentName.trim(),
         sub_equipment_name: subEquipmentName.trim() || null,
       });
-      setItemNumber(''); setEquipmentName(''); setSubEquipmentName('');
+      setItemNumber("");
+      setEquipmentName("");
+      setSubEquipmentName("");
     } catch (e) {
-      const fallback = 'Gagal menambahkan baris.';
+      const fallback = "Gagal menambahkan baris.";
       if (axios.isAxiosError(e) && e.response) {
         const data = e.response.data as { message?: string };
         setErr(data.message ?? fallback);
@@ -280,11 +285,11 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ sectionMeta, onSubmit, onCanc
     <div className="border-t border-slate-200 bg-slate-50/60 px-4 py-3 space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Tambah baris ke {sectionMeta.name}</p>
-        <button onClick={onCancel} className="text-[11px] text-slate-500 hover:text-slate-700">Batal</button>
+        <button onClick={onCancel} className="text-[11px] text-slate-500 hover:text-slate-700">
+          Batal
+        </button>
       </div>
-      {err && (
-        <div className="rounded border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-700">{err}</div>
-      )}
+      {err && <div className="rounded border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-700">{err}</div>}
       <div className="grid grid-cols-1 sm:grid-cols-[80px_1fr_140px_auto] gap-2">
         <input
           type="text"
@@ -350,15 +355,15 @@ export const CnsdReadinessDetailPage: React.FC = () => {
   const [showAddItemForSection, setShowAddItemForSection] = useState<string | null>(null);
   const [editingItemId, setEditingItemId] = useState<number | null>(null); // for inline equipment_name edit
 
-  const isAdmin = user?.role === 'Admin';
-  const isManager = user?.role === 'Manager Teknik';
-  const isSupervisor = user?.role === 'Supervisor CNSD';
+  const isAdmin = user?.role === "Admin";
+  const isManager = user?.role === "Manager Teknik";
+  const isSupervisor = user?.role === "Supervisor CNSD";
   const canEditStructure = isAdmin || isManager || isSupervisor;
 
   // ─── Fetch ────────────────────────────────────────────
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
-      setErrorMessage('ID form tidak valid.');
+      setErrorMessage("ID form tidak valid.");
       setIsLoading(false);
       return;
     }
@@ -376,20 +381,20 @@ export const CnsdReadinessDetailPage: React.FC = () => {
       setErrorMessage(null);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
-        setErrorMessage('Form tidak ditemukan.');
+        setErrorMessage("Form tidak ditemukan.");
       } else {
-        setErrorMessage('Gagal memuat data form.');
+        setErrorMessage("Gagal memuat data form.");
       }
       setRecord(null);
     } finally {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   useEffect(() => {
     void fetchRecord();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   // ─── Derived ──────────────────────────────────────────
@@ -403,7 +408,7 @@ export const CnsdReadinessDetailPage: React.FC = () => {
     return map;
   }, [record]);
 
-  const isCompleted = record?.status === 'completed';
+  const isCompleted = record?.status === "completed";
   const isReadOnly = isCompleted || !canEditCnsd(user);
   const hasChanges = Object.keys(editedItems).length > 0;
 
@@ -411,23 +416,19 @@ export const CnsdReadinessDetailPage: React.FC = () => {
     const edited = editedItems[item.id];
     if (edited && field in edited) {
       const v = edited[field];
-      return v == null ? '' : String(v);
+      return v == null ? "" : String(v);
     }
     const original = item[field];
-    return original == null ? '' : String(original);
+    return original == null ? "" : String(original);
   };
 
-  const updateField = (
-    itemId: number,
-    field: keyof CnsdReadinessItem,
-    value: string | null,
-  ) => {
+  const updateField = (itemId: number, field: keyof CnsdReadinessItem, value: string | null) => {
     if (isReadOnly) return;
     setEditedItems((prev) => ({
       ...prev,
       [itemId]: {
         ...(prev[itemId] ?? {}),
-        [field]: value === '' ? null : value,
+        [field]: value === "" ? null : value,
       },
     }));
   };
@@ -442,10 +443,10 @@ export const CnsdReadinessDetailPage: React.FC = () => {
 
     const items = Object.entries(editedItems).map(([rawId, patch]) => ({
       id: Number(rawId),
-      status_peralatan:      'status_peralatan'      in patch ? patch.status_peralatan ?? null : undefined,
-      kondisi_operasional_1: 'kondisi_operasional_1' in patch ? patch.kondisi_operasional_1 ?? null : undefined,
-      kondisi_operasional_2: 'kondisi_operasional_2' in patch ? patch.kondisi_operasional_2 ?? null : undefined,
-      keterangan:            'keterangan'            in patch ? patch.keterangan ?? null : undefined,
+      status_peralatan: "status_peralatan" in patch ? (patch.status_peralatan ?? null) : undefined,
+      kondisi_operasional_1: "kondisi_operasional_1" in patch ? (patch.kondisi_operasional_1 ?? null) : undefined,
+      kondisi_operasional_2: "kondisi_operasional_2" in patch ? (patch.kondisi_operasional_2 ?? null) : undefined,
+      keterangan: "keterangan" in patch ? (patch.keterangan ?? null) : undefined,
     }));
 
     try {
@@ -457,9 +458,9 @@ export const CnsdReadinessDetailPage: React.FC = () => {
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menyimpan perubahan.');
+        setErrorMessage(data.message ?? "Gagal menyimpan perubahan.");
       } else {
-        setErrorMessage('Koneksi gagal, coba lagi.');
+        setErrorMessage("Koneksi gagal, coba lagi.");
       }
     } finally {
       setIsSaving(false);
@@ -468,10 +469,7 @@ export const CnsdReadinessDetailPage: React.FC = () => {
 
   // ─── Structural handlers ──────────────────────────────
 
-  const handleAddItem = async (
-    sectionName: string,
-    payload: { item_number?: string | null; equipment_name: string; sub_equipment_name?: string | null },
-  ) => {
+  const handleAddItem = async (sectionName: string, payload: { item_number?: string | null; equipment_name: string; sub_equipment_name?: string | null }) => {
     if (!record) return;
     const updated = await cnsdReadinessService.addItem(record.id, {
       section_name: sectionName,
@@ -485,7 +483,7 @@ export const CnsdReadinessDetailPage: React.FC = () => {
 
   const handleDeleteItem = async (itemId: number) => {
     if (!record) return;
-    if (!confirm('Hapus baris ini? Tindakan ini tidak dapat diurungkan.')) return;
+    if (!confirm("Hapus baris ini? Tindakan ini tidak dapat diurungkan.")) return;
     try {
       const updated = await cnsdReadinessService.deleteItem(record.id, itemId);
       setRecord(updated);
@@ -495,7 +493,7 @@ export const CnsdReadinessDetailPage: React.FC = () => {
         return rest;
       });
     } catch (e) {
-      const fallback = 'Gagal menghapus baris.';
+      const fallback = "Gagal menghapus baris.";
       if (axios.isAxiosError(e) && e.response) {
         const data = e.response.data as { message?: string };
         setErrorMessage(data.message ?? fallback);
@@ -505,17 +503,14 @@ export const CnsdReadinessDetailPage: React.FC = () => {
     }
   };
 
-  const handleSaveItemStructure = async (
-    itemId: number,
-    payload: { item_number?: string | null; equipment_name?: string | null; sub_equipment_name?: string | null },
-  ) => {
+  const handleSaveItemStructure = async (itemId: number, payload: { item_number?: string | null; equipment_name?: string | null; sub_equipment_name?: string | null }) => {
     if (!record) return;
     try {
       const updated = await cnsdReadinessService.updateItemStructure(record.id, itemId, payload);
       setRecord(updated);
       setEditingItemId(null);
     } catch (e) {
-      const fallback = 'Gagal menyimpan struktur baris.';
+      const fallback = "Gagal menyimpan struktur baris.";
       if (axios.isAxiosError(e) && e.response) {
         const data = e.response.data as { message?: string };
         setErrorMessage(data.message ?? fallback);
@@ -525,10 +520,7 @@ export const CnsdReadinessDetailPage: React.FC = () => {
     }
   };
 
-  const handleRenameSection = async (
-    oldName: string,
-    payload: { name: string; columns_label_1: string; columns_label_2: string },
-  ) => {
+  const handleRenameSection = async (oldName: string, payload: { name: string; columns_label_1: string; columns_label_2: string }) => {
     if (!record) return;
     const updated = await cnsdReadinessService.renameSection(record.id, {
       old_name: oldName,
@@ -555,8 +547,8 @@ export const CnsdReadinessDetailPage: React.FC = () => {
     return (
       <div className="max-w-3xl mx-auto py-20 text-center space-y-4">
         <AlertCircle className="mx-auto h-12 w-12 text-slate-400" />
-        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? 'Form tidak ditemukan.'}</h2>
-        <Button variant="outline" onClick={() => navigate('/cnsd/readiness')} className="gap-2">
+        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? "Form tidak ditemukan."}</h2>
+        <Button variant="outline" onClick={() => navigate("/cnsd/readiness")} className="gap-2">
           <ArrowLeft size={16} />
           Kembali ke Daftar
         </Button>
@@ -564,27 +556,17 @@ export const CnsdReadinessDetailPage: React.FC = () => {
     );
   }
 
-  const activeSectionMeta = activeSection
-    ? record.sections_meta.find((s) => s.name === activeSection) ?? null
-    : null;
+  const activeSectionMeta = activeSection ? (record.sections_meta.find((s) => s.name === activeSection) ?? null) : null;
 
   return (
     <div className="max-w-full space-y-5 animate-fade-in pb-12">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <button
-          type="button"
-          onClick={() => navigate('/cnsd')}
-          className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors"
-        >
+        <button type="button" onClick={() => navigate("/cnsd")} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
           <ArrowLeft size={14} /> CNSD
         </button>
         <span>/</span>
-        <button
-          type="button"
-          onClick={() => navigate('/cnsd/readiness')}
-          className="hover:text-slate-700 transition-colors"
-        >
+        <button type="button" onClick={() => navigate("/cnsd/readiness")} className="hover:text-slate-700 transition-colors">
           Kesiapan Peralatan
         </button>
         <span>/</span>
@@ -600,9 +582,7 @@ export const CnsdReadinessDetailPage: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg font-bold text-slate-900">
-                  Form {record.form_type} — Kesiapan Peralatan
-                </h1>
+                <h1 className="text-lg font-bold text-slate-900">Form {record.form_type} — Kesiapan Peralatan</h1>
                 <StatusBadge status={record.status} variant="pill" />
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -619,7 +599,7 @@ export const CnsdReadinessDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg" title="Rentang waktu shift">
               <Clock size={13} className="text-slate-400" />
-              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? '—'}</span>
+              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? "—"}</span>
             </div>
             <ShiftBadge shift={record.shift_type} />
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
@@ -645,20 +625,16 @@ export const CnsdReadinessDetailPage: React.FC = () => {
         <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Manager Teknik</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.manager?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Supervisor CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}
-            </p>
+            <p className="mt-0.5 font-medium text-slate-700">{record.supervisor?.name ?? <span className="text-slate-400 italic">Tidak ditugaskan</span>}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Teknisi CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(', ')}>
-              {record.technicians.map((t) => t.technician_name).join(', ') || <span className="text-slate-400 italic">—</span>}
+            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(", ")}>
+              {record.technicians.map((t) => t.technician_name).join(", ") || <span className="text-slate-400 italic">—</span>}
             </p>
           </div>
         </div>
@@ -666,11 +642,11 @@ export const CnsdReadinessDetailPage: React.FC = () => {
 
       {/* Messages */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{errorMessage}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {errorMessage}
+        </div>
       )}
-      {successMessage && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>
-      )}
+      {successMessage && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>}
 
       {/* Info Peralatan card */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
@@ -720,17 +696,8 @@ export const CnsdReadinessDetailPage: React.FC = () => {
       {/* Pending-changes indicator */}
       {!isReadOnly && (
         <div className="flex items-center justify-end gap-3 pt-2">
-          {hasChanges && (
-            <span className="text-xs text-amber-600 font-medium">
-              {Object.keys(editedItems).length} item belum disimpan
-            </span>
-          )}
-          <Button
-            onClick={() => void handleSave()}
-            disabled={!hasChanges}
-            isLoading={isSaving}
-            className="gap-2"
-          >
+          {hasChanges && <span className="text-xs text-amber-600 font-medium">{Object.keys(editedItems).length} item belum disimpan</span>}
+          <Button onClick={() => void handleSave()} disabled={!hasChanges} isLoading={isSaving} className="gap-2">
             <Save size={16} />
             Simpan Perubahan
           </Button>
@@ -771,20 +738,29 @@ interface SectionPanelProps {
   editingItemId: number | null;
   onStartItemEdit: (itemId: number) => void;
   onCancelItemEdit: () => void;
-  onSaveItemStructure: (
-    itemId: number,
-    payload: { item_number?: string | null; equipment_name?: string | null; sub_equipment_name?: string | null },
-  ) => Promise<void>;
+  onSaveItemStructure: (itemId: number, payload: { item_number?: string | null; equipment_name?: string | null; sub_equipment_name?: string | null }) => Promise<void>;
   onDeleteItem: (itemId: number) => void;
 }
 
 const SectionPanel: React.FC<SectionPanelProps> = ({
-  sectionMeta, items, isReadOnly, canEditStructure,
-  getValue, onChange,
-  onEditSectionMeta, onAddItemClick,
-  showAddForm, onAddSubmit, onAddCancel,
-  editingItemId, onStartItemEdit, onCancelItemEdit, onSaveItemStructure, onDeleteItem,
+  sectionMeta,
+  items,
+  isReadOnly,
+  canEditStructure,
+  getValue,
+  onChange,
+  onEditSectionMeta,
+  onAddItemClick,
+  showAddForm,
+  onAddSubmit,
+  onAddCancel,
+  editingItemId,
+  onStartItemEdit,
+  onCancelItemEdit,
+  onSaveItemStructure,
+  onDeleteItem,
 }) => {
+  const col1IsDualStatus = isDualStatusColumn(sectionMeta.columns_label_1);
   const col2IsToggle = isDualStateColumn(sectionMeta.columns_label_2);
 
   return (
@@ -793,12 +769,7 @@ const SectionPanel: React.FC<SectionPanelProps> = ({
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">{sectionMeta.name}</h2>
           {canEditStructure && (
-            <button
-              type="button"
-              onClick={onEditSectionMeta}
-              className="p-1 text-slate-400 hover:text-brand-primary rounded transition-colors"
-              title="Edit nama section & label kolom"
-            >
+            <button type="button" onClick={onEditSectionMeta} className="p-1 text-slate-400 hover:text-brand-primary rounded transition-colors" title="Edit nama section & label kolom">
               <Pencil size={13} />
             </button>
           )}
@@ -818,16 +789,10 @@ const SectionPanel: React.FC<SectionPanelProps> = ({
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-12 text-[11px] uppercase tracking-wider">No</th>
               <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[220px] text-[11px] uppercase tracking-wider">Nama Peralatan</th>
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-44 text-[11px] uppercase tracking-wider">Status</th>
-              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">
-                {sectionMeta.columns_label_1 ?? '—'}
-              </th>
-              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[180px] text-[11px] uppercase tracking-wider">
-                {sectionMeta.columns_label_2 ?? '—'}
-              </th>
+              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[160px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_1 ?? "—"}</th>
+              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[180px] text-[11px] uppercase tracking-wider">{sectionMeta.columns_label_2 ?? "—"}</th>
               <th className="px-2 py-2 text-left font-semibold border-b border-slate-200 min-w-[160px] text-[11px] uppercase tracking-wider">Keterangan</th>
-              {canEditStructure && (
-                <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-16 text-[11px] uppercase tracking-wider">Aksi</th>
-              )}
+              {canEditStructure && <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-16 text-[11px] uppercase tracking-wider">Aksi</th>}
             </tr>
           </thead>
           <tbody>
@@ -844,6 +809,7 @@ const SectionPanel: React.FC<SectionPanelProps> = ({
                   item={item}
                   isReadOnly={isReadOnly}
                   canEditStructure={canEditStructure}
+                  col1IsDualStatus={col1IsDualStatus}
                   col2IsToggle={col2IsToggle}
                   getValue={getValue}
                   onChange={onChange}
@@ -860,13 +826,7 @@ const SectionPanel: React.FC<SectionPanelProps> = ({
       </div>
 
       {/* Add-row form (inline) */}
-      {canEditStructure && showAddForm && (
-        <AddItemForm
-          sectionMeta={sectionMeta}
-          onSubmit={onAddSubmit}
-          onCancel={onAddCancel}
-        />
-      )}
+      {canEditStructure && showAddForm && <AddItemForm sectionMeta={sectionMeta} onSubmit={onAddSubmit} onCancel={onAddCancel} />}
     </div>
   );
 };
@@ -877,6 +837,7 @@ interface ItemRowProps {
   item: CnsdReadinessItem;
   isReadOnly: boolean;
   canEditStructure: boolean;
+  col1IsDualStatus: boolean;
   col2IsToggle: boolean;
   getValue: (item: CnsdReadinessItem, field: keyof CnsdReadinessItem) => string;
   onChange: (itemId: number, field: keyof CnsdReadinessItem, value: string | null) => void;
@@ -887,22 +848,18 @@ interface ItemRowProps {
   onDeleteItem: () => void;
 }
 
-const ItemRow: React.FC<ItemRowProps> = ({
-  item, isReadOnly, canEditStructure, col2IsToggle,
-  getValue, onChange,
-  isEditingStructure, onStartItemEdit, onCancelItemEdit, onSaveItemStructure, onDeleteItem,
-}) => {
+const ItemRow: React.FC<ItemRowProps> = ({ item, isReadOnly, canEditStructure, col1IsDualStatus, col2IsToggle, getValue, onChange, isEditingStructure, onStartItemEdit, onCancelItemEdit, onSaveItemStructure, onDeleteItem }) => {
   // Local state for the inline structure-edit form
-  const [draftItemNumber, setDraftItemNumber] = useState(item.item_number ?? '');
+  const [draftItemNumber, setDraftItemNumber] = useState(item.item_number ?? "");
   const [draftEquipName, setDraftEquipName] = useState(item.equipment_name);
-  const [draftSubName, setDraftSubName] = useState(item.sub_equipment_name ?? '');
+  const [draftSubName, setDraftSubName] = useState(item.sub_equipment_name ?? "");
   const [savingStructure, setSavingStructure] = useState(false);
 
   useEffect(() => {
     if (isEditingStructure) {
-      setDraftItemNumber(item.item_number ?? '');
+      setDraftItemNumber(item.item_number ?? "");
       setDraftEquipName(item.equipment_name);
-      setDraftSubName(item.sub_equipment_name ?? '');
+      setDraftSubName(item.sub_equipment_name ?? "");
     }
   }, [isEditingStructure, item]);
 
@@ -919,49 +876,25 @@ const ItemRow: React.FC<ItemRowProps> = ({
     }
   };
 
-  const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent';
-  const statusVal = getValue(item, 'status_peralatan');
-  const kondisi1 = getValue(item, 'kondisi_operasional_1');
-  const kondisi2 = getValue(item, 'kondisi_operasional_2');
-  const keterangan = getValue(item, 'keterangan');
+  const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent";
+  const statusVal = getValue(item, "status_peralatan");
+  const kondisi1 = getValue(item, "kondisi_operasional_1");
+  const kondisi2 = getValue(item, "kondisi_operasional_2");
+  const keterangan = getValue(item, "keterangan");
 
   return (
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
       {/* No */}
       <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">
-        {isEditingStructure ? (
-          <input
-            type="text"
-            value={draftItemNumber}
-            onChange={(e) => setDraftItemNumber(e.target.value)}
-            maxLength={10}
-            className={cn(inputClass, 'text-center')}
-          />
-        ) : (
-          item.item_number ?? ''
-        )}
+        {isEditingStructure ? <input type="text" value={draftItemNumber} onChange={(e) => setDraftItemNumber(e.target.value)} maxLength={10} className={cn(inputClass, "text-center")} /> : (item.item_number ?? "")}
       </td>
 
       {/* Nama Peralatan */}
       <td className="px-3 py-2 align-middle">
         {isEditingStructure ? (
           <div className="space-y-1">
-            <input
-              type="text"
-              value={draftEquipName}
-              onChange={(e) => setDraftEquipName(e.target.value)}
-              placeholder="Nama peralatan"
-              maxLength={255}
-              className={inputClass}
-            />
-            <input
-              type="text"
-              value={draftSubName}
-              onChange={(e) => setDraftSubName(e.target.value)}
-              placeholder="Sub (PRIMARY/SECONDARY)"
-              maxLength={60}
-              className={inputClass}
-            />
+            <input type="text" value={draftEquipName} onChange={(e) => setDraftEquipName(e.target.value)} placeholder="Nama peralatan" maxLength={255} className={inputClass} />
+            <input type="text" value={draftSubName} onChange={(e) => setDraftSubName(e.target.value)} placeholder="Sub (PRIMARY/SECONDARY)" maxLength={60} className={inputClass} />
             <div className="flex items-center gap-1 pt-0.5">
               <Button size="sm" onClick={() => void submitStructure()} isLoading={savingStructure} className="gap-1 h-7 px-2 text-[11px]">
                 <Save size={11} /> Simpan
@@ -975,19 +908,10 @@ const ItemRow: React.FC<ItemRowProps> = ({
           <div className="flex items-center gap-1">
             <div>
               <div className="text-slate-800 font-semibold">{item.equipment_name}</div>
-              {item.sub_equipment_name && (
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                  {item.sub_equipment_name}
-                </div>
-              )}
+              {item.sub_equipment_name && <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{item.sub_equipment_name}</div>}
             </div>
             {canEditStructure && (
-              <button
-                type="button"
-                onClick={onStartItemEdit}
-                className="ml-1 p-0.5 text-slate-300 hover:text-brand-primary rounded transition-colors"
-                title="Edit nama peralatan"
-              >
+              <button type="button" onClick={onStartItemEdit} className="ml-1 p-0.5 text-slate-300 hover:text-brand-primary rounded transition-colors" title="Edit nama peralatan">
                 <Pencil size={11} />
               </button>
             )}
@@ -997,70 +921,42 @@ const ItemRow: React.FC<ItemRowProps> = ({
 
       {/* Status */}
       <td className="px-2 py-2 align-middle text-center">
-        <StatementToggle
-          value={statusVal}
-          options={STATUS_OPTIONS}
-          onChange={(v) => onChange(item.id, 'status_peralatan', v)}
-          disabled={isReadOnly}
-          variant="status"
-        />
+        <StatementToggle value={statusVal} options={STATUS_OPTIONS} onChange={(v) => onChange(item.id, "status_peralatan", v)} disabled={isReadOnly} variant="status" />
       </td>
 
-      {/* Kondisi 1 — always free text */}
-      <td className="px-2 py-2 align-middle">
-        <input
-          type="text"
-          className={inputClass}
-          placeholder="..."
-          value={kondisi1}
-          onChange={(e) => onChange(item.id, 'kondisi_operasional_1', e.target.value)}
-          disabled={isReadOnly}
-        />
+      {/* Kondisi 1 — DUAL/SINGLE pick-list for sections labelled "DUAL STATUS", free text otherwise */}
+      <td className="px-2 py-2 align-middle text-center">
+        {col1IsDualStatus ? (
+          <div className="flex flex-col items-center gap-1">
+            <StatementToggle value={kondisi1} options={DUAL_STATUS_OPTIONS} onChange={(v) => onChange(item.id, "kondisi_operasional_1", v)} disabled={isReadOnly} variant="neutral" />
+            <LegacyValueChip value={kondisi1} options={DUAL_STATUS_OPTIONS} onClear={() => onChange(item.id, "kondisi_operasional_1", "")} disabled={isReadOnly} />
+          </div>
+        ) : (
+          <input type="text" className={inputClass} placeholder="..." value={kondisi1} onChange={(e) => onChange(item.id, "kondisi_operasional_1", e.target.value)} disabled={isReadOnly} />
+        )}
       </td>
 
       {/* Kondisi 2 — toggle for DUAL STATE, free text otherwise */}
       <td className="px-2 py-2 align-middle text-center">
         {col2IsToggle ? (
-          <StatementToggle
-            value={kondisi2}
-            options={DUAL_STATE_OPTIONS}
-            onChange={(v) => onChange(item.id, 'kondisi_operasional_2', v)}
-            disabled={isReadOnly}
-            variant="state"
-          />
+          <div className="flex flex-col items-center gap-1">
+            <StatementToggle value={kondisi2} options={DUAL_STATE_OPTIONS} onChange={(v) => onChange(item.id, "kondisi_operasional_2", v)} disabled={isReadOnly} variant="state" />
+            <LegacyValueChip value={kondisi2} options={DUAL_STATE_OPTIONS} onClear={() => onChange(item.id, "kondisi_operasional_2", "")} disabled={isReadOnly} />
+          </div>
         ) : (
-          <input
-            type="text"
-            className={inputClass}
-            placeholder="..."
-            value={kondisi2}
-            onChange={(e) => onChange(item.id, 'kondisi_operasional_2', e.target.value)}
-            disabled={isReadOnly}
-          />
+          <input type="text" className={inputClass} placeholder="..." value={kondisi2} onChange={(e) => onChange(item.id, "kondisi_operasional_2", e.target.value)} disabled={isReadOnly} />
         )}
       </td>
 
       {/* Keterangan */}
       <td className="px-2 py-2 align-middle">
-        <input
-          type="text"
-          className={inputClass}
-          placeholder="Catatan"
-          value={keterangan}
-          onChange={(e) => onChange(item.id, 'keterangan', e.target.value)}
-          disabled={isReadOnly}
-        />
+        <input type="text" className={inputClass} placeholder="Catatan" value={keterangan} onChange={(e) => onChange(item.id, "keterangan", e.target.value)} disabled={isReadOnly} />
       </td>
 
       {/* Action */}
       {canEditStructure && (
         <td className="px-2 py-2 align-middle text-center">
-          <button
-            type="button"
-            onClick={onDeleteItem}
-            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-            title="Hapus baris"
-          >
+          <button type="button" onClick={onDeleteItem} className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Hapus baris">
             <Trash2 size={13} />
           </button>
         </td>
@@ -1074,6 +970,6 @@ const ItemRow: React.FC<ItemRowProps> = ({
 const InfoCell: React.FC<{ label: string; value: string | null }> = ({ label, value }) => (
   <div>
     <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">{label}</span>
-    <p className="mt-0.5 font-medium text-slate-700">{value ?? '—'}</p>
+    <p className="mt-0.5 font-medium text-slate-700">{value ?? "—"}</p>
   </div>
 );

@@ -1,40 +1,27 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import {
-  AlertCircle,
-  ArrowLeft,
-  Calendar,
-  Clock,
-  MapPin,
-  Printer,
-  Radar as DvorIcon,
-  Save,
-  Users,
-} from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { ShiftBadge } from '@/components/common/ShiftBadge';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { Skeleton } from '@/components/common/Skeleton';
-import { Tabs } from '@/components/common/Tabs';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
-import { canEditCnsd } from '@/lib/roles';
-import { cnsdDvorMeterService } from '@/services/cnsdDvorMeterService';
-import { CnsdDvorMeterSignaturePanel } from './components/CnsdDvorMeterSignaturePanel';
-import type { ShiftType } from '@/types';
-import type {
-  CnsdDvorMeterItem,
-  CnsdDvorMeterRecordDetail,
-} from '@/types/cnsdDvor';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { AlertCircle, ArrowLeft, Calendar, Clock, MapPin, Printer, Radar as DvorIcon, Save, Users } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { ShiftBadge } from "@/components/common/ShiftBadge";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { Skeleton } from "@/components/common/Skeleton";
+import { Tabs } from "@/components/common/Tabs";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { canEditCnsd } from "@/lib/roles";
+import { cnsdDvorMeterService } from "@/services/cnsdDvorMeterService";
+import { CnsdDvorMeterSignaturePanel } from "./components/CnsdDvorMeterSignaturePanel";
+import type { ShiftType } from "@/types";
+import type { CnsdDvorMeterItem, CnsdDvorMeterRecordDetail } from "@/types/cnsdDvor";
 
 const SHIFT_TIME_LABELS: Record<string, string> = {
-  pagi:  '07:00 — 13:00',
-  siang: '13:00 — 19:00',
-  malam: '19:00 — 07:00',
+  pagi: "07:15 — 13:15",
+  siang: "13:15 — 19:15",
+  malam: "19:15 — 07:15",
 };
 
-const TX_MODE_OPTIONS: Array<'MAIN' | 'STANDBY'> = ['MAIN', 'STANDBY'];
+const TX_MODE_OPTIONS: Array<"MAIN" | "STANDBY"> = ["MAIN", "STANDBY"];
 
 interface SectionMeta {
   code: string;
@@ -57,17 +44,17 @@ export const CnsdDvorMeterDetailPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [merk, setMerk] = useState('');
-  const [type, setType] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
-  const [tx1Mode, setTx1Mode] = useState('');
-  const [tx2Mode, setTx2Mode] = useState('');
+  const [merk, setMerk] = useState("");
+  const [type, setType] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
+  const [tx1Mode, setTx1Mode] = useState("");
+  const [tx2Mode, setTx2Mode] = useState("");
 
   const canEditMetadata = canEditCnsd(user);
 
   const fetchRecord = useCallback(async () => {
     if (!recordId || Number.isNaN(recordId)) {
-      setErrorMessage('ID form tidak valid.');
+      setErrorMessage("ID form tidak valid.");
       setIsLoading(false);
       return;
     }
@@ -76,54 +63,50 @@ export const CnsdDvorMeterDetailPage: React.FC = () => {
       const data = await cnsdDvorMeterService.getRecord(recordId);
       setRecord(data);
       setEditedItems({});
-      setMerk(data.merk ?? '');
-      setType(data.type ?? '');
-      setSerialNumber(data.serial_number ?? '');
-      setTx1Mode(data.tx1_mode ?? '');
-      setTx2Mode(data.tx2_mode ?? '');
+      setMerk(data.merk ?? "");
+      setType(data.type ?? "");
+      setSerialNumber(data.serial_number ?? "");
+      setTx1Mode(data.tx1_mode ?? "");
+      setTx2Mode(data.tx2_mode ?? "");
       if (data.sections_meta.length > 0) {
         const stillExists = activeSectionCode && data.sections_meta.some((s) => s.code === activeSectionCode);
         if (!stillExists) setActiveSectionCode(data.sections_meta[0].code);
       }
       setErrorMessage(null);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 404) setErrorMessage('Form tidak ditemukan.');
-      else setErrorMessage('Gagal memuat data form.');
+      if (axios.isAxiosError(err) && err.response?.status === 404) setErrorMessage("Form tidak ditemukan.");
+      else setErrorMessage("Gagal memuat data form.");
       setRecord(null);
     } finally {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
-  useEffect(() => { void fetchRecord(); }, [recordId]);
+  useEffect(() => {
+    void fetchRecord();
+  }, [recordId]);
 
   const itemsBySection = useMemo(() => {
     const map: Record<string, CnsdDvorMeterItem[]> = {};
     if (!record) return map;
     record.items.forEach((it) => {
-      const code = it.section_code ?? 'I';
+      const code = it.section_code ?? "I";
       if (!map[code]) map[code] = [];
       map[code].push(it);
     });
     return map;
   }, [record]);
 
-  const isReadOnly = record?.status === 'completed' || !canEditCnsd(user);
-  const metadataDirty = !!record && (
-    merk !== (record.merk ?? '') ||
-    type !== (record.type ?? '') ||
-    serialNumber !== (record.serial_number ?? '') ||
-    tx1Mode !== (record.tx1_mode ?? '') ||
-    tx2Mode !== (record.tx2_mode ?? '')
-  );
+  const isReadOnly = record?.status === "completed" || !canEditCnsd(user);
+  const metadataDirty = !!record && (merk !== (record.merk ?? "") || type !== (record.type ?? "") || serialNumber !== (record.serial_number ?? "") || tx1Mode !== (record.tx1_mode ?? "") || tx2Mode !== (record.tx2_mode ?? ""));
   const hasChanges = Object.keys(editedItems).length > 0 || metadataDirty;
 
   const updateField = (itemId: number, field: keyof CnsdDvorMeterItem, value: string | null) => {
     if (isReadOnly) return;
     setEditedItems((prev) => ({
       ...prev,
-      [itemId]: { ...(prev[itemId] ?? {}), [field]: value === '' ? null : value },
+      [itemId]: { ...(prev[itemId] ?? {}), [field]: value === "" ? null : value },
     }));
   };
 
@@ -131,10 +114,10 @@ export const CnsdDvorMeterDetailPage: React.FC = () => {
     const edited = editedItems[item.id];
     if (edited && field in edited) {
       const v = edited[field];
-      return v == null ? '' : String(v);
+      return v == null ? "" : String(v);
     }
     const original = item[field];
-    return original == null ? '' : String(original);
+    return original == null ? "" : String(original);
   };
 
   const handleSave = async () => {
@@ -144,31 +127,31 @@ export const CnsdDvorMeterDetailPage: React.FC = () => {
     setSuccessMessage(null);
     const items = Object.entries(editedItems).map(([rawId, patch]) => ({
       id: Number(rawId),
-      hasil_pemeriksaan: 'hasil_pemeriksaan' in patch ? patch.hasil_pemeriksaan ?? null : undefined,
-      keterangan:        'keterangan'        in patch ? patch.keterangan        ?? null : undefined,
+      hasil_pemeriksaan: "hasil_pemeriksaan" in patch ? (patch.hasil_pemeriksaan ?? null) : undefined,
+      keterangan: "keterangan" in patch ? (patch.keterangan ?? null) : undefined,
     }));
     try {
       const updated = await cnsdDvorMeterService.updateRecord(record.id, {
         merk: metadataDirty ? merk || null : undefined,
         type: metadataDirty ? type || null : undefined,
         serial_number: metadataDirty ? serialNumber || null : undefined,
-        tx1_mode: metadataDirty ? (tx1Mode as 'MAIN' | 'STANDBY' | null) || null : undefined,
-        tx2_mode: metadataDirty ? (tx2Mode as 'MAIN' | 'STANDBY' | null) || null : undefined,
+        tx1_mode: metadataDirty ? (tx1Mode as "MAIN" | "STANDBY" | null) || null : undefined,
+        tx2_mode: metadataDirty ? (tx2Mode as "MAIN" | "STANDBY" | null) || null : undefined,
         items: items.length > 0 ? items : undefined,
       });
       setRecord(updated);
       setEditedItems({});
       const parts: string[] = [];
       if (items.length > 0) parts.push(`${items.length} item`);
-      if (metadataDirty) parts.push('metadata peralatan');
-      setSuccessMessage(`${parts.join(' + ')} disimpan.`);
+      if (metadataDirty) parts.push("metadata peralatan");
+      setSuccessMessage(`${parts.join(" + ")} disimpan.`);
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as { message?: string };
-        setErrorMessage(data.message ?? 'Gagal menyimpan perubahan.');
+        setErrorMessage(data.message ?? "Gagal menyimpan perubahan.");
       } else {
-        setErrorMessage('Koneksi gagal, coba lagi.');
+        setErrorMessage("Koneksi gagal, coba lagi.");
       }
     } finally {
       setIsSaving(false);
@@ -189,24 +172,24 @@ export const CnsdDvorMeterDetailPage: React.FC = () => {
     return (
       <div className="max-w-3xl mx-auto py-20 text-center space-y-4">
         <AlertCircle className="mx-auto h-12 w-12 text-slate-400" />
-        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? 'Form tidak ditemukan.'}</h2>
-        <Button variant="outline" onClick={() => navigate('/cnsd/dvor-meter')} className="gap-2">
+        <h2 className="text-lg font-semibold text-slate-700">{errorMessage ?? "Form tidak ditemukan."}</h2>
+        <Button variant="outline" onClick={() => navigate("/cnsd/dvor-meter")} className="gap-2">
           <ArrowLeft size={16} /> Kembali ke Daftar
         </Button>
       </div>
     );
   }
 
-  const activeSectionMeta = activeSectionCode ? record.sections_meta.find((s) => s.code === activeSectionCode) ?? null : null;
+  const activeSectionMeta = activeSectionCode ? (record.sections_meta.find((s) => s.code === activeSectionCode) ?? null) : null;
 
   return (
     <div className="max-w-full space-y-5 animate-fade-in pb-12">
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <button type="button" onClick={() => navigate('/cnsd')} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
+        <button type="button" onClick={() => navigate("/cnsd")} className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
           <ArrowLeft size={14} /> CNSD
         </button>
         <span>/</span>
-        <button type="button" onClick={() => navigate('/cnsd/dvor-meter')} className="hover:text-slate-700 transition-colors">
+        <button type="button" onClick={() => navigate("/cnsd/dvor-meter")} className="hover:text-slate-700 transition-colors">
           DVOR Meter Reading
         </button>
         <span>/</span>
@@ -226,7 +209,12 @@ export const CnsdDvorMeterDetailPage: React.FC = () => {
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 CNSD &nbsp;·&nbsp;<span className="font-mono">{record.form_number}</span>
-                {record.form_code && <> &nbsp;·&nbsp; <span className="font-mono">{record.form_code}</span></>}
+                {record.form_code && (
+                  <>
+                    {" "}
+                    &nbsp;·&nbsp; <span className="font-mono">{record.form_code}</span>
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -238,7 +226,7 @@ export const CnsdDvorMeterDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg" title="Rentang waktu shift">
               <Clock size={13} className="text-slate-400" />
-              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? '—'}</span>
+              <span className="font-medium font-mono">{SHIFT_TIME_LABELS[record.shift_type] ?? "—"}</span>
             </div>
             <ShiftBadge shift={record.shift_type as ShiftType} />
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
@@ -271,19 +259,19 @@ export const CnsdDvorMeterDetailPage: React.FC = () => {
           </div>
           <div>
             <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">Teknisi CNSD</span>
-            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(', ')}>
-              {record.technicians.map((t) => t.technician_name).join(', ') || <span className="text-slate-400 italic">—</span>}
+            <p className="mt-0.5 font-medium text-slate-700 truncate" title={record.technicians.map((t) => t.technician_name).join(", ")}>
+              {record.technicians.map((t) => t.technician_name).join(", ") || <span className="text-slate-400 italic">—</span>}
             </p>
           </div>
         </div>
       </div>
 
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{errorMessage}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {errorMessage}
+        </div>
       )}
-      {successMessage && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>
-      )}
+      {successMessage && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>}
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
         <h2 className="text-sm font-bold text-slate-800">Informasi Peralatan</h2>
@@ -302,39 +290,21 @@ export const CnsdDvorMeterDetailPage: React.FC = () => {
           <EditableSelectField label="Tx 1 Mode" value={tx1Mode} onChange={setTx1Mode} options={TX_MODE_OPTIONS} disabled={!!isReadOnly || !canEditMetadata} />
           <EditableSelectField label="Tx 2 Mode" value={tx2Mode} onChange={setTx2Mode} options={TX_MODE_OPTIONS} disabled={!!isReadOnly || !canEditMetadata} />
         </div>
-        {!canEditMetadata && !isReadOnly && (
-          <p className="text-[10px] text-slate-400 italic">
-            Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.
-          </p>
-        )}
+        {!canEditMetadata && !isReadOnly && <p className="text-[10px] text-slate-400 italic">Hanya Manager Teknik / Supervisor CNSD yang dapat mengubah identifikasi peralatan.</p>}
       </div>
 
-      {record.sections_meta.length > 0 && (
-        <Tabs
-          items={record.sections_meta.map((s) => ({ key: s.code, label: `${s.code}. ${s.name}` }))}
-          defaultKey={activeSectionCode ?? record.sections_meta[0]?.code}
-          onChange={setActiveSectionCode}
-        />
-      )}
+      {record.sections_meta.length > 0 && <Tabs items={record.sections_meta.map((s) => ({ key: s.code, label: `${s.code}. ${s.name}` }))} defaultKey={activeSectionCode ?? record.sections_meta[0]?.code} onChange={setActiveSectionCode} />}
 
-      {activeSectionMeta && (
-        <DvorSectionPanel
-          sectionMeta={activeSectionMeta}
-          items={itemsBySection[activeSectionMeta.code] ?? []}
-          isReadOnly={!!isReadOnly}
-          getValue={getValue}
-          onChange={updateField}
-        />
-      )}
+      {activeSectionMeta && <DvorSectionPanel sectionMeta={activeSectionMeta} items={itemsBySection[activeSectionMeta.code] ?? []} isReadOnly={!!isReadOnly} getValue={getValue} onChange={updateField} />}
 
       {!isReadOnly && (
         <div className="flex items-center justify-end gap-3 pt-2">
           {hasChanges && (
             <span className="text-xs text-amber-600 font-medium">
               {Object.keys(editedItems).length > 0 && `${Object.keys(editedItems).length} item`}
-              {Object.keys(editedItems).length > 0 && metadataDirty && ' + '}
-              {metadataDirty && 'metadata'}
-              {' belum disimpan'}
+              {Object.keys(editedItems).length > 0 && metadataDirty && " + "}
+              {metadataDirty && "metadata"}
+              {" belum disimpan"}
             </span>
           )}
           <Button onClick={() => void handleSave()} disabled={!hasChanges} isLoading={isSaving} className="gap-2">
@@ -356,20 +326,21 @@ interface DvorSectionPanelProps {
   onChange: (itemId: number, field: keyof CnsdDvorMeterItem, value: string | null) => void;
 }
 
-const DvorSectionPanel: React.FC<DvorSectionPanelProps> = ({
-  sectionMeta, items, isReadOnly, getValue, onChange,
-}) => {
+const DvorSectionPanel: React.FC<DvorSectionPanelProps> = ({ sectionMeta, items, isReadOnly, getValue, onChange }) => {
   const groups = useMemo(() => {
     const order: string[] = [];
     const map: Record<string, CnsdDvorMeterItem[]> = {};
     items.forEach((it) => {
       if (it.is_header) return;
-      const key = `${it.group_code ?? ''}::${it.group_name ?? ''}`;
-      if (!map[key]) { map[key] = []; order.push(key); }
+      const key = `${it.group_code ?? ""}::${it.group_name ?? ""}`;
+      if (!map[key]) {
+        map[key] = [];
+        order.push(key);
+      }
       map[key].push(it);
     });
     return order.map((key) => {
-      const first = items.find((i) => `${i.group_code ?? ''}::${i.group_name ?? ''}` === key);
+      const first = items.find((i) => `${i.group_code ?? ""}::${i.group_name ?? ""}` === key);
       return {
         code: first?.group_code ?? null,
         name: first?.group_name ?? null,
@@ -378,7 +349,7 @@ const DvorSectionPanel: React.FC<DvorSectionPanelProps> = ({
     });
   }, [items]);
 
-  const isPeralatan = sectionMeta.inputs_layout === 'single_result';
+  const isPeralatan = sectionMeta.inputs_layout === "single_result";
   const colCount = 5;
   const editableItems = useMemo(() => items.filter((i) => !i.is_header), [items]);
 
@@ -391,8 +362,8 @@ const DvorSectionPanel: React.FC<DvorSectionPanelProps> = ({
           </h2>
           <p className="text-[11px] text-slate-500 mt-0.5">
             {isPeralatan
-              ? 'Isi kolom HASIL PEMERIKSAAN untuk masing-masing parameter (sesuaikan dengan LIMIT). Gunakan ↑↓←→ atau Enter untuk navigasi.'
-              : 'Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan. Gunakan ↑↓←→ atau Enter untuk navigasi.'}
+              ? "Isi kolom HASIL PEMERIKSAAN untuk masing-masing parameter (sesuaikan dengan LIMIT). Gunakan ↑↓←→ atau Enter untuk navigasi."
+              : "Isi kolom HASIL untuk tiap kegiatan pemeriksaan lingkungan. Gunakan ↑↓←→ atau Enter untuk navigasi."}
           </p>
         </div>
         <span className="text-xs font-medium text-slate-400">{editableItems.length} item</span>
@@ -403,12 +374,8 @@ const DvorSectionPanel: React.FC<DvorSectionPanelProps> = ({
           <thead>
             <tr className="bg-slate-50 text-slate-700">
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 w-16 text-[11px] uppercase tracking-wider">No</th>
-              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[240px] text-[11px] uppercase tracking-wider">
-                {isPeralatan ? 'Pembacaan Meter Reading' : 'Kegiatan'}
-              </th>
-              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[160px] text-[11px] uppercase tracking-wider">
-                {isPeralatan ? 'Limit' : 'Nominal'}
-              </th>
+              <th className="px-3 py-2 text-left font-semibold border-b border-slate-200 min-w-[240px] text-[11px] uppercase tracking-wider">{isPeralatan ? "Pembacaan Meter Reading" : "Kegiatan"}</th>
+              <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[160px] text-[11px] uppercase tracking-wider">{isPeralatan ? "Limit" : "Nominal"}</th>
               <th className="px-2 py-2 text-center font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">Hasil Pemeriksaan</th>
               <th className="px-2 py-2 text-left font-semibold border-b border-slate-200 min-w-[140px] text-[11px] uppercase tracking-wider">Keterangan</th>
             </tr>
@@ -426,23 +393,14 @@ const DvorSectionPanel: React.FC<DvorSectionPanelProps> = ({
                   {group.name && isPeralatan && (
                     <tr className="bg-slate-100">
                       <td colSpan={colCount} className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200">
-                        {group.code ? `${group.code}. ` : ''}{group.name}
+                        {group.code ? `${group.code}. ` : ""}
+                        {group.name}
                       </td>
                     </tr>
                   )}
                   {group.items.map((item) => {
-                    const rowIndex = editableItems.findIndex(i => i.id === item.id);
-                    return (
-                      <DvorItemRow
-                        key={item.id}
-                        item={item}
-                        rowIndex={rowIndex}
-                        totalRows={editableItems.length}
-                        isReadOnly={isReadOnly}
-                        getValue={getValue}
-                        onChange={onChange}
-                      />
-                    );
+                    const rowIndex = editableItems.findIndex((i) => i.id === item.id);
+                    return <DvorItemRow key={item.id} item={item} rowIndex={rowIndex} totalRows={editableItems.length} isReadOnly={isReadOnly} getValue={getValue} onChange={onChange} />;
                   })}
                 </React.Fragment>
               ))
@@ -463,52 +421,48 @@ interface DvorItemRowProps {
   onChange: (itemId: number, field: keyof CnsdDvorMeterItem, value: string | null) => void;
 }
 
-const DvorItemRow: React.FC<DvorItemRowProps> = ({ 
-  item, rowIndex, totalRows, isReadOnly, getValue, onChange 
-}) => {
-  const inputClass = 'w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500';
-  const availableFields = ['hasil_pemeriksaan', 'keterangan'] as const;
+const DvorItemRow: React.FC<DvorItemRowProps> = ({ item, rowIndex, totalRows, isReadOnly, getValue, onChange }) => {
+  const inputClass = "w-full h-8 px-2 text-xs rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500";
+  const availableFields = ["hasil_pemeriksaan", "keterangan"] as const;
 
   const focusInput = (targetRow: number, preferredField: string) => {
     let el = document.querySelector(`input[data-row="${targetRow}"][data-field="${preferredField}"]`) as HTMLInputElement;
-    
+
     if (el) {
       el.focus();
       el.select();
       return;
     }
-    
+
     // Fallback cerdas jika field tidak ditemukan
-    if (preferredField === 'keterangan') {
+    if (preferredField === "keterangan") {
       el = document.querySelector(`input[data-row="${targetRow}"][data-field="hasil_pemeriksaan"]`) as HTMLInputElement;
     }
-    
+
     if (el) {
       el.focus();
       el.select();
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, currentField: typeof availableFields[number]) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, currentField: (typeof availableFields)[number]) => {
     if (isReadOnly) return;
 
     const currentFieldIdx = availableFields.indexOf(currentField);
 
-    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+    if (e.key === "ArrowDown" || e.key === "Enter") {
       e.preventDefault();
       const nextRow = rowIndex + 1;
       if (nextRow < totalRows) {
         focusInput(nextRow, currentField);
       }
-    } 
-    else if (e.key === 'ArrowUp') {
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
       const prevRow = rowIndex - 1;
       if (prevRow >= 0) {
         focusInput(prevRow, currentField);
       }
-    } 
-    else if (e.key === 'ArrowRight') {
+    } else if (e.key === "ArrowRight") {
       e.preventDefault();
       if (currentFieldIdx < availableFields.length - 1) {
         focusInput(rowIndex, availableFields[currentFieldIdx + 1]);
@@ -517,8 +471,7 @@ const DvorItemRow: React.FC<DvorItemRowProps> = ({
           focusInput(rowIndex + 1, availableFields[0]);
         }
       }
-    } 
-    else if (e.key === 'ArrowLeft') {
+    } else if (e.key === "ArrowLeft") {
       e.preventDefault();
       if (currentFieldIdx > 0) {
         focusInput(rowIndex, availableFields[currentFieldIdx - 1]);
@@ -534,20 +487,18 @@ const DvorItemRow: React.FC<DvorItemRowProps> = ({
     <tr className="hover:bg-slate-50 transition-colors border-b border-slate-100">
       <td className="px-2 py-2 text-center text-slate-500 font-mono text-[11px] align-middle">{rowIndex + 1}</td>
       <td className="px-3 py-2 align-middle text-slate-800 font-medium">{item.item_name}</td>
-      <td className={cn('px-2 py-2 align-middle text-center text-slate-600 text-[11px]', !item.limit_value && 'text-slate-300')}>
-        {item.limit_value || '—'}
-      </td>
+      <td className={cn("px-2 py-2 align-middle text-center text-slate-600 text-[11px]", !item.limit_value && "text-slate-300")}>{item.limit_value || "—"}</td>
       <td className="px-2 py-2 align-middle">
         <input
           type="text"
           className={inputClass}
           placeholder="..."
-          value={getValue(item, 'hasil_pemeriksaan')}
-          onChange={(e) => onChange(item.id, 'hasil_pemeriksaan', e.target.value)}
+          value={getValue(item, "hasil_pemeriksaan")}
+          onChange={(e) => onChange(item.id, "hasil_pemeriksaan", e.target.value)}
           disabled={isReadOnly}
           data-row={rowIndex}
           data-field="hasil_pemeriksaan"
-          onKeyDown={(e) => handleKeyDown(e, 'hasil_pemeriksaan')}
+          onKeyDown={(e) => handleKeyDown(e, "hasil_pemeriksaan")}
         />
       </td>
       <td className="px-2 py-2 align-middle">
@@ -555,12 +506,12 @@ const DvorItemRow: React.FC<DvorItemRowProps> = ({
           type="text"
           className={inputClass}
           placeholder="Catatan"
-          value={getValue(item, 'keterangan')}
-          onChange={(e) => onChange(item.id, 'keterangan', e.target.value)}
+          value={getValue(item, "keterangan")}
+          onChange={(e) => onChange(item.id, "keterangan", e.target.value)}
           disabled={isReadOnly}
           data-row={rowIndex}
           data-field="keterangan"
-          onKeyDown={(e) => handleKeyDown(e, 'keterangan')}
+          onKeyDown={(e) => handleKeyDown(e, "keterangan")}
         />
       </td>
     </tr>
@@ -570,7 +521,7 @@ const DvorItemRow: React.FC<DvorItemRowProps> = ({
 const InfoCell: React.FC<{ label: string; value: string | null }> = ({ label, value }) => (
   <div>
     <span className="text-slate-400 uppercase tracking-wider text-[10px] font-semibold">{label}</span>
-    <p className="mt-0.5 font-medium text-slate-700">{value ?? '—'}</p>
+    <p className="mt-0.5 font-medium text-slate-700">{value ?? "—"}</p>
   </div>
 );
 
@@ -586,11 +537,16 @@ const EditableMetaField: React.FC<EditableMetaFieldProps> = ({ label, value, onC
   <div>
     <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</label>
     {disabled ? (
-      <p className="text-xs text-slate-700 font-medium">{value || '—'}</p>
+      <p className="text-xs text-slate-700 font-medium">{value || "—"}</p>
     ) : (
-      <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
         className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 bg-white focus:ring-2 focus:ring-brand-primary focus:border-transparent focus:outline-none placeholder:text-slate-300"
-        maxLength={60} />
+        maxLength={60}
+      />
     )}
   </div>
 );
@@ -607,13 +563,14 @@ const EditableSelectField: React.FC<EditableSelectFieldProps> = ({ label, value,
   <div>
     <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</label>
     {disabled ? (
-      <p className="text-xs text-slate-700 font-medium">{value || '—'}</p>
+      <p className="text-xs text-slate-700 font-medium">{value || "—"}</p>
     ) : (
-      <select value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 bg-white focus:ring-2 focus:ring-brand-primary focus:border-transparent focus:outline-none">
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 bg-white focus:ring-2 focus:ring-brand-primary focus:border-transparent focus:outline-none">
         <option value="">—</option>
         {options.map((opt) => (
-          <option key={opt} value={opt}>{opt}</option>
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
         ))}
       </select>
     )}
